@@ -134,16 +134,6 @@ print "Start routing customer design ${CL}"
 ###############################################################################
 route_design -directive $ROUTE_DIRECT -tns_cleanup -timing_summary
 
-#JUNHA, UNCOMMENT THIS :)
-################################################################################
-#print "Adjusting host clock frequency based on post-route timing"
-################################################################################
-#source $HDK_SHELL_DIR/build/scripts/adjust_host_frequency.tcl
-#set adjusted_freq [adjust_host_frequency $desired_host_frequency]
-#if {$adjusted_freq eq ""} {
-#    print "ERROR: Frequency adjustment failed — design cannot meet minimum frequency."
-#}
-#
 print "Writing post-route design checkpoint and report"
 
 set failPath [check_timing_path]
