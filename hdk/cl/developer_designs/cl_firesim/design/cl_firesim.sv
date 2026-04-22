@@ -47,7 +47,8 @@ logic rst_firesim_n_sync;
 `include "unused_flr_template.inc"
 //`include "unused_ddr_template.inc"
 //`include "unused_pcim_template.inc"
-`include "unused_cl_sda_template.inc"
+// SDA AXI-L is consumed by AWS_CLK_GEN below; do not tie off.
+// `include "unused_cl_sda_template.inc"
 // `include "unused_sh_bar1_template.inc" // does not exist in F2
 `include "unused_apppf_irq_template.inc"
 // `include "unused_sh_ocl_template.inc"
@@ -81,18 +82,85 @@ always_ff @(negedge rst_main_n or posedge clk_main_a0)
 
 //---------------------------
 
+// AWS_CLK_GEN generates firesim_internal_clock at 125 MHz using the default
+// A1 clock recipe (clk_extra_a1 = 125 MHz). See F2 Clock-Recipes User Guide.
 logic firesim_internal_clock;
-logic firesim_clocking_locked;
 
-clk_wiz_0_firesim firesim_clocking (
-   // Clock in ports
-    .clk_in1(clk_main_a0), // input clk_in1, expects 250 mhz
-    // Clock out ports
-    .clk_out1(firesim_internal_clock),
-    // Status and control signals
-    .reset(!rst_main_n), // input reset
-    .locked(firesim_clocking_locked) // output locked
+logic gen_clk_hbm_ref;
+logic gen_clk_main_a0;
+logic gen_clk_extra_a1;
+logic gen_clk_extra_a2;
+logic gen_clk_extra_a3;
+logic gen_clk_extra_b0;
+logic gen_clk_extra_b1;
+logic gen_clk_extra_c0;
+logic gen_clk_extra_c1;
+logic gen_clk_hbm_axi;
+logic gen_rst_hbm_axi_n;
+logic gen_rst_hbm_ref_n;
+logic gen_rst_c1_n;
+logic gen_rst_c0_n;
+logic gen_rst_b1_n;
+logic gen_rst_b0_n;
+logic gen_rst_a3_n;
+logic gen_rst_a2_n;
+logic gen_rst_a1_n;
+logic gen_rst_main_n;
+
+aws_clk_gen
+#(
+    .CLK_GRP_A_EN (1),
+    .CLK_GRP_B_EN (1),
+    .CLK_GRP_C_EN (1),
+    .CLK_HBM_EN   (1)
+)
+AWS_CLK_GEN (
+    .i_clk_main_a0         (clk_main_a0       ),
+    .i_rst_main_n          (rst_main_n        ),
+    .i_clk_hbm_ref         (clk_hbm_ref       ),
+
+    // SDA AXI-L: runtime clock-recipe configuration from host
+    .s_axil_ctrl_awaddr    (sda_cl_awaddr     ),
+    .s_axil_ctrl_awvalid   (sda_cl_awvalid    ),
+    .s_axil_ctrl_awready   (cl_sda_awready    ),
+    .s_axil_ctrl_wdata     (sda_cl_wdata      ),
+    .s_axil_ctrl_wstrb     (sda_cl_wstrb      ),
+    .s_axil_ctrl_wvalid    (sda_cl_wvalid     ),
+    .s_axil_ctrl_wready    (cl_sda_wready     ),
+    .s_axil_ctrl_bresp     (cl_sda_bresp      ),
+    .s_axil_ctrl_bvalid    (cl_sda_bvalid     ),
+    .s_axil_ctrl_bready    (sda_cl_bready     ),
+    .s_axil_ctrl_araddr    (sda_cl_araddr     ),
+    .s_axil_ctrl_arvalid   (sda_cl_arvalid    ),
+    .s_axil_ctrl_arready   (cl_sda_arready    ),
+    .s_axil_ctrl_rdata     (cl_sda_rdata      ),
+    .s_axil_ctrl_rresp     (cl_sda_rresp      ),
+    .s_axil_ctrl_rvalid    (cl_sda_rvalid     ),
+    .s_axil_ctrl_rready    (sda_cl_rready     ),
+
+    .o_clk_hbm_ref         (gen_clk_hbm_ref   ),
+    .o_clk_main_a0         (gen_clk_main_a0   ),
+    .o_clk_extra_a1        (gen_clk_extra_a1  ),
+    .o_clk_extra_a2        (gen_clk_extra_a2  ),
+    .o_clk_extra_a3        (gen_clk_extra_a3  ),
+    .o_clk_extra_b0        (gen_clk_extra_b0  ),
+    .o_clk_extra_b1        (gen_clk_extra_b1  ),
+    .o_clk_extra_c0        (gen_clk_extra_c0  ),
+    .o_clk_extra_c1        (gen_clk_extra_c1  ),
+    .o_clk_hbm_axi         (gen_clk_hbm_axi   ),
+    .o_cl_rst_hbm_axi_n    (gen_rst_hbm_axi_n ),
+    .o_cl_rst_hbm_ref_n    (gen_rst_hbm_ref_n ),
+    .o_cl_rst_c1_n         (gen_rst_c1_n      ),
+    .o_cl_rst_c0_n         (gen_rst_c0_n      ),
+    .o_cl_rst_b1_n         (gen_rst_b1_n      ),
+    .o_cl_rst_b0_n         (gen_rst_b0_n      ),
+    .o_cl_rst_a3_n         (gen_rst_a3_n      ),
+    .o_cl_rst_a2_n         (gen_rst_a2_n      ),
+    .o_cl_rst_a1_n         (gen_rst_a1_n      ),
+    .o_cl_rst_main_n       (gen_rst_main_n    )
 );
+
+assign firesim_internal_clock = gen_clk_extra_a1;
 
 //-------------------------------------------------
 // Reset Synchronization Inner
@@ -442,8 +510,8 @@ logic ddr_sync_rst_n;
 
 xpm_cdc_async_rst CDC_ASYNC_RST_N_DDR
 (
-  .src_arst               (rst_main_n               ),
-  .dest_clk               (clk_main_a0              ),
+  .src_arst               (gen_rst_main_n               ),
+  .dest_clk               (gen_clk_main_a0              ),
   .dest_arst              (ddr_sync_rst_n           )
 );
 
@@ -454,7 +522,7 @@ lib_pipe
 )
 PIPE_DDR_STAT0
 (
-  .clk                    (clk_main_a0              ),
+  .clk                    (gen_clk_main_a0              ),
   .rst_n                  (ddr_sync_rst_n           ),
   .in_bus                 ({sh_cl_ddr_stat_wr,
                             sh_cl_ddr_stat_rd,
@@ -474,7 +542,7 @@ lib_pipe
 )
 PIPE_DDR_STAT_ACK0
 (
-  .clk                    (clk_main_a0              ),
+  .clk                    (gen_clk_main_a0              ),
   .rst_n                  (ddr_sync_rst_n           ),
   .in_bus                 ({ddr_sh_stat_ack_q,
                             ddr_sh_stat_int_q,
@@ -564,9 +632,9 @@ sh_ddr
 )
 SH_DDR
 (
-  .clk                    (clk_main_a0              ),
+  .clk                    (gen_clk_main_a0              ),
   .rst_n                  (ddr_sync_rst_n           ),
-  .stat_clk               (clk_main_a0              ),
+  .stat_clk               (gen_clk_main_a0              ),
   .stat_rst_n             (ddr_sync_rst_n           ),
 
   .CLK_DIMM_DP            (CLK_DIMM_DP              ),
@@ -1456,7 +1524,7 @@ assign fsimtop_s_3_axi_rvalid = 1'b0;
 // Tie-Off Unused Global Signals
 //-------------------------------------------
 // The functionality for these signals is TBD so they can can be tied-off.
-assign clk_hbm_ref = 1'b0;
+// clk_hbm_ref is a shell input consumed by AWS_CLK_GEN; do not drive it.
 assign cl_sh_status0[31:0] = 32'h0;
 assign cl_sh_status1[31:0] = 32'h0;
 assign cl_sh_status2[31:0] = 32'h0; // new in f2

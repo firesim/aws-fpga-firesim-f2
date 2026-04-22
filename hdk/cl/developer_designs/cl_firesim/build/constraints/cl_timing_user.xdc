@@ -21,23 +21,19 @@
 # Alias of Shell interface clock
 set clk_main_a0 [get_clocks -of_objects [get_ports clk_main_a0]]
 
-# Alias of Firesim wizard clock
-set clk_firesim [get_clocks -of_objects [get_ports clk_out1_clk_wiz_0_firesim]]
+# Alias of Firesim internal clock (AWS_CLK_GEN clk_extra_a1 = 125 MHz under A1 recipe)
+set clk_firesim [get_clocks -of_objects \
+    [get_pins -of_objects \
+        [get_cells -hierarchical -regexp {.*AWS_CLK_GEN/CLK_GRP_A_EN_I.CLK_MMCM_A_I/inst/CLK_CORE_DRP_I/clk_inst/mmcme4_adv_inst}] \
+        -filter {NAME=~*CLKOUT0}]]
 
-create_generated_clock -name          clk_ddr \
-                       -master_clock  [get_clocks -of_objects [get_pins -hierarchical -regexp {.*CL/clk_main_a0}]] \
-                       [get_pins -hierarchical -regexp {.*/u_ddr4_infrastructure/gen_mmcme4.u_mmcme_adv_inst/CLKOUT0}]
-
-## extra one in case
-create_generated_clock -name          clk_mmcm \
-                       -master_clock  [get_clocks -of_objects [get_pins -hierarchical -regexp {.*CL/clk_main_a0}]] \
-                       [get_pins -hierarchical -regexp {.*/u_ddr4_infrastructure/mmcm_clkout0}]
 
 ###############################################################################
 # FireSim reset synchronizer false paths
 ###############################################################################
-# The FireSim MMCM reset synchronizer registers have async CLR pins driven
-# from the shell clock domain.  These are standard CDC reset synchronizers.
+# The FireSim reset synchronizer registers (now clocked by AWS_CLK_GEN
+# clk_extra_a1) have async CLR pins driven from rst_main_n in the shell clock
+# domain.  These are standard CDC reset synchronizers.
 set_false_path -to [get_pins -hierarchical *pre_sync_rst_n_firesim_reg/CLR]
 set_false_path -to [get_pins -hierarchical *rst_firesim_n_sync_reg/CLR]
 
@@ -50,7 +46,10 @@ set_false_path -from [get_pins -of_objects \
                           [get_cells -hierarchical -filter { NAME =~ *ram_reg*}] -filter {REF_PIN_NAME == CLK}] \
                -to   [get_cells -hierarchical -filter { NAME =~ *rd_do_reg[*]}]
 
-# set_false_path -to   [get_cells -hierarchical -filter { NAME =~ *mmcm_clkout0}]
+set_clock_groups -asynchronous \
+    -group [get_clocks clk_main_a0] \
+    -group [get_clocks -of_objects [get_pins -hierarchical -filter {NAME=~*SH_DDR/genblk1.IS_DDR_PRESENT.DDR4_0/inst/u_ddr4_infrastructure/gen_mmcme4.u_mmcme_adv_inst/CLKOUT0}]]
+
 
 # XPM CDC:
 set_false_path -from \
@@ -62,11 +61,7 @@ set_false_path -from \
 # END MEM_PERF TIMING.XDC
 
 set_clock_groups -asynchronous -group [get_clocks clk_main_a0] \
-    -group [get_clocks -of_objects [get_pins -hierarchical -regexp {.*CL/clk_out1_clk_wiz_0_firesim}]]
-
-set_clock_groups -asynchronous -group [get_clocks clk_main_a0] \
-    -group [get_clocks clk_ddr] \
-    -group [get_clocks clk_mmcm]
+    -group $clk_firesim
 
 #################################################################################
 ### Timing Exceptions
@@ -92,8 +87,8 @@ set_false_path -to [get_pins -hierarchical *ddr_ready_sync_reg/CLR]
 ###############################################################################
 # Blanket false-path for DDR4 MMCM output clock (mmcm_clkout0)
 ###############################################################################
-set_false_path -from [get_clocks -of_objects [get_pins -hierarchical -regexp {*mmcm_clkout0}]]
-set_false_path -to   [get_clocks -of_objects [get_pins -hierarchical -regexp {*mmcm_clkout0}]]
+# set_false_path -from [get_clocks -of_objects [get_pins -hierarchical -regexp {*mmcm_clkout0}]]
+# set_false_path -to   [get_clocks -of_objects [get_pins -hierarchical -regexp {*mmcm_clkout0}]]
 
 ###############################################################################
 # False-path between clk_main_a0 and its CL partition-boundary copy

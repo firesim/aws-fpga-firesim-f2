@@ -167,8 +167,10 @@ set_property PROCESSING_ORDER LATE [get_files cl_synth_user.xdc]
 set_property PROCESSING_ORDER LATE [get_files cl_timing_user.xdc]
 
 
-# FireSim custom clocking
-source $CL_DIR/build/scripts/synth_firesim_clk_wiz.tcl
+# FireSim custom clocking is now provided by AWS_CLK_GEN (clk_extra_a1, 125 MHz
+# under the default A1 recipe) instantiated directly in cl_firesim.sv. The
+# clk_wiz_0_firesim MMCM is no longer used.
+# source $CL_DIR/build/scripts/synth_firesim_clk_wiz.tcl
 
 #===============================================================================
 # ALL IPs below were originally configured for F1 (xcvu9p) and must be
