@@ -4,7 +4,7 @@ This document provides the floorplan of the Small Shell.
 
 ## Small Shell
 
-![Small_shell_floorplan](./images/small_shell_fp.png)
+![Small_shell_floorplan](../../docs-rtd/source/_static/small_shell_fp.png)
 
 ## Recommendations
 

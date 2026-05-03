@@ -15,10 +15,10 @@
 # limitations under the License.
 # =============================================================================
 #
-# Disable Data Bus Inversion for cl_hbm 
+# Disable Data Bus Inversion for cl_hbm
 # This is ONLY needed for XSIM simulation with HBM, not needed for other simulators
 #
-# Source this file if different cl_hbm configuration is desired and regenerate ip simualtion models 
+# Source this file if different cl_hbm configuration is desired and regenerate ip simulation models
 # the new xpm_internal_config* files will replace those in verif/include/xsim_hbm
 #
 set_property CONFIG.USER_MC0_WRITE_DBI_EN false [get_ips cl_hbm]

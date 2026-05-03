@@ -22,7 +22,9 @@ The following examples are not currently supported by AMD:
 
 The following examples are currently under development by AMD:
 
-* `performance/axi_burst_performance`
+* `host_py/hello_world_py`
+* `host_xrt/mailbox_auto_restart_xrt`
+* `rtl_kernels/rtl_vadd_mixed_c`
 
 ## Hardware Emulation
 
@@ -32,7 +34,7 @@ The following examples do not support Hardware Emulation.
 * `host_xrt/kernel_chain`
 * `sys_opt/multiple_processes`
 
-## Vitis 2025.1 and 2024.2
+## Vitis 2025.2
 
 Vitis currently only supports Hardware Emulation. Hardware builds and AFI creation are not supported at this time.
 

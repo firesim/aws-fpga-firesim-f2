@@ -24,6 +24,15 @@ Custom Logic Examples
 
   hdk/cl/CHECKLIST-BEFORE-BUILDING-CL
 
+cl_axil_reg_access
+""""""""""""""""""
+
+.. toctree::
+  :maxdepth: 1
+
+  hdk/cl/examples/cl-demo/cl-axil-reg-access/README
+  hdk/cl/examples/cl-demo/cl-axil-reg-access/verif/README
+
 cl_dram_hbm_dma
 """""""""""""""
 
@@ -113,6 +122,14 @@ Vitis
   :maxdepth: 1
 
   vitis/README
+
+Runtime AMI Builder
+-------------------
+
+.. toctree::
+  :maxdepth: 1
+
+  developer-resources/runtime-ami-builder/README
 
 Release Notes and Errata
 ------------------------

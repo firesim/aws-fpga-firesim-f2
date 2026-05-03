@@ -233,7 +233,7 @@ fpga_mgmt_cmd_handle_metrics(const union afi_cmd *rsp, uint32_t len,
 			len, tmp_len);
 
 	/* We've already validated the header; copy the response into the out
-	 * paramater. */
+	 * parameter. */
 	*metrics = (void *)rsp->body;
 
 	return 0;

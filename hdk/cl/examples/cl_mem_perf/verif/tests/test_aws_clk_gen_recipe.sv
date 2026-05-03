@@ -59,9 +59,7 @@ module test_aws_clk_gen_recipe();
         '{"reference",    100, `REF_FREQ_CTR}
     }; // Reverse order so that the ref_clk is at 0 and clk_hbm_ref is at 9
 
-    tb.power_up(.clk_recipe_a(ClockRecipe::A1),
-                .clk_recipe_b(ClockRecipe::B0),
-                .clk_recipe_c(ClockRecipe::C0));
+    tb.power_up(.clk_recipe_a(ClockRecipe::A1));
 
     #500ns;
 

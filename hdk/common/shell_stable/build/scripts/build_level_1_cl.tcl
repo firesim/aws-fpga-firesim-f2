@@ -153,8 +153,6 @@ report_timing -delay_type max \
               -significant_digits 3 \
               -file ${reports_dir}/${CL}.${TAG}.post_route_timing.rpt
 
-report_utilization -hierarchical -hierarchical_percentages -file ${reports_dir}/${CL}.${TAG}.post_route_utilization.rpt
-
 write_debug_probes -no_partial_ltxfile -force ${checkpoints_dir}/${TAG}.debug_probes.ltx
 
 

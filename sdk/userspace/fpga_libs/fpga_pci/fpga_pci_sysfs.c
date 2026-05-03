@@ -607,7 +607,7 @@ fpga_pci_get_all_slot_specs(struct fpga_slot_spec spec_array[], int size)
 		}
 		/* fill in app resources */
 		rc = fpga_pci_complete_slot_spec(&spec_array[i]);
-		fail_on(rc, out, "unabled to get APP PF info for slot %d", i);
+		fail_on(rc, out, "unable to get APP PF info for slot %d", i);
 	}
 
 out:
@@ -634,7 +634,7 @@ fpga_pci_get_slot_spec(int slot_id, struct fpga_slot_spec *spec)
 	fail_on(ret, err, "failed to enumerate FPGA slots");
 
 	ret = fpga_pci_complete_slot_spec(&spec_array[slot_id]);
-	fail_on(ret, err, "unabled to get APP PF info for slot %d", slot_id);
+	fail_on(ret, err, "unable to get APP PF info for slot %d", slot_id);
 
 	if (!fpga_slot_spec_is_initialized(&spec_array[slot_id])) {
 		log_error("No device matching specified id: %d", slot_id);
@@ -923,7 +923,7 @@ fpga_pci_rescan_slot_app_pfs(int slot_id)
 	 * If we found a driver attached to the given app_map, increase
 	 * the wait time between remove and rescan.
 	 * Note that if the driver takes a long time to complete the
-	 * PCI remove fuction (e.g. longer than the below wait time),
+	 * PCI remove function (e.g. longer than the below wait time),
 	 * we may still fail to expose the changed PCI IDs in the rescan step.
 	 *
 	 * FPGA_REMOVE_APP_PF_LONG_DELAY_MSEC is being removed as it unnecessarily

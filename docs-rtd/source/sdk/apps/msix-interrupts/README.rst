@@ -1,10 +1,10 @@
 MSI-X Interrupts Implementation Guide
 =====================================
 
-This guide describes how to implement PCIe Message Signaled
-Interrupts Extended (MSI-X) with F2. It demonstrates the implementation of a
-custom interrupt service routine (ISR) and provides working examples of
-both kernel and user space code.
+This guide describes how to implement PCIe Message Signaled Interrupts
+Extended (MSI-X) with F2. It demonstrates the implementation of a custom
+interrupt service routine (ISR) and provides working examples of both
+kernel and user space code.
 
 Table of Contents
 -----------------
@@ -13,8 +13,6 @@ Table of Contents
 - `Implementation Steps <#implementation-steps>`__
 - `Generating Interrupts <#generating-interrupts>`__
 - `Additional Resources <#additional-resources>`__
-
-.. _key-concepts:
 
 Key Concepts
 ------------
@@ -25,8 +23,6 @@ Key Concepts
   parameters
 - ISRs execute in kernel space, where errors can cause system
   instability
-
-.. _implementation-steps:
 
 Implementation Steps
 --------------------
@@ -44,13 +40,13 @@ Enabling Interrupts in PCIe Configuration Space
 MSI-X functionality is enabled using the ``pci_enable_msix_exact``
 function which requires the following:
 
-- Pointer to the device's PCI data structure
+- Pointer to the device’s PCI data structure
 - Table to map kernel vector numbers to device interrupts
 - Number of interrupts that are being allocated in the kernel
 
 This code runs during kernel module insertion when the driver is loaded.
 
-.. code:: bash
+.. code-block:: c
 
    #define NUM_OF_USER_INTS 16
    struct msix_entry f2_ints[] = {
@@ -73,7 +69,7 @@ structure (a pointer to an integer) is registered with the vector. The
 ISR retrieves this structure when it is called. This code also runs
 during kernel module insertion, immediately after enabling MSI-X.
 
-.. code:: bash
+.. code-block:: c
 
    for (int i = 0; i < NUM_OF_USER_INTS; i++) {
      f2_dev_id[i] = kmalloc(sizeof(int), GFP_DMA | GFP_USER);
@@ -89,13 +85,14 @@ The snippet of code shown below runs from user space and programs the
 PCIe block to handle interrupts. This code is executed during
 application runtime, typically when initializing the device for use.
 
-Each MSI-X entry needs its interrupt vector number programmed in the IRQ block.
-By default, all vectors point to index 0. For this example, each user interrupt 
-is programmed to point to a different interrupt vector to illustrate using all 
-16 entries. The vector numbers are aligned on byte boundaries, and four 32-bit 
-addresses (0x80-0x8f) are used to assign interrupt vectors.
+Each MSI-X entry needs its interrupt vector number programmed in the IRQ
+block. By default, all vectors point to index 0. For this example, each
+user interrupt is programmed to point to a different interrupt vector to
+illustrate using all 16 entries. The vector numbers are aligned on byte
+boundaries, and four 32-bit addresses (0x80-0x8f) are used to assign
+interrupt vectors.
 
-.. code:: bash
+.. code-block:: c
 
    rc |= fpga_pci_poke(dma_bar_handle, dma_reg_addr(IRQ_TGT, 0, 0x080), 0x03020100);    
    rc |= fpga_pci_poke(dma_bar_handle, dma_reg_addr(IRQ_TGT, 0, 0x084), 0x07060504);    
@@ -104,14 +101,12 @@ addresses (0x80-0x8f) are used to assign interrupt vectors.
 
 The final step is to enable interrupts by writing the interrupt enable
 mask bits. In the example, all the interrupts are enabled at once with a
-single write of 0xffff to the IRQ Block User Interrupt Enable Mask register (0x004).
+single write of 0xffff to the IRQ Block User Interrupt Enable Mask
+register (0x004).
 
-.. code:: bash
+.. code-block:: c
 
    rc = fpga_pci_poke(dma_bar_handle, dma_reg_addr(IRQ_TGT, 0, 0x004), 0xffff);
-
-
-.. _generating-interrupts:
 
 Generating Interrupts
 ---------------------
@@ -120,14 +115,14 @@ The CL_DRAM_HBM_DMA example design does not generate interrupts
 independently. It instead contains a register which when written will
 produce one or more interrupts. The test program writes this register to
 generate interrupts. When the interrupt is received by the ISR, it will
-read a DDR location in the CL and increment it by one. The test program
-monitors the interrupt status register in the CL and and waits for the 
+read a DDR location in CL and increment it by one. The test program
+monitors the interrupt status register in the CL and and waits for the
 acknowledge bit to be asserted.
 
 Instructions to run example
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code:: bash
+.. code-block:: bash
 
    git clone https://github.com/aws/aws-fpga.git
    cd aws-fpga
@@ -135,7 +130,7 @@ Instructions to run example
 
 Note:
 
-- Replace ``<slot_number>`` with the appropriate FPGA slot number you're
+- Replace ``<slot_number>`` with the appropriate FPGA slot number you’re
   using
 - To find the ``<bus:device.function>`` of your FPGA slot, use
   ``sudo fpga-describe-local-image -S <slot_number>``
@@ -143,21 +138,21 @@ Note:
 Use the ``fpga-load-local-image`` command to load the FPGA with the
 pre-generated CL_DRAM_HBM_DMA AFI
 
-.. code:: bash
+.. code-block:: bash
 
    sudo fpga-load-local-image -S <slot_number> -I agfi-01d87c1ef9313165b
 
 Run the following command with the verbose flag to see if interrupts are
 enabled
 
-.. code:: bash
+.. code-block:: bash
 
    sudo lspci -v -s <bus:device.function>
 
-Notice that the Capabilities Register [60] indicates that MSI-X functionality 
-is currently disabled (shown by the 'Enable-' status)
+Notice that the Capabilities Register [60] indicates that MSI-X
+functionality is currently disabled (shown by the ‘Enable-’ status)
 
-.. code:: bash
+.. code-block:: bash
 
    <bus:device.function> Memory controller: Amazon.com, Inc. Device f001
            Subsystem: Device fedc:1d51
@@ -173,7 +168,7 @@ is currently disabled (shown by the 'Enable-' status)
 Next, navigate to the ``aws-fpga/sdk/apps/msix-interrupts`` directory
 and run the following commands
 
-.. code:: bash
+.. code-block:: bash
 
    make                             # compiles the kernel module
    make test                        # compiles the test program
@@ -181,7 +176,7 @@ and run the following commands
 
 To check to see if the driver loaded, run:
 
-.. code:: bash
+.. code-block:: bash
 
    sudo dmesg
 
@@ -189,10 +184,10 @@ This command will print the message buffer from the kernel. Since the
 device driver is a kernel module, special prints are used to place
 messages in this buffer.
 
-Rerun ``sudo lspci -v -s <bus:device.function>`` and you should see that MSI-X was enabled by the
-driver.
+Rerun ``sudo lspci -v -s <bus:device.function>`` and you should see that
+MSI-X was enabled by the driver.
 
-.. code:: bash
+.. code-block:: bash
 
    <bus:device.function> Memory controller: Amazon.com, Inc. Device f001
            Subsystem: Device fedc:1d51
@@ -207,14 +202,14 @@ driver.
 
 To see the interrupts in use, run the following command
 
-.. code:: bash
+.. code-block:: bash
 
    sudo ./f2_test <slot_number>
 
-Running the example on a 12xlarge instance will show 
-the following on the terminal:
+Running the example on a 12xlarge instance will show the following on
+the terminal:
 
-.. code:: bash
+::
 
    Starting MSI-X Interrupt test 
    Initial DDR value: 0
@@ -252,16 +247,16 @@ Other Useful MakeFile Targets
 - Removes the compiled test program (f2_test)
 - Use this before rebuilding the driver from scratch
 
-.. _additional-resources:
-
 Additional Resources
 --------------------
 
 - `AWS F2 Shell Interface
-  Specification <https://github.com/aws/aws-fpga/tree/f2/hdk/docs/AWS_Shell_Interface_Specification.md>`__
+  Specification <./../../../hdk/docs/AWS-Shell-Interface-Specification.html>`__
 - `The MSI Driver Guide
   HOWTO <https://www.kernel.org/doc/Documentation/PCI/MSI-HOWTO.txt>`__
 - `How To Write Linux PCI
   Drivers <https://www.kernel.org/doc/Documentation/PCI/pci.txt>`__
-- `PCI Express Product Guide 
+- `PCI Express Product Guide
   PG195 <https://docs.amd.com/r/en-US/pg195-pcie-dma>`__
+
+`Back to Home <../../../index.html>`__

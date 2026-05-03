@@ -1,49 +1,34 @@
 # SDE Hardware Guide
 
-# Table of Contents:
+## Table of Contents
 
-* [Overview](#Overview)
+* [Overview](#overview)
 
-* [Feature List](#FeatureList)
+* [Feature List](#feature-list)
 
-* [Architecture](#Architecture)
+* [Architecture](#architecture)
 
-* [Designing with the SDE](#DesignCLwSDE)
+* [Designing with the SDE](#designing-with-the-sde)
+  * [IOs](#ios)
+  * [Design Configuration Parameters](#design-configuration-parameters)
+  * [PF and Address Mapping](#pf-and-address-mapping)
+  * [CSR Description and Address Mapping](#csr-description-and-address-mapping)
+  * [Descriptors and Write-Back Metadata](#descriptors-and-write-back-metadata)
+  * [Credit Mechanism](#credit-mechanism)
+  * [Write-Back Mechanism](#write-back-mechanism)
+  * [Data Flow Model](#data-flow-model)
+  * [Error Conditions](#error-conditions)
+  * [Implementation for Maximum Clock Frequency](#implementation-for-maximum-clock-frequency)
+  * [Implementation for Resource Utilization](#implementation-for-resource-utilization)
+* [Example Design](#example-design)
+* [FAQ](#faq)
 
-   * [IOs](#IOs)
-
-   * [Design Configuration Parameters](#DesignParam)
-
-   * [PF and Address Range](#PF_AddressRange)
-
-   * [CSR Description and Address Mapping](#CSRRange)
-
-   * [Descriptors and Write-Back Metadata](#Descriptors)
-
-   * [Credit Mechanism](#Credit)
-
-   * [Write-Back Mechanism](#WBM)
-
-   * [Data Flow Model](#DataFlow)
-
-   * [Error Conditions](#Error)
-
-   * [Implementation - Maximum Clock Frequency](#MaxClockFreq)
-
-   * [Implementation - Resource Utilization](#ResourceUtil)
-
-* [Example Design](#ExampleDesign)
-
-* [FAQ](#FAQ)
-
-
-<a name="Overview"></a>
 # Overview
 
 The Streaming Data Engine (SDE) provides high-performance packet streaming connectivity between the Custom Logic (CL) and the host application. The SDE provides a streaming interface to the CL and uses the shell's PCIM AXI4 interface to move packets between the CL and the host application. The SDE is a parameterizable, soft IP block that is intended to be instantiated within the CL. Each instance of the SDE provides two AXI streaming compliant interfaces viz. one Card-to-Host (C2H) and one Host-to-Card (H2C) channel.
 
-<a name="FeatureList"></a>
 # Feature List
+
 1. High Performance PPS for C2H and H2C.
 2. 12GB/s Bandwidth per channel for C2H and H2C (4KB packet at 250MHz).
 3. AXI Stream compliant on the CL facing side.
@@ -56,14 +41,13 @@ The Streaming Data Engine (SDE) provides high-performance packet streaming conne
 10. Write-back for credits and metadata.
 11. Multiple write-back metadata types (Normal and compact)
 12. One instance of the streaming data engine can be configured at compile-time to provide the following channel combinations
-* One full-duplex streaming channel (one C2H and one H2C).
-* One Streaming C2H Channel only (No H2C Channel)
-* One Streaming H2C Channel only (No C2H Channel)
+    * One full-duplex streaming channel (one C2H and one H2C).
+    * One Streaming C2H Channel only (No H2C Channel)
+    * One Streaming H2C Channel only (No C2H Channel)
 
-<a name="Architecture"></a>
 # Architecture
 
-![alt tag](../images/SDE_Block_Diagram.jpg)
+![SDE Block Diagram](./../../../../docs-rtd/source/_static/sdk/apps/virtual-ethernet/SDE_Block_Diagram.jpg)
 
 The SDE uses shell's PCIM AXI4 interface to move packets between the AXI Streaming interface and the host. It implements a store and forward mechanism. For C2H, the packets received from the AXI Streaming interface is stored in the C2H packet buffer and are then transmitted on the PCIM AXI4 interface. For H2C, the packets received from the PCIM AXI4 interface are stored in the H2C packet buffer and are then transmitted on the AXI Streaming interface.
 
@@ -71,20 +55,20 @@ SDE uses descriptors to perform the data movement and the bit-fields of the desc
 
 In order to minimize latency and reduce the complexity of the software/driver, all the information that is polled by the driver/software (for example, descriptor credits, write-back ring write pointer, etc...) is stored in a contiguous host memory range. The SDE is architected to update these variables together by writing to the physical memory location using the PCIM interface.
 
-<a name="DesignCLwSDE"></a>
 # Designing with the SDE
 
-<a name="IOs"></a>
 ## IOs
+
 * PCIM AXI4 Master Interface: SDE uses this interface to write data to the host.
 * PCIS AXI4 Slave Interface: Software uses this interface to write descriptors and configuration data to the SDE.
 * H2C AXI Stream Master Interface: SDE uses this interface to transmit H2C packets to the CL.
 * C2H AXI Stream Slave Interface: SDE uses this interface to receive C2H packets from the CL.
 * Clocks and Reset: SDE uses a single clock and a single synchronous active-low reset.
 
-<a name="DesignParam"></a>
-## Design Configuration parameters
+## Design Configuration Parameters
+
 The SDE can be parameterized when the SDE is instanced in the CL. These configuration parameters are static parameters and are expected to be set when the SDE is instanced in the CL. Some important parameters are summarized below.
+
 * C2H_ONLY: Disable SDE H2C logic (Can be set to 1 if only the C2H channel is required).
 * H2C_ONLY: Disable SDE C2H logic (Can be set to 1 if only the H2C channel is required).
 * C2H_DESC_TYPE & H2C_DESC_TYPE: Descriptor Type (0 - Regular, 1 - Compact) for C2H and H2C respectively.
@@ -127,9 +111,8 @@ Full List of Parameters are listed in table below. **Supported values for each p
 | H2C_PCIM_MAX_RD_SIZE | 3           | Default only | H2C Maximum AXI Read request size (0 – 512B, 1 – 1KB, 2 – 2KB, 3 – 4KB). This should be 0 when using the AWS shell in order to maximize H2C performance.                                             |
 | C2H_PCIM_MAX_WR_SIZE | 3           | Default only | C2H Maximum AXI Write request size (0 – 512B, 1 – 1KB, 2 – 2KB, 3 – 4KB). This should be 3 when using the AWS shell in order to maximize C2H performance.                                            |
 
-
-<a name="PF_AddressRange"></a>
 ### PF and Address Mapping
+
 SDE implements a 16KB address space on the PCIS interface and therefore can be accessed using the PF0-BAR4. SDE uses the lower 16 bits of the address bus of the PCIS interface.  The SDE address window should be 16KB aligned. The following table describes address mapping within SDE.
 
 | **Address Range** | **Size (Bytes)** | **Name**                | **Access Type**            | **Description**                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -139,9 +122,7 @@ SDE implements a 16KB address space on the PCIS interface and therefore can be a
 | 0x2000 – 0x2FFC   | 4K               | RSVD | Do not use | Reserved for future use                                                                                      |
 | 0x3000 – 0x3FFC   | 4K               | CSRs                    | Read-Write (DW accesses)   | Software should use this address range when accessing CSRs. Software should use only 4 byte aligned address of the registers to access CSRs implemented in this range. Only 1 DW read or 1 DW write accesses are allowed in this range.                                                                                                                                                                                   |
 
-<a name="CSRRange"></a>
 ### CSR Description and Address Mapping
------------------
 
 The CSR address space starts at the CSR base address and is organized as shown
 below
@@ -153,11 +134,9 @@ below
 | 0x3400 – 0x39FC   | 1536             | C2H CSRs  | C2H Config and Status Registers          |
 | 0x3A00 – 0x3FFC   | 1536             | H2C CSRs  | H2C Config and Status Registers          |
 
-PCIS CSRs
----------
+#### PCIS CSRs
 
 1. **Software Reset Register**
-
 
     Address – PCIS_BASE_ADDR + 0x3000
 
@@ -170,9 +149,7 @@ PCIS CSRs
 | SW_RST         | 0             | RW       | 0x0               | Software Reset. When Set, reset is asserted to all the functional blocks of the SDE except the PCIS Slave Block. |
 | RSVD           | 31:1          | RO       | 0x0               | Reserved                                                                                                         |
 
-
 2. **SDE Info Register**
-
 
     Address – PCIS_BASE_ADDR + 0x3004
 
@@ -187,17 +164,13 @@ PCIS CSRs
 | H2C_PRESENT    | 16            | RO       | 0x0               | 1 = H2C Instanced 0 = H2C Not Instanced |
 | RSVD           | 31:17         | RO       | 0x0               | Reserved                                |
 
-
-PCIM CSRs
----------
+#### PCIM CSRs
 
 RSVD for future Use
 
+#### C2H CSRs
 
-C2H CSRs
---------
-
- **C2H CSR Address Mapping**
+**C2H CSR Address Mapping**
 
 | **Address Range** | **Size (Bytes)** | **Name**            | **Description**                            |
 |-------------------|------------------|---------------------|--------------------------------------------|
@@ -209,17 +182,13 @@ C2H CSRs
 | 0x3900 – 0x39FC   | 256              | C2H AXIS CSRs       | C2H AXI-Stream Config and Status Registers |
 
 
-C2H Global CSRs
-------------------
+#### C2H Global CSRs
 
 RSVD for future use.
 
-
-C2H Descriptor CSRs
--------------------
+#### C2H Descriptor CSRs
 
 1. **Descriptor Credit Consumed Counter**
-
 
     Address – PCIS_BASE_ADDR + 0x3500
 
@@ -234,7 +203,6 @@ C2H Descriptor CSRs
 
 2. **Descriptor Credit Limit Counter**
 
-
     Address – PCIS_BASE_ADDR + 0x3504
 
     CSR Offset – CSR_BASE_ADDR + 0x504
@@ -248,7 +216,6 @@ C2H Descriptor CSRs
 
 3. **Completed Descriptors Counter**
 
-
     Address – PCIS_BASE_ADDR + 0x3508
 
     CSR Offset – CSR_BASE_ADDR + 0x508
@@ -258,7 +225,6 @@ C2H Descriptor CSRs
 | **Field Name** | **Bit Range** | **Type** | **Default Value** | **Description**                                 |
 |----------------|---------------|----------|-------------------|-------------------------------------------------|
 | COMP_COUNT     | 31:0          | RW0C     | 0x0               | Completed Descriptor Counter. Write 0 to clear. |
-
 
 4. **Descriptor FIFO Pointers**
 
@@ -275,7 +241,6 @@ C2H Descriptor CSRs
 | FIFO_RD_PTR     | 30:16         | RO       | 0x0               | Descriptor FIFO Read Pointer      |
 | FIFO_RD_PTR_MSB | 31            | RO       | 0x0               | Descriptor FIFO Read Pointer MSB  |
 
-
 5. **Descriptor RAM Address**
 
     Address – PCIS_BASE_ADDR + 0x3510
@@ -290,7 +255,6 @@ C2H Descriptor CSRs
 | DESC_RAM_DW_IDX | 19:16         | RWC      | 0x0               | Descriptor RAM Data DW Index. This bitfield is cleared when this register is written. This will auto-increment when DESC_RAM_DATA is read or written. |
 | RSVD            | 31:20         | RO       | 0x0               | Reserved                                                                                                                                              |
 
-
 6. **Descriptor RAM Data**
 
     Address – PCIS_BASE_ADDR + 0x3514
@@ -302,7 +266,6 @@ C2H Descriptor CSRs
 | **Field Name**   | **Bit Range** | **Type** | **Default Value** | **Description**                                                                                                                                                                                                                                                                                                           |
 |------------------|---------------|----------|-------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | DESC_RAM_DATA_DW | 31:0          | RW       | 0x0               | Descriptor RAM Data. When writing the descriptor RAM, SDE initiates a write to the descriptor RAM after all the DWs that make up the descriptor are written to this register. When reading the descriptor RAM, SDE initiates a read from the descriptor RAM when this register is read and when the DESC_RAM_DW_IDX is 0. |
-
 
 7. **Descriptor RAM Status**
 
@@ -321,7 +284,6 @@ C2H Descriptor CSRs
 | DESC_EMPTY        | 4             | RO       | 0x0               | Desc RAM Empty                                                                            |
 | RSVD              | 31:5          | RO       | 0x0               | Reserved                                                                                  |
 
-
 8. **Descriptor Info**
 
     Address – PCIS_BASE_ADDR + 0x3520
@@ -336,9 +298,7 @@ C2H Descriptor CSRs
 | RSVD           | 15:1          | RO       | 0x0               | RSVD                                                 |
 | DESC_RAM_DEPTH | 31:16         | RO       | 0x0               | Descriptor RAM Depth. Maximum Number of descriptors. |
 
-
-C2H Data Mover CSRs
--------------------
+#### C2H Data Mover CSRs
 
 1. **Data Mover Config Register 0**
 
@@ -366,8 +326,7 @@ C2H Data Mover CSRs
 | DM_DESC_LEN_ERR | 1             | RW1C     | 0x0               | Descriptor Length equal to 0 |
 | RSVD            | 31:2          | RO       | 0x0               | Reserved                     |
 
-C2H Write-Back CSRs
--------------------
+#### C2H Write-Back CSRs
 
 1. **Write-Back Config Register 0**
 
@@ -521,8 +480,7 @@ C2H Write-Back CSRs
 | WB_ERROR       | 2             | RO       | 0x0               | Write Back Error |
 | RSVD           | 31:3          | RO       | 0x0               | Reserved         |
 
-C2H Buffer CSRs
--------------------
+#### C2H Buffer CSRs
 
 1. **Buffer Config Register 0**
 
@@ -617,8 +575,7 @@ C2H Buffer CSRs
 | NUM_BYTES      | 15:0          | RO       | 0x0               | Number of Bytes in Buffer When Aux FIFO is valid, this is the number of bytes until end of current packet When Aux FIFO is not valid, this is the number of bytes in the buffer |
 | RSVD           | 31:16         | RO       | 0x0               | Reserved                                                                                                                                                                        |
 
-C2H AXI-Stream CSRs
--------------------
+#### C2H AXI-Stream CSRs
 
 1. **Packet Count**
 
@@ -632,11 +589,9 @@ C2H AXI-Stream CSRs
 |----------------|---------------|----------|-------------------|--------------------------------------------------------------------------------------------------------------|
 | PKT_CNT        | 31:0          | RW0C     | 0x0               | Number of packets transmitted on the AXIS interface. Increments after transmitting an EOP. Write 0 to clear. |
 
-H2C CSRs
---------
+#### H2C CSRs
 
-H2C CSR Address Mapping
--------------------
+#### H2C CSR Address Mapping
 
 | **Range**       | **Size (Bytes)** | **Name**            | **Description**                            |
 |-----------------|------------------|---------------------|--------------------------------------------|
@@ -647,13 +602,11 @@ H2C CSR Address Mapping
 | 0x3E00 – 0x3EFC | 256              | H2C Buffer CSRs     | H2C Buffer Config and Status Registers     |
 | 0x3F00 – 0x3FFC | 256              | H2C AXIS CSRs       | H2C AXI-Stream Config and Status Registers |
 
-H2C Global CSRs
--------------------
+#### H2C Global CSRs
 
 RSVD for future use
 
-H2C Descriptor CSRs
--------------------
+#### H2C Descriptor CSRs
 
 1. **Descriptor Credit Consumed Counter**
 
@@ -764,9 +717,7 @@ H2C Descriptor CSRs
 | RSVD           | 15:1          | RO       | 0x0               | RSVD                                                 |
 | DESC_RAM_DEPTH | 31:16         | RO       | 0x0               | Descriptor RAM Depth. Maximum Number of descriptors. |
 
-
-H2C Data Mover CSRs
--------------------
+#### H2C Data Mover CSRs
 
 1. **Data Mover Config Register 0**
 
@@ -795,8 +746,7 @@ H2C Data Mover CSRs
 | RSVD            | 31:2          | RO       | 0x0               | Reserved                     |
 
 
-H2C Write-Back CSRs
--------------------
+#### H2C Write-Back CSRs
 
 1. **Write-Back Config Register 0**
 
@@ -886,9 +836,7 @@ H2C Write-Back CSRs
 | WB_ERROR       | 2             | RO       | 0x0               | Write Back Error |
 | RSVD           | 31:3          | RO       | 0x0               | Reserved         |
 
-
-H2C Buffer CSRs
--------------------
+#### H2C Buffer CSRs
 
 1.  **Buffer Config Register 0**
 
@@ -998,9 +946,7 @@ H2C Buffer CSRs
 | DM_AUX_WR_PTR     | 30:16         | RO       | 0x0               | Data Mover Aux RAM Read Pointer     |
 | DM_AUX_WR_PTR_MSB | 31            | RO       | 0x0               | Data Mover Aux RAM Read Pointer MSB |
 
-
-H2C AXI-Stream CSRs
--------------------
+#### H2C AXI-Stream CSRs
 
 1. **Packet Count**
 
@@ -1014,10 +960,8 @@ H2C AXI-Stream CSRs
 |----------------|---------------|----------|-------------------|--------------------------------------------------------------------------------------------------------|
 | PKT_CNT        | 31:0          | RW0C     | 0x0               | Number of packets received on the AXIS interface. Increments after receiving an EOP. Write 0 to clear. |
 
-
-
-<a name="Descriptors"></a>
 ### Descriptors and Write-Back Metadata
+
 Descriptors are used to provide all required information for the data transfer. The software/driver is
 expected to provide this information to the SDE. SDE supports two types of descriptors – Normal and
 compact type. The choice of the descriptor type is static and has to be chosen during the design of the
@@ -1093,41 +1037,38 @@ Description of Fields
 
 Descriptions of Fields
 
-1.  Physical Address: Source physical address for the data. This is the host
+1. Physical Address: Source physical address for the data. This is the host
     guest physical address used by the SDE to read the packet. For compact
     descriptor type, this address is 48 bits wide. This field is not used when
     SPB = 1.
 
-2.  Length: Number of bytes for the data transfer. The minimum length is 1 byte.
+2. Length: Number of bytes for the data transfer. The minimum length is 1 byte.
 
-3.  EOP: If bit is set, the SDE will assert the “last” signal on the last beat
+3. EOP: If bit is set, the SDE will assert the “last” signal on the last beat
     of the transfer on the AXI Streaming interface.
 
-4.  SPB: This bit indicates if the source of the packet is Small Packet Buffer
+4. SPB: This bit indicates if the source of the packet is Small Packet Buffer
     or PCIM. If this bit is set, the SDE data mover will read the packets from
     SPB instead of the PCIM.
 
-5.  User Bits: These bits are driven on the user bus of the AXI Streaming
+5. User Bits: These bits are driven on the user bus of the AXI Streaming
     Interface when the EOP is asserted.
 
-6.  RSVD: These bits are used to adjust the total length of the descriptor to
+6. RSVD: These bits are used to adjust the total length of the descriptor to
     256 bits and unused in the SDE. SDE does not store these bits in the
     descriptor RAM.
 
-
-<a name="Credit"></a>
 ## Credit Mechanism
 
 SDE architecture implements a credit mechanism for descriptors and for small packet buffer. In this section, the description is provided for descriptors but the mechanism is identical for descriptors and small packet buffer.
 The credit mechanism contains two counters “consumed” and “limit”. The difference between these two counters is the number of available credits based on which the software can write the descriptors. These counters are implemented as 32 bit rolling counters. These counters are present in both the SDE and the software. However, the SDE updates the software’s copy of the “limit” counter after the SDE reads a descriptor from the descriptor RAM.
 
-1)	“consumed”: This counter is implemented in the SDE and the software. This counter is initialized to 0. When the software writes the descriptor, software will increment its copy of this counter. When the SDE receives this descriptor into the descriptor RAM, the SDE will increment its copy of this counter.
+1) “consumed”: This counter is implemented in the SDE and the software. This counter is initialized to 0. When the software writes the descriptor, software will increment its copy of this counter. When the SDE receives this descriptor into the descriptor RAM, the SDE will increment its copy of this counter.
 
-2)	“limit”: This counter is implemented in the SDE. The counter is also present in the software but the software will not change the value. software will only use this counter to determine number of available credits. This counter is initialized to the number of available credits. When the SDE completes a descriptor, it will increment its copy of this counter. It will also update the software’s copy of this counter using the PCIM interface.
+2) “limit”: This counter is implemented in the SDE. The counter is also present in the software but the software will not change the value. software will only use this counter to determine number of available credits. This counter is initialized to the number of available credits. When the SDE completes a descriptor, it will increment its copy of this counter. It will also update the software’s copy of this counter using the PCIM interface.
 
-3)	“available”: This is difference between the “consumed” and the “limit” counters. The software will compute this locally and will use this value to determine how many descriptors can be written.
+3) “available”: This is difference between the “consumed” and the “limit” counters. The software will compute this locally and will use this value to determine how many descriptors can be written.
 
-<a name="WBM"></a>
 ## Write-Back Mechanism
 
 ### Status Counter Write-Back
@@ -1155,187 +1096,199 @@ d.	Bit 31:3 – RSVD
 
  The software should configure the circular buffer’s base address and circular buffer size during initialization. The software should also clear SDE’s copy of the read pointer and write pointer during initialization.
 
-  1)	Read pointer: software increments the read pointer when it reads the write-back metadata and software periodically updates SDE’s copy of the read pointer using CSR memory writes. The SDE uses its copy to determine if there is room in the circular buffer before writing metadata. In order to provide as much bandwidth to descriptor writes, software should keep the frequency of updating the SDE’s copy low.
+  1) Read pointer: software increments the read pointer when it reads the write-back metadata and software periodically updates SDE’s copy of the read pointer using CSR memory writes. The SDE uses its copy to determine if there is room in the circular buffer before writing metadata. In order to provide as much bandwidth to descriptor writes, software should keep the frequency of updating the SDE’s copy low.
 
   When posting descriptors, the software can optionally ensure that there is room in the metadata ring. If no free entries are available in the metadata ring, the SDE will keep waiting until software updates the read-pointer. This will eventually backpressure the data mover.
 The software should consider that the metadata ring is full when the value of write pointer plus 1 is equal to the read pointer.
 
-  2)	Write pointer: SDE uses the write-pointer, metadata ring base address and ring size to determine the address to where the metadata has to be written. SDE increments the write pointer after the SDE writes the metadata to host location and SDE updates software’s copy of the write pointer by writing to host memory. The software can use the write pointer value to determine how many valid metadata entries are present in the circular buffer.
+  2) Write pointer: SDE uses the write-pointer, metadata ring base address and ring size to determine the address to where the metadata has to be written. SDE increments the write pointer after the SDE writes the metadata to host location and SDE updates software’s copy of the write pointer by writing to host memory. The software can use the write pointer value to determine how many valid metadata entries are present in the circular buffer.
 
-<a name="DataFlow"></a>
 ## Data Flow Model
 
 ###	C2H
 
-1)	APP: Application requests the software to move packets from the CL by calling software provided APIs.
+1) APP: Application requests the software to move packets from the CL by calling software provided APIs.
 
-2)	CL: The CL streams data into the SDE’s buffer.
+2) CL: The CL streams data into the SDE’s buffer.
 
-3)	Software: When enough descriptor credits and metadata entries are available, software will write the descriptor (physical address of packet buffer and length) to the SDE’s desc RAM using PF0-BAR4 and write-combine.
+3) Software: When enough descriptor credits and metadata entries are available, software will write the descriptor (physical address of packet buffer and length) to the SDE’s desc RAM using PF0-BAR4 and write-combine.
 
-4)	SDE: When the software writes the descriptors, the SDE will increment the “consumed”. SDE’s data mover will read the descriptor from the desc RAM. When the SDE’s data mover reads the descriptor, SDE increments the descriptor credit “limit” counter and also schedules an update to the software’s copy of this counter using PCIM.
+4) SDE: When the software writes the descriptors, the SDE will increment the “consumed”. SDE’s data mover will read the descriptor from the desc RAM. When the SDE’s data mover reads the descriptor, SDE increments the descriptor credit “limit” counter and also schedules an update to the software’s copy of this counter using PCIM.
 
-5)	Software: Software will read the “limit” and compute number of available credits to figure out if more descriptors can be written.
+5) Software: Software will read the “limit” and compute number of available credits to figure out if more descriptors can be written.
 
-6)	SDE: If there is enough data (as requested in the desc) or if there is an EOP, SDE Data Mover initiates data transfer by issuing writes to host on PCIM. If there is not enough data and if an EOP is not received, data mover will wait.
+6) SDE: If there is enough data (as requested in the desc) or if there is an EOP, SDE Data Mover initiates data transfer by issuing writes to host on PCIM. If there is not enough data and if an EOP is not received, data mover will wait.
 
-7)	SDE: After the data mover completes the data transfer and if metadata ring is not full, SDE writes the metadata (valid bit, byte count, EOP and any user bits) to the metadata ring using PCIM. SDE increments its copy of the metadata ring write-pointer and will also schedule an update to software’s copy of the metadata ring write-pointer.
+7) SDE: After the data mover completes the data transfer and if metadata ring is not full, SDE writes the metadata (valid bit, byte count, EOP and any user bits) to the metadata ring using PCIM. SDE increments its copy of the metadata ring write-pointer and will also schedule an update to software’s copy of the metadata ring write-pointer.
 
-8)	SDE: The SDE increments the “number of completed descriptors” counter and metadata write pointer. The SDE also schedules an update to software’s copy of these counters.
+8) SDE: The SDE increments the “number of completed descriptors” counter and metadata write pointer. The SDE also schedules an update to software’s copy of these counters.
 
-9)	Software: Software will poll the valid bit of the metadata to figure out that the data transfer is complete.
+9) Software: Software will poll the valid bit of the metadata to figure out that the data transfer is complete.
 
-10)	Software: After reading the metadata, software clears the valid bit of the metadata that was read. Software will increment read pointer and when required, will update SDE’s copy of the metadata ring read pointer. Note if software ensures that metadata entries are available before posting the descriptor, metadata pointers can be disabled and the software is not required to update SDE’s copy of the read pointer.
-
+10) Software: After reading the metadata, software clears the valid bit of the metadata that was read. Software will increment read pointer and when required, will update SDE’s copy of the metadata ring read pointer. Note if software ensures that metadata entries are available before posting the descriptor, metadata pointers can be disabled and the software is not required to update SDE’s copy of the read pointer.
 
 ###	H2C
 
-1)	APP: Application requests the software to move packets to the CL using software provided APIs.
+1) APP: Application requests the software to move packets to the CL using software provided APIs.
 
-2)	Software: When enough descriptor credits are available, software will write the descriptor (physical address of packet buffer, length, EOP and SPB bits) to the SDE’s desc RAM using PF0-BAR4 and write-combine.
+2) Software: When enough descriptor credits are available, software will write the descriptor (physical address of packet buffer, length, EOP and SPB bits) to the SDE’s desc RAM using PF0-BAR4 and write-combine.
 
-3)	SDE: When the software writes the descriptors, the SDE will increment the “consumed”. SDE’s data mover will read the descriptor from the desc RAM. When the SDE’s data mover reads the descriptor, SDE increments the descriptor credit “limit” counter and also schedules an update to the software’s copy of this counter using PCIM.
+3) SDE: When the software writes the descriptors, the SDE will increment the “consumed”. SDE’s data mover will read the descriptor from the desc RAM. When the SDE’s data mover reads the descriptor, SDE increments the descriptor credit “limit” counter and also schedules an update to the software’s copy of this counter using PCIM.
 
-4)	Software: Software will read the “limit” and compute number of available credits to figure out if more descriptors can be written.
+4) Software: Software will read the “limit” and compute number of available credits to figure out if more descriptors can be written.
 
-5)	SDE: If there is enough room in the SDE buffer (as requested by the descriptor), SDE Data Mover initiates data transfer by issuing reads from host DRAM on PCIM. When the descriptor specifies the source of the packet as the small-pkt buffer, the data mover will read from small-pkt buffer instead of using PCIM. If there is not enough room in the buffer, data mover will wait.
+5) SDE: If there is enough room in the SDE buffer (as requested by the descriptor), SDE Data Mover initiates data transfer by issuing reads from host DRAM on PCIM. When the descriptor specifies the source of the packet as the small-pkt buffer, the data mover will read from small-pkt buffer instead of using PCIM. If there is not enough room in the buffer, data mover will wait.
 
-6)	SDE: Data mover writes the received PCIM read data to the buffer to be streamed to the CL (for non-small packet buffer case).
+6) SDE: Data mover writes the received PCIM read data to the buffer to be streamed to the CL (for non-small packet buffer case).
 
-7)	SDE: SDE implements a master streaming interface that reads data from the buffer and streams it to the CL.
+7) SDE: SDE implements a master streaming interface that reads data from the buffer and streams it to the CL.
 
-8)	SDE: After the data mover completes the data transfer, SDE increments the “number of completed descriptors” counter and also schedules an update to the software’s copy of this counter using PCIM.
+8) SDE: After the data mover completes the data transfer, SDE increments the “number of completed descriptors” counter and also schedules an update to the software’s copy of this counter using PCIM.
 
-9)	Software: Software will poll its copy of “number of completed descriptors” to figure out that data transfer is complete.
+9) Software: Software will poll its copy of “number of completed descriptors” to figure out that data transfer is complete.
 
-10)	Software: Software can also poll its copy of “packet count” to figure out that a packet has been transmitted on the AXI-Stream interface.
+10) Software: Software can also poll its copy of “packet count” to figure out that a packet has been transmitted on the AXI-Stream interface.
 
-
-<a name="Error"></a>
 ## Error Conditions
 
 ### C2H Error Conditions
 
-1.  Descriptor RAM Overflow: Occurs when the descriptor RAM is full and SW
+1. Descriptor RAM Overflow: Occurs when the descriptor RAM is full and SW
     writes a new descriptor
 
-2.  Descriptor Out of Order Error: If a descriptor write is split into multiple
+2. Descriptor Out of Order Error: If a descriptor write is split into multiple
     writes, each write should use incrementing address. If this condition is
     violated, the out of order error is set.
 
-3.  Descriptor Unaligned Error: Occurs when a non-64B aligned address is used
+3. Descriptor Unaligned Error: Occurs when a non-64B aligned address is used
     for writing descriptors.
 
-4.  Data Mover BRESP Error: Occurs when a non-zero BRESP is received on the PCIM
+4. Data Mover BRESP Error: Occurs when a non-zero BRESP is received on the PCIM
     interface for data writes
 
-5.  Data Mover Descriptor Length Error: Occurs when data mover encounters a
+5. Data Mover Descriptor Length Error: Occurs when data mover encounters a
     descriptor with length equal to 0.
 
-6.  Write Back BRESP Error: Occurs when a non-zero BRESP is received on the PCIM
+6. Write Back BRESP Error: Occurs when a non-zero BRESP is received on the PCIM
     interface for write-back writes.
 
 ### H2C Error Conditions
 
-1.  Descriptor RAM Overflow: Occurs when the descriptor RAM is full and SW
+1. Descriptor RAM Overflow: Occurs when the descriptor RAM is full and SW
     writes a new descriptor
 
-2.  Descriptor Out of Order Error: If a descriptor write is split into multiple
+2. Descriptor Out of Order Error: If a descriptor write is split into multiple
     writes, each write should use incrementing address. If this condition is
     violated, the out of order error is set.
 
-3.  Descriptor Unaligned Error: Occurs when a non-64B aligned address is used
+3. Descriptor Unaligned Error: Occurs when a non-64B aligned address is used
     for writing descriptors.
 
-4.  Data Mover RRESP Error: Occurs when a non-zero RRESP is received on the PCIM
+4. Data Mover RRESP Error: Occurs when a non-zero RRESP is received on the PCIM
     interface for data reads
 
-5.  Data Mover Descriptor Length Error: Occurs when data mover encounters a
+5. Data Mover Descriptor Length Error: Occurs when data mover encounters a
     descriptor with length equal to 0.
 
-6.  Write Back BRESP Error: Occurs when a non-zero BRESP is received on the PCIM
+6. Write Back BRESP Error: Occurs when a non-zero BRESP is received on the PCIM
     interface for write-back writes.
 
-<a name="MaxClockFreq"></a>
-### Implementation - Maximum Clock Frequency
+### Implementation for Maximum Clock Frequency
+
 The SDE can be implemented at a maximum frequency of 250MHz
 
-<a name="ResourceUtil"></a>
-### Implementation - Resource Utilization
+### Implementation for Resource Utilization
+
 The resource utilization for the SDE implemented at 250MHz when using 64 descriptor RAM depth and 32KB buffers for C2H and H2C each.
 
 | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs  | RAMB2016 | URAM | DSP48 Blocks|
 |------------|------------|---------|------|-------|----------|------|-------------|
 | 36330      | 35672      | 658     | 0    | 23525 | 15       | 0    | 0           |
 
-
-<a name="ExampleDesign"></a>
-
 ## Example Design
-AWS provides an example CL called CL_SDE. CL_SDE instances the SDE and some utility and test blocks to demonstrate the functionality of the SDE. See [CL_SDE](../../../../hdk/cl/examples/cl_sde/) for details.
 
-<a name="FAQ"></a>
+AWS provides an example CL called CL_SDE. CL_SDE instances the SDE and some utility and test blocks to demonstrate the functionality of the SDE. See [CL_SDE](../../../../hdk/cl/examples/cl_sde/) for details.
 
 ## FAQ
 
 ### Q: What is the maximum number of full duplex channels per instance of SDE?
+
 One instance of SDE will provide one full duplex channel (one C2H and one H2C).
 
 ### Q: My application does not need C2H. I only need H2C. How can this be done?
+
 Design parameters C2H_ONLY and H2C_ONLY can be used to get what is required and avoid unwanted logic. For example, if only C2H is required, C2H_ONLY should be 1 so that H2C logic is avoided.
 
 ### Q. My application needs more than one full duplex channel. How can this be achieved?
+
 With the current version of the SDE, if more than 1 full duplex channel is needed, multiple SDEs have to be instanced and AXI crossbars have to be used to connect the PCIS and PCIM buses to/from the corresponding SDEs. Similarly, if more than 1 C2H or more than 1 H2C channel is required, multiple SDEs have to be used.
 
 ### Q. Is there a maximum number of SDEs that can be instanced in a CL?
+
 There is no theoretical maximum. There is a practical limitation based on the number of resources in the CL.
 
 ### Q. What kind of software/Driver is required to use the SDE.
+
 A userspace or kernel poll-mode driver is required to use the SDE.
 
 ### Q. Does AWS have any example Driver/Application?
+
 AWS provides DPDK based Virtual Ethernet application described [here](./Virtual_Ethernet_Application_Guide.md).
 
 ### Q. Does SDE supports interrupts?
+
 Interrupts are not supported by the SDE.
 
 ### Q. My application needs more descriptors in the SDE? How can I achieve this?
+
 Parameters C2H_DESC_RAM_DEPTH and H2C_DESC_RAM_DEPTH can be used to increase the number of descriptors that can be stored in the SDE. Note that this will increase BRAM usage in the SDE.
 
 ### Q. How can I change the size of the H2C and C2H buffers?
+
 Parameters C2H_BUF_DEPTH and H2C_BUF_DEPTH can be used to change the size of the main packet buffers for C2H and H2C respectively.
 
 ### Q. What is the guideline for choosing buffer sizes?
+
 The H2C buffer should be sized according to the bandwidth requirements. Having a very small H2C buffer will cause the SDE to reduce the effective number of outstanding PCIM reads leading to host DRAM latencies getting manifested on the H2C AXI-S interface, leading to reduced H2C bandwidth. AWS has observed that 32KB buffer is sufficient to maximize H2C throughput assuming average DRAM latency of 2us and PCI-E BW of 16GB/s.
 The C2H buffer should be sized according to CL resource availability and latency requirements. Assuming 4KB PCIM writes, AWS recommends at least a size of 16KB C2H buffer to maximize C2H BW.
 
 ### Q. My application needs more than / less than 64 user bits. How can this be achieved?
+
 In the current version of the SDE, User bit width cannot be changed. Therefore, parameters C2H_USER_BIT_WIDTH and H2C_USER_BIT_WIDTH should not be changed. If more user bits are required, they will have to be embedded in the payload of the packet (For example, preamble or appended at the end of the packet).
 
 ### Q. Can I use write-combine to write multiple descriptors per clock?
+
 Traditional Write-combine, explained [here](https://github.com/awslabs/aws-fpga-app-notes/tree/master/Using-PCIe-Write-Combining), routinely causes the CPU to generate out of order writes to the descriptor address range. SDE does not support out of order writes to the descriptor range. Therefore, x86 intrinsic load/store instructions should be used to write descriptors in order.
 
 ### Q. What is the maximum throughput of the SDE?
+
 The maximum throughput for H2C is 12 GB/s and the maximum throughput for C2h is 12.4 GB/s.
 
 ### Q. What is the minimum packet size required for maximum throughput?
+
 4KB is the minimum packet size required for maximum throughput.
 
 ### Q. My application uses PCIS and PCIM interfaces for other purposes in the CL. Can I still use the SDE?
+
 Yes, the SDE can still be used. However, appropriate AXI Crossbars/Fabric needs to be used in the CL in order to provide connectivity for PCIS and PCIM buses to the SDE. Additionally, address and ARID/AWIDs should be appropriately configured/parameterized in the software and the SDE respectively.
 
 ### Q. My accelerator/CL cannot transmit/receive data at 512bits per clock. Can SDE transmit/receive less than 512 bits per clock on the H2C/C2H Streaming Interfaces?
+
 The current version of the SDE can only transmit/receive data at 512 bits per clock. The CL developer can use Xilinx AXI-S width converters to achieve width conversion from any bit width to 512 bits.
 
 ### Q. What is the guideline for choosing between Regular and Compact Descriptor/Metadata types?
+
 Regular Descriptor/Metadata will provide 64 bits for host address and also provide 64 bits for User bits. Compact Descriptor/Metadata will provide only 48 bits for host address and does not provide any user bits. Using the compact type will save PCIS bandwidth for descriptor writes, save PCIM bandwidth for Metadata writes and save BRAM space in the SDE.
 Therefore, the compact type should be chosen when user bits are not required and also to maximize bandwidth usage for packet data and to save BRAM utilization in the CL.
 
 ### Q. How many clocks and resets does the SDE use?
+
 The SDE uses only one clock. The SDE uses only one reset that is synchronized to the aforementioned clock.
 
 ### Q. Can the SDE be implemented at a clock frequency greater than 250MHz?
+
 AWS only supports SDE implemented at a maximum of 250MHz.
 
 ### Q. Should the SDE be constrained to a single SLR?
+
 AWS recommends that the all the logic in the SDE be constrained to a single SLR. Additionally, AWS recommends adding pipelining on the PCIM and PCIS interfaces from the shell leading up to the SDE.

@@ -24,10 +24,10 @@ The Virtual JTAG solution consists of three main elements:
 
 ## Install XVC Driver on F2 Instances
 
-To begin debugging a CL design, the developer must first install the XVC driver (skip this step if the driver is pre-installed). This section provides a guide for installing the XVC driver on F2 instances using the AWS FPGA developer AMI. For detailed compilation and installation information, refer to the [AMD prodct guide](https://docs.amd.com/r/en-US/pg195-pcie-dma/Compiling-and-Loading-the-Driver).
+To begin debugging a CL design, the developer must first install the XVC driver (skip this step if the driver is pre-installed). This section provides a guide for installing the XVC driver on F2 instances using the AWS FPGA developer AMI. For detailed compilation and installation information, refer to the [AMD product guide](https://docs.amd.com/r/en-US/pg195-pcie-dma/Compiling-and-Loading-the-Driver).
 
 - Locate and unzip the XVC driver file from the Vivado tool installation directory:
-  - :warning: Remember to update the tool installation directory to the correct directory for your AMI. The example below is for demonstration only.
+  - ⚠️ Remember to update the tool installation directory to the correct directory for your AMI. The example below is for demonstration only.
 
 ``` bash
     unzip /opt/Xilinx/Vivado/*/data/xicom/drivers/pcie/xvc_pcie.zip
@@ -58,7 +58,7 @@ To begin debugging a CL design, the developer must first install the XVC driver 
     },
 ```
 
-  :warning: Developers may encounter a compilation error in some operating systems due to driver incompatibility, like this:
+  ⚠️ Developers may encounter a compilation error in some operating systems due to driver incompatibility, like this:
 
 ```bash
 /home/<ubuntu_or_rocky>/driver_v0.4/xvc_pcie_driver_base.c:306:25: error: too many arguments to function ‘class_create’
@@ -112,7 +112,7 @@ To begin debugging a CL design, the developer must first install the XVC driver 
     INFO: xvc_pcie application started
     INFO: Use Ctrl-C to exit xvc_pcie application
 
-    INFO: To connect to this xvc_pcie instance use url: tcp:ip-172-31-8-59:10200 ---> This shows the host server name and the port nummber
+    INFO: To connect to this xvc_pcie instance use url: tcp:ip-172-31-8-59:10200 ---> This shows the host server name and the port number
 ```
 
 ## Connect to target FPGA via Virtual JTAG
@@ -132,27 +132,27 @@ With a XVC server up and running, a Virtual JTAG cable connection to the target 
 
 - Open Vivado GUI and select "Open Hardware Manager"
 
-![vjtag_1](./images/VJTAG_images/vjtag_1.jpg)
+![vjtag_1](./../../docs-rtd/source/_static/VJTAG_images/vjtag_1.jpg)
 
 - Click "Open target" and select the "Open New Target...".
 
-![vjtag_2](./images/VJTAG_images/vjtag_2.jpg)
+![vjtag_2](./../../docs-rtd/source/_static/VJTAG_images/vjtag_2.jpg)
 
 - For hardware server setting, connect to "Local server" and click "Next"
 
-![vjtag_3](./images/VJTAG_images/vjtag_3.jpg)
+![vjtag_3](./../../docs-rtd/source/_static/VJTAG_images/vjtag_3.jpg)
 
 - Click "Add Xilinx Virtual Cable (XVC)" and put in "Host name" and "Port" collected previously from the XVC server. Click "OK" to proceed.
 
-![vjtag_4](./images/VJTAG_images/vjtag_4.jpg)
+![vjtag_4](./../../docs-rtd/source/_static/VJTAG_images/vjtag_4.jpg)
 
 - The debug bridge in the target design should be detected and listed in "Hardware Targets". Click "Next" and "Finish" to finish setting up the Virtual JTAG connection.
 
-![vjtag_5](./images/VJTAG_images/vjtag_5.jpg)
+![vjtag_5](./../../docs-rtd/source/_static/VJTAG_images/vjtag_5.jpg)
 
 - All the debug cores embedded in the CL design should be now listed under `debug_bridge_0`. Highlight `debug_bridge_0` and add the CL design `.LTX` probe file to "Probes file" in the "Hardware Device Properties" window. After the probe file gets loaded, the waveform and configuration windows will be available for each debug core in Vivado. The CL design at this point is ready to be debugged.
 
-![vjtag_6](./images/VJTAG_images/vjtag_6.jpg)
+![vjtag_6](./../../docs-rtd/source/_static/VJTAG_images/vjtag_6.jpg)
 
 ## Start Remote Debug Server on F2 Instances (Coming Soon)
 

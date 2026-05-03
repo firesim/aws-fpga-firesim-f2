@@ -43,4 +43,4 @@ int sde_hw_cfg_atg_mode(struct sde_hw_ctrl* ctrl, bool enable, uint32_t data, ui
 int sde_hw_cfg_c2h(struct sde_hw_ctrl* ctrl, uint64_t c2h_status_pa, uint64_t c2h_md_ring_pa, uint32_t c2h_md_ring_size);
 int sde_hw_cfg_h2c(struct sde_hw_ctrl* ctrl, uint64_t h2c_status_pa);
 
-int sde_hw_post_descriptor(struct sde_hw_ctrl* ctrl, uint64_t descriptor_va, size_t num_desc, enum SDE_SUBSYSTEM subsytem);
+int sde_hw_post_descriptor(struct sde_hw_ctrl* ctrl, uint64_t descriptor_va, size_t num_desc, enum SDE_SUBSYSTEM subsystem);

@@ -26,7 +26,7 @@ CFLAGS=$(OPT) -g  -Wall -Werror -W -Wno-parentheses -Wstrict-prototypes -Wmissin
 LDFLAGS = -L$(LIB_PATH)/so
 LDLIBS = -lfpga_mgmt
 
-# flags for compiling a staticly linked version
+# flags for compiling a statically linked version
 LDFLAGS_STATIC = -L$(LIB_PATH)
 LDLIBS_STATIC = -lfpga_mgmt -lrt -lpthread
 

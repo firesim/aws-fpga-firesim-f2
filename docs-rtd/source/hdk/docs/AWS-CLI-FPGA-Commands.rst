@@ -11,9 +11,9 @@ The AWS CLI FPGA commands allow you to manage your Amazon FPGA Images.
 
 Use ``aws ec2 copy-fpga-image`` to copy AFIs between AWS regions. The
 copy operation will use the target `EC2
-endpoint <https://docs.aws.amazon.com/general/latest/gr/rande.html#regional-endpoints>`__
-as the destination region (this is the aws-cli default region or
-specified by the
+endpoint <http://docs.aws.amazon.com/general/latest/gr/rande.html>`__ as
+the destination region (this is the aws-cli default region or specified
+by the
 `region <http://docs.aws.amazon.com/cli/latest/userguide/cli-command-line.html>`__
 argument). The source region must be specified using ``--source-region``
 argument.
@@ -24,127 +24,77 @@ use the same Global AFI ID on every region.
 
 To allow copies, the source AFI must meet the following requirements:
 
-- AFI must be owned by caller. Access to an AFI does not grant
-  sufficient permissions to copy it.
-- AFI must be in ``available`` state. Copy is not allowed if source AFI
-  is in ``pending``, ``failed`` or ``unavailable`` states.
+- AFI must be owned by the caller
 
-Example usage
-~~~~~~~~~~~~~
+  - Access to an AFI does not grant sufficient permissions to copy it
 
-- Show command manual page:
+- AFI must be in the ``available`` state
 
-::
+Example Usage to Copy an Amazon FPGA Image
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-       $ aws ec2 copy-fpga-image help
+- The ``help`` command will display the command manual page which can
+  also be found in the `AWS EC2
+  documentation <https://docs.aws.amazon.com/cli/latest/reference/ec2/copy-fpga-image.html>`__:
 
-- Copy AFI from same region (source: us-east-1, destination:us-east-1):
+.. code-block:: bash
 
-::
-
-       $ aws ec2 copy-fpga-image --region us-east-1 --source-region us-east-1 --source-fpga-image-id afi-01a7ea9bafe3ef8cc
-       {
-           "FpgaImageId": "afi-0ccd812687c77c5b8"
-       }
-
-- Use ``describe-fpga-images`` with the response AFI ID to check copied
-  AFI state:
-
-::
-
-       $ aws ec2 describe-fpga-images --region us-east-1 --fpga-image-ids afi-0ccd812687c77c5b8
-       {
-           "FpgaImages": [
-               {
-                   "OwnerAlias": "amazon",
-                   "UpdateTime": "2017-07-26T19:09:24.000Z",
-                   "Name": "hello_world_1.3.0",
-                   "PciId": {
-                       "SubsystemVendorId": "0xfedd",
-                       "VendorId": "0x1d0f",
-                       "DeviceId": "0xf000",
-                       "SubsystemId": "0x1d51"
-                   },
-                   "FpgaImageGlobalId": "agfi-088bffb3ab91ca2d1",
-                   "State": {
-                      "Code": "available"
-                   },
-                   "ShellVersion": "0x071417d3",
-                   "OwnerId": "095707098027",
-                   "FpgaImageId": "afi-0ccd812687c77c5b8",
-                   "CreateTime": "2017-07-26T18:42:42.000Z",
-                   "Description": "Hello World AFI"
-               }
-           ]
-       }
+   aws ec2 copy-fpga-image help
 
 - Copy AFI from another region (source: us-east-1, destination:
   us-west-2):
 
-::
+.. code-block:: bash
 
-       $ aws ec2 copy-fpga-image --region us-west-2 --source-region us-east-1 --source-fpga-image-id afi-01a7ea9bafe3ef8cc
-       {
-           "FpgaImageId": "afi-0ccd812687c77c5b8"
-       }
+   $ aws ec2 copy-fpga-image --region us-west-2 --source-region us-east-1 --source-fpga-image-id afi-01a7ea9bafe3ef8cc
+   {
+       "FpgaImageId": "afi-0ccd812687c77c5b8"
+   }
 
+Things to note about ``copy-fpga-image``:
+
+- It is possible to copy an AFI to the same region it exists in (source:
+  us-east-1, destination:us-east-1)
 - Cross-region copies may take some time to transfer AFI resources to
   destination region. AFI state will be ``pending`` while copy is in
-  progress:
-
-::
-
-       $ aws ec2 describe-fpga-images --region us-west-2 --fpga-image-ids afi-0ccd812687c77c5b8
-
-       {
-           "UpdateTime": "2017-08-24T18:26:40.000Z",
-           "Name": "copy",
-           "State": {
-               "Code": "pending"
-           },
-           "OwnerId": "095707098027",
-           "FpgaImageId": "afi-0ec49a946f276c5f5",
-           "CreateTime": "2017-08-24T18:26:40.000Z",
-           "Description": "delete"
-        }
-
+  progress.
 - Cross-region copies cannot be fully validated before
   ``copy-fpga-image`` returns. In case of failure, destination AFI state
   will include an error message:
 
-::
+.. code-block:: bash
 
-       $ aws ec2 describe-fpga-images --region us-west-2 --fpga-image-ids afi-0a4a231c9804af6c6
-       {
-           "FpgaImages": [
-               {
-                   "OwnerId": "095707098027",
-                   "FpgaImageId": "afi-0a4a231c9804af6c6",
-                   "State": {
-                       "Message": "NOT_FOUND: Source image is not found or the user ID is not authorized to copy source image.",
-                       "Code": "failed"
-                   },
-                   "CreateTime": "2017-08-24T21:18:56.000Z",
-                   "UpdateTime": "2017-08-24T21:19:00.000Z"
-               }
-           ]
-       }
+   $ aws ec2 describe-fpga-images --region us-west-2 --fpga-image-ids afi-0a4a231c9804af6c6
+   {
+       "FpgaImages": [
+           {
+               "OwnerId": "095707098027",
+               "FpgaImageId": "afi-0a4a231c9804af6c6",
+               "State": {
+                   "Message": "NOT_FOUND: Source image is not found or the user ID is not authorized to copy source image.",
+                   "Code": "failed"
+               },
+               "CreateTime": "2017-08-24T21:18:56.000Z",
+               "UpdateTime": "2017-08-24T21:19:00.000Z"
+           }
+       ]
+   }
 
-       $ aws ec2 describe-fpga-images --region us-west-2 --fpga-image-ids afi-0a4a231c9804af6c6
-       {
-           "FpgaImages": [
-               {
-                   "OwnerId": "095707098027",
-                   "FpgaImageId": "afi-0a4a231c9804af6c6",
-                   "State": {
-                       "Message": "INVALID_STATE: Source image is not in a suitable state to allow copying.",
-                       "Code": "failed"
-                   },
-                   "CreateTime": "2017-08-24T21:18:56.000Z",
-                   "UpdateTime": "2017-08-24T21:19:00.000Z"
-               }
-           ]
-       }
+   $ aws ec2 describe-fpga-images --region us-west-2 --fpga-image-ids afi-0a4a231c9804af6c6
+   {
+       "FpgaImages": [
+           {
+               "OwnerId": "095707098027",
+               "FpgaImageId": "afi-0a4a231c9804af6c6",
+               "State": {
+                   "Message": "INVALID_STATE: Source image is not in a suitable state to allow copying.",
+                   "Code": "failed"
+               },
+               "CreateTime": "2017-08-24T21:18:56.000Z",
+               "UpdateTime": "2017-08-24T21:19:00.000Z"
+           }
+       ]
+   }
 
 ``create-fpga-image``
 ---------------------
@@ -155,51 +105,61 @@ which contains a tar file. The tar file includes the encrypted and
 compiled fpga image(a.k.a. Design Checkpoint or DCP) and a mandatory
 ``manifest.txt`` file.
 
-.. _example-usage-1:
+Example Usage to Create an Amazon FPGA Image
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Example usage
-~~~~~~~~~~~~~
+- The ``help`` command will display the command manual page which can
+  also be found in the `AWS EC2
+  documentation <https://docs.aws.amazon.com/cli/latest/reference/ec2/create-fpga-image.html>`__:
 
-- Show command manual page:
+.. code-block:: bash
 
-::
-
-       $ aws ec2 create-fpga-image help
+   aws ec2 create-fpga-image help
 
 - AFI creation may take some time to transfer AFI resources to the
   destination region. AFI state will be ``pending`` while copy is in
   progress:
 
-::
+.. code-block:: bash
 
-       $ aws ec2 create-fpga-image \
-           --name <afi-name> \
-           --description <afi-description> \
-           --input-storage-location Bucket=<dcp-bucket-name>,Key=<path-to-tarball> \
-           --logs-storage-location Bucket=<logs-bucket-name>,Key=<path-to-logs> \
+   $ aws ec2 create-fpga-image \
+       --name <afi-name> \
+       --description <afi-description> \
+       --input-storage-location Bucket=<dcp-bucket-name>,Key=<path-to-tarball> \
+       --logs-storage-location Bucket=<logs-bucket-name>,Key=<path-to-logs> \
        [ --client-token <value> ] \
        [ --dry-run | --no-dry-run ]
-       {
-           "FpgaImages": [
-               {
-                   "FpgaImageId": "afi-<afi-id>",
-                   "FpgaImageGlobalId": "agfi-<agfi-id>",
-                   "Name": "<afi-name>",
-                   "Description": "<afi-description>",
-                   ...
-                   "State": {
-                       "Code": "pending"
-                   },
-                   ...
-               }
-           ]
-       }
 
-Errors can occur when calling this API and this document provides the
-specification for the error codes.
+   {
+   "FpgaImageId": "afi-0d123e123bfc85abc",
+   "FpgaImageGlobalId": "agfi-123cb27b5e84a0abc"
+   }
 
 Error Codes
-~~~~~~~~~~~
+^^^^^^^^^^^
+
+Errors can occur when ingesting the DCP. Calling the
+`describe-fpga-images <#describe-fpga-images>`__ API will display any
+error codes and this section provides the specification for all error
+codes:
+
+.. code-block:: text
+
+   {
+       "FpgaImages": [
+           {
+               "FpgaImageId": "afi-<afi-id>",
+               "FpgaImageGlobalId": "agfi-<agfi-id>",
+               "Name": "<afi-name>",
+               "Description": "<afi-description>",
+               ...
+               "State": {
+                   "Code": "pending | error-code"
+               },
+               ...
+           }
+       ]
+   }
 
 - ``INACCESSIBLE_INPUT`` *Error accessing resource in S3. Check
   permissions, naming, and ensure the bucket is within the same region
@@ -245,13 +205,13 @@ Error Codes
 
   *1. The design validation detected unsupported primitives in the
   customer logic. Certain FPGA primitives are restricted to maintain
-  platform stability and ensure reliable operation of customer workloads.
-  The following primitives are not supported: DNA_PORT, FRAME_ECC, MCAP,
-  ICAP_TOP, ICAP_BOT, MASTER_JTAG, DCIRESET, EFUSE_USR, USR_ACCESS,
-  STARTUP, BSCAN1, BSCAN2, BSCAN3, BSCAN4, SYSMON.* *NOTE: This
-  implementation follows the*
-  `design advisory issued by AMD <https://docs.amd.com/r/en-US/000038693>`__.
-  *Refer to it for detailed information.*
+  platform stability and ensure reliable operation of customer
+  workloads. The following primitives are not supported: DNA_PORT,
+  FRAME_ECC, MCAP, ICAP_TOP, ICAP_BOT, MASTER_JTAG, DCIRESET, EFUSE_USR,
+  USR_ACCESS, STARTUP, BSCAN1, BSCAN2, BSCAN3, BSCAN4, SYSMON.* **NOTE:
+  This implementation follows the** `design advisory issued by
+  AMD <https://docs.amd.com/r/en-US/000038693>`__\ **\ . Refer to it for
+  detailed information.**
 
   *2. We found a combinatorial loop in the CL design. Bitstream
   generation logs might show errors like ERROR: [DRC LUTLP-1]
@@ -275,38 +235,35 @@ argument. Deleting an AFI in one region has no effect on AFIs in other
 regions.
 
 Delete is not allowed if the AFI is public or shared with other
-accounts. Use
-``describe-fpga-image-attribute`` to check
-if an AFI is shared, and
-``reset-fpga-image-attribute`` to remove
-all load permissions.
-
-If you want to create a fresh copy of a Global AFI ID in a region, the
-Global AFI ID must be fully deleted from the region by deleting all AFIs
-with the same Global AFI ID. Use ``describe-fpga-images`` with
-``fpga-image-global-id`` filter to find AFIs with the same Global AFI ID.
-The Global AFI ID is not fully deleted from a region for 6 hours after
-all associated AFI IDs are deleted. Any AFIs copied to the region after
-the Global AFI ID is fully deleted will result in a fresh copy of the
-Global AFI ID.
+accounts. Use ``describe-fpga-image-attribute`` to check if an AFI is
+shared, and ``reset-fpga-image-attribute`` to remove all load
+permissions.
 
 Deleting an AFI does not affect AFIs already loaded onto FPGAs. Deleting
 only prevents new attempts to load an AFI onto an FPGA. Note that,
 within a region, an AFI will continue to be loadable as long as its
-Global AFI ID is available. Use
-``describe-fpga-images`` with
+Global AFI ID is available. Use ``describe-fpga-images`` with the
 ``fpga-image-global-id`` filter to find AFIs with the same Global AFI
 ID.
+
+If you want to create a fresh copy of a Global AFI ID in a region, the
+Global AFI ID must be fully deleted from the region by deleting all AFIs
+with the same Global AFI ID. Use ``describe-fpga-images`` with
+``fpga-image-global-id`` filter to find AFIs with the same Global AFI
+ID. The Global AFI ID is not fully deleted from a region for 6 hours
+after all associated AFI IDs are deleted. Any AFIs copied to the region
+after the Global AFI ID is fully deleted will result in a fresh copy of
+the Global AFI ID.
 
 An AFI will not be recoverable after deleting all copies in all regions.
 Use `IAM Policies for Amazon
 EC2 <http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-policies-for-amazon-ec2.html>`__
 to restrict access to the API unless explicitly required (See `IAM best
-practices <https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege>`__).
+practices <http://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege>`__).
 For example, include the following statement in your IAM policy to deny
 access to ``DeleteFpgaImage``:
 
-::
+.. code-block:: text
 
    {
      "Version": "2012-10-17",
@@ -321,52 +278,45 @@ access to ``DeleteFpgaImage``:
      ]
    }
 
-.. _example-usage-2:
+Example Usage to Delete an Amazon FPGA Image
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Example usage
-~~~~~~~~~~~~~
+- Show command manual page which can be found in the `AWS EC2
+  documentation <https://docs.aws.amazon.com/cli/latest/reference/ec2/delete-fpga-image.html>`__:
 
-- Show command manual page:
+.. code-block:: bash
 
-::
+   aws ec2 delete-fpga-image help
 
-       $ aws ec2 delete-fpga-image help
+Common Error Messages when Deleting AFIs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Delete AFI:
+Attempt to Describe an AFI after Deletion
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-::
+.. code-block:: bash
 
-       $ aws ec2 --region us-east-1 delete-fpga-image --fpga-image-id afi-0e5361a69d2af203d
-       {
-           "Return": true
-       }
+   $ aws ec2 --region us-east-1 describe-fpga-images --fpga-image-ids afi-0e5361a69d2af203d
 
-Common Error Messages
-~~~~~~~~~~~~~~~~~~~~~
+   An error occurred (InvalidFpgaImageID.NotFound) when calling the DescribeFpgaImages operation: Image ID 'afi-0e5361a69d2af203d' not found.
 
-- Describe an AFI after delete:
+Attempt to Delete a Shared AFI
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-::
+.. code-block:: bash
 
-       $ aws ec2 --region us-east-1 describe-fpga-images --fpga-image-ids afi-0e5361a69d2af203d
+   $ aws ec2 --region us-east-1 delete-fpga-image --fpga-image-id afi-0e5361a69d2af203d
 
-       An error occurred (InvalidFpgaImageID.NotFound) when calling the DescribeFpgaImages operation: Image ID 'afi-0e5361a69d2af203d' not found.
+   An error occurred (OperationNotPermitted) when calling the DeleteFpgaImage operation: Operation not permitted for shared AFI
 
-- Delete shared AFI
+Attempt to Delete a Public AFI
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-::
+.. code-block:: bash
 
-       $ aws ec2 --region us-east-1 delete-fpga-image --fpga-image-id afi-0e5361a69d2af203d
+   $ aws ec2 --region us-east-1 delete-fpga-image --fpga-image-id afi-0e5361a69d2af203d
 
-       An error occurred (OperationNotPermitted) when calling the DeleteFpgaImage operation: Operation not permitted for shared AFI
-
-- Delete public AFI
-
-::
-
-       $ aws ec2 --region us-east-1 delete-fpga-image --fpga-image-id afi-0e5361a69d2af203d
-
-       An error occurred (OperationNotPermitted) when calling the DeleteFpgaImage operation: Operation not permitted for public AFI
+   An error occurred (OperationNotPermitted) when calling the DeleteFpgaImage operation: Operation not permitted for public AFI
 
 ``describe-fpga-images``
 ------------------------
@@ -393,259 +343,252 @@ check the result of the bitstream generation process:
 - ``pending`` AFI bitstream generation is in progress.
 - ``available`` AFI is available for use by F2 instances.
 - ``failed`` AFI bitstream generation failed. The ``State.Message``
-  field provides the specific error code as described in
-  `Error Codes`_.
+  field provides the specific error code as described in `Error
+  Codes <#error-codes>`__.
 - ``unavailable`` AFI is no longer available for use by F2 instances.
 
-Example response
+Example Response
 ~~~~~~~~~~~~~~~~
 
 The following response shows the AFI information provided by
 ``describe-fpga-images``. The AFIs shown in this case are the public
 AFIs generated from the example CLs in the HDK.
 
-::
+.. code-block:: text
 
-       {
-           "FpgaImages": [
-               {
-                   "OwnerAlias": "amazon",
-                   "UpdateTime": "2017-04-19T17:15:26.000Z",
-                   "Name": "cl_hellow_world_04151701",
-                   "PciId": {
-                       "SubsystemVendorId": "0xfedd",
-                       "VendorId": "0x1d0f",
-                       "DeviceId": "0xf000",
-                       "SubsystemId": "0x1d51"
-                   },
-                   "FpgaImageGlobalId": "agfi-0f0e045f919413242",
-                   "State": {
-                       "Code": "available"
-                   },
-                   "ShellVersion": "0x04151701",
-                   "OwnerId": "095707098027",
-                   "FpgaImageId": "afi-0f0927bc2649e6259",
-                   "CreateTime": "2017-04-19T17:15:25.000Z",
-                   "Description": "cl_hello_world for shell 0x04151701"
+   {
+       "FpgaImages": [
+           {
+               "OwnerAlias": "amazon",
+               "UpdateTime": "2017-04-19T17:15:26.000Z",
+               "Name": "cl_hellow_world_04151701",
+               "PciId": {
+                   "SubsystemVendorId": "0xfedd",
+                   "VendorId": "0x1d0f",
+                   "DeviceId": "0xf000",
+                   "SubsystemId": "0x1d51"
                },
-               {
-                   "OwnerAlias": "amazon",
-                   "UpdateTime": "2017-04-17T15:58:54.000Z",
-                   "Name": "cl_dram_dma_0415",
-                   "PciId": {
-                       "SubsystemVendorId": "0xfedc",
-                       "VendorId": "0x1d0f",
-                       "DeviceId": "0xf001",
-                       "SubsystemId": "0x1d51"
-                   },
-                   "FpgaImageGlobalId": "agfi-0d873e8b409f8e806",
-                   "State": {
-                       "Code": "available"
-                   },
-                   "ShellVersion": "0x04151701",
-                   "OwnerId": "095707098027",
-                   "FpgaImageId": "afi-06d0ffc989feeea2a",
-                   "CreateTime": "2017-04-17T15:58:54.000Z",
-                   "Description": "cl_dram_dma_0415"
-               }
-           ]
-       }
-
-.. _example-usage-3:
+               "FpgaImageGlobalId": "agfi-0f0e045f919413242",
+               "State": {
+                   "Code": "available"
+               },
+               "ShellVersion": "0x04151701",
+               "OwnerId": "095707098027",
+               "FpgaImageId": "afi-0f0927bc2649e6259",
+               "CreateTime": "2017-04-19T17:15:25.000Z",
+               "Description": "cl_hello_world for shell 0x04151701"
+           },
+           {
+               "OwnerAlias": "amazon",
+               "UpdateTime": "2017-04-17T15:58:54.000Z",
+               "Name": "cl_dram_dma_0415",
+               "PciId": {
+                   "SubsystemVendorId": "0xfedc",
+                   "VendorId": "0x1d0f",
+                   "DeviceId": "0xf001",
+                   "SubsystemId": "0x1d51"
+               },
+               "FpgaImageGlobalId": "agfi-0d873e8b409f8e806",
+               "State": {
+                   "Code": "available"
+               },
+               "ShellVersion": "0x04151701",
+               "OwnerId": "095707098027",
+               "FpgaImageId": "afi-06d0ffc989feeea2a",
+               "CreateTime": "2017-04-17T15:58:54.000Z",
+               "Description": "cl_dram_dma_0415"
+           }
+       ]
+   }
 
 Example usage
 ~~~~~~~~~~~~~
 
-- Get all AFIs accessible to caller AWS account:
+Get All AFIs Accessible to Caller AWS Account
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-::
+.. code-block:: bash
 
-       $ aws ec2 describe-fpga-images
+   aws ec2 describe-fpga-images
 
-- Get AFI using a specific AFI ID:
+Get AFI Using a Specific AFI ID
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-::
+.. code-block:: bash
 
-       $ aws ec2 describe-fpga-images --fpga-image-ids afi-06d0ffc989feeea2a
+   aws ec2 describe-fpga-images --fpga-image-ids afi-06d0ffc989feeea2a
 
-- Get multiple AFIs by AFI IDs:
+Get Multiple AFIs by AFI IDs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-::
+.. code-block:: bash
 
-       $ aws ec2 describe-fpga-images --fpga-image-ids afi-06d0ffc989feeea2a afi-0f0927bc2649e6259
+   aws ec2 describe-fpga-images --fpga-image-ids afi-06d0ffc989feeea2a afi-0f0927bc2649e6259
 
-- Get AFIs owned by caller AWS account (i.e., exclude public AFIs and
-  AFIs with load permissions):
+Get AFIs Owned by Caller AWS Accounts or Entities
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-::
+- ``OWNER=self`` - Exclude public AFIs and AFIs that have been shared
+  with load permissions
+- ``OWNER=amazon`` - Get Public AFIs Owned by Amazon
 
-       $ aws ec2 describe-fpga-images --owners self
+  - The public FPGA images in the `example
+    response <#example-response>`__ should be returned from this call
 
-- Get public AFIs owned by Amazon (this is the command used to retrieve
-  the example response):
+- ``OWNER=aws-marketplace`` - Get AFIs Owned by the `AWS
+  Marketplace <https://aws.amazon.com/marketplace>`__
+- ``OWNER=095707098027`` - Get AFIs Owned by an Explicit AWS Account ID
 
-::
+.. code-block:: bash
 
-       $ aws ec2 describe-fpga-images --owners amazon
+   aws ec2 describe-fpga-images --owners $OWNER
 
-- Get AFIs owned by `AWS
-  Marketplace <https://aws.amazon.com/marketplace>`__:
-
-::
-
-       $ aws ec2 describe-fpga-images --owners aws-marketplace
-
-- Get AFIs using explicit AWS account ID:
-
-::
-
-       $ aws ec2 describe-fpga-images --owners 095707098027
-
-Use filters parameter
+Use Filters Parameter
 ^^^^^^^^^^^^^^^^^^^^^
 
-- Get AFIs using various filters:
+- ``FILTERS="Name=name,Values=cl_dram_dma_0415"`` - Get AFIs by name
+- ``FILTERS="Name=state,Values=available"`` - Get AFIs in ``available``
+  state
+- ``FILTERS="Name=shell-version,Values=0x04151701"`` - Get AFIs with
+  shell version 0x04151701
+- ``FILTERS="Name=create-time,Values=2017-04-17T15:58:54.000Z"`` - Get
+  AFIs created at a specific time
+- ``FILTERS="Name=fpga-image-global-id,Values=['agfi-0f0e045f919413242','agfi-0d873e8b409f8e806']"``
+  - Get AFIs associated with an AGFI ID
 
-::
+.. code-block:: bash
 
-       # Get AFIs by name
-       $ aws ec2 describe-fpga-images --filters "Name=name,Values=cl_dram_dma_0415"
+   aws ec2 describe-fpga-images --filters "${FILTERS}"
 
-       # Get AFIs in 'available' state
-       $ aws ec2 describe-fpga-images --filters "Name=state,Values=available"
+Get AFIs Using EC2 Tagging Filters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-       # Get AFIs with shell version 0x04151701
-       $ aws ec2 describe-fpga-images --filters "Name=shell-version,Values=0x04151701"
+Manage EC2 tags using
+`create-tags <https://docs.aws.amazon.com/cli/latest/reference/ec2/create-tags.html>`__,
+`describe-tags <https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-tags.html>`__,
+and
+`delete-tags <https://docs.aws.amazon.com/cli/latest/reference/ec2/delete-tags.html>`__:
 
-       # Get AFIs created at a specific time
-       $ aws ec2 describe-fpga-images --filters "Name=create-time,Values=2017-04-17T15:58:54.000Z"
+.. code-block:: bash
 
-- Get AFIs using EC2 tagging filters (manage EC2 tags using
-  `create-tags <https://docs.aws.amazon.com/cli/latest/reference/ec2/create-tags.html>`__,
-  `describe-tags <https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-tags.html>`__
-  and
-  `delete-tags <https://docs.aws.amazon.com/cli/latest/reference/ec2/delete-tags.html>`__):
+   # Create a tag with key="key_1" and value="value_1"
+   $ aws ec2 create-tags --resources afi-06d0ffc989feeea2a --tags Key=key_1,Value=value_1
 
-::
+   # Get all AFIs with tags
+   $ aws ec2 describe-tags --filters "Name=resource-type,Values=fpga-image"
 
-       # Create a tag with key="key_1" and value="value_1"
-       $ aws ec2 create-tags --resources afi-06d0ffc989feeea2a --tags Key=key_1,Value=value_1
+   # Get the tags for a specific AFI ID
+   $ aws ec2 describe-tags --filters "Name=resource-id,Values=afi-06d0ffc989feeea2a"
 
-       # Get all AFIs with tags
-       $ aws ec2 describe-tags --filters "Name=resource-type,Values=fpga-image"
+   # Get AFIs with a tag key "key_1"
+   $ aws ec2 describe-fpga-images --filters "Name=tag-key,Values=key_1"
 
-       # Get the tags for a specific AFI ID
-       $ aws ec2 describe-tags --filters "Name=resource-id,Values=afi-06d0ffc989feeea2a"
+   # Get AFIs with a tag value "value_1"
+   $ aws ec2 describe-fpga-images --filters "Name=tag-value,Values=value"
 
-       # Get AFIs with a tag key "key_1"
-       $ aws ec2 describe-fpga-images --filters "Name=tag-key,Values=key_1"
+   # Get AFIs with a tag key/value pair "key_1/value_1"
+   $ aws ec2 describe-fpga-images --filters "Name=tag:key_1,Values=value_1"
 
-       # Get AFIs with a tag value "value_1"
-       $ aws ec2 describe-fpga-images --filters "Name=tag-value,Values=value"
+Get AFIs Using Wildcard Filters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-       # Get AFIs with a tag key/value pair "key_1/value_1"
-       $ aws ec2 describe-fpga-images --filters "Name=tag:key_1,Values=value_1"
+Wildcards are only usable in the ``filters`` parameter:
 
-- Get AFIs using wildcard filters (wildcards only usable in ``filters``
-  parameter):
+.. code-block:: bash
 
-::
+   # Get AFIs created on 2017-04-17
+   $ aws ec2 describe-fpga-images --filters "Name=create-time,Values=2017-04-17*"
 
-       # Get AFIs created on 2017-04-17
-       $ aws ec2 describe-fpga-images --filters "Name=create-time,Values=2017-04-17*"
+   # Get AFIs if name starts with 'cl_'
+   $ aws ec2 describe-fpga-images --filters "Name=name,Values=cl_*"
 
-       # Get AFIs if name starts with 'cl_'
-       $ aws ec2 describe-fpga-images --filters "Name=name,Values=cl_*"
+   # Get AFIs with multiple wildcards
+   $ aws ec2 describe-fpga-images --filters "Name=name,Values=*_world_*"
 
-       # Get AFIs with multiple wildcards
-       $ aws ec2 describe-fpga-images --filters "Name=name,Values=*_world_*"
-
-Combine filters to find groups of AFIs
+Combine Filters to Find Groups of AFIs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Get all failed AFIs owned by caller AWS account:
 
-::
+.. code-block:: bash
 
-       $ aws ec2 describe-fpga-images --owners self --filters "Name=state,Values=failed"
+   aws ec2 describe-fpga-images --owners self --filters "Name=state,Values=failed"
 
 - Multiple filter values are evaluated as ``OR`` conditions:
 
-::
+.. code-block:: bash
 
-       # Get both example AFIs by name
-       $ aws ec2 describe-fpga-images --filters "Name=name,Values=cl_dram_dma_0415,cl_hellow_world_04151701"
+   # Get both example AFIs by name
+   $ aws ec2 describe-fpga-images --filters "Name=name,Values=cl_dram_dma_0415,cl_hellow_world_04151701"
 
-       # Get AFIs created on 2017-04-17 or 2017-04-19
-       $ aws ec2 describe-fpga-images --filters "Name=create-time,Values=2017-04-17*,2017-04-19*"
+   # Get AFIs created on 2017-04-17 or 2017-04-19
+   $ aws ec2 describe-fpga-images --filters "Name=create-time,Values=2017-04-17*,2017-04-19*"
 
 - Multiple filters are evaluated as ``AND`` conditions:
 
-::
+.. code-block:: bash
 
-       # Get AFIs by name AND created on 2017-04-17
-       $ aws ec2 describe-fpga-images --filters "Name=name,Values=cl_dram_dma_0415,cl_hellow_world_04151701" "Name=create-time,Values=2017-04-17*"
+   # Get AFIs by name AND created on 2017-04-17
+   $ aws ec2 describe-fpga-images --filters "Name=name,Values=cl_dram_dma_0415,cl_hellow_world_04151701" "Name=create-time,Values=2017-04-17*"
 
-       # Same filter can be use multiple times, which can return an empty set
-       $ aws ec2 describe-fpga-images --filters "Name=name,Values=cl_dram_dma_0415" "Name=name,Values=cl_hellow_world_04151701"
+   # Same filter can be use multiple times, which can return an empty set
+   $ aws ec2 describe-fpga-images --filters "Name=name,Values=cl_dram_dma_0415" "Name=name,Values=cl_hellow_world_04151701"
 
-Control command output
+Control Command Output
 ~~~~~~~~~~~~~~~~~~~~~~
 
 - Use the standard aws-cli ``query`` and ``output`` parameters to change
   the response format and displayed fields:
 
-::
+.. code-block:: bash
 
-       $ aws ec2 describe-fpga-images --query 'FpgaImages[*].[FpgaImageGlobalId,UpdateTime,ShellVersion,State.Code,Name]' --output text --owners amazon
-       agfi-02948a33d1a0e9665  2017-07-26T19:18:41.000Z    0x071417d3  available   dram_dma_1.3.0
-       agfi-088bffb3ab91ca2d1  2017-07-26T19:09:24.000Z    0x071417d3  available   hello_world_1.3.0
-       agfi-0f0e045f919413242  2017-04-19T17:15:26.000Z    0x04151701  available   cl_hellow_world_04151701
-       agfi-0d873e8b409f8e806  2017-04-17T15:58:54.000Z    0x04151701  available   cl_dram_dma_0415
+   $ aws ec2 describe-fpga-images --query 'FpgaImages[*].[FpgaImageGlobalId,UpdateTime,ShellVersion,State.Code,Name]' --output text --owners amazon
+   agfi-02948a33d1a0e9665 2017-07-26T19:18:41.000Z 0x071417d3 available dram_dma_1.3.0
+   agfi-088bffb3ab91ca2d1 2017-07-26T19:09:24.000Z 0x071417d3 available hello_world_1.3.0
+   agfi-0f0e045f919413242 2017-04-19T17:15:26.000Z 0x04151701 available cl_hellow_world_04151701
+   agfi-0d873e8b409f8e806 2017-04-17T15:58:54.000Z 0x04151701 available cl_dram_dma_0415
 
 Find details on all available formatting options in `Controlling Command
 Output from the AWS Command Line
 Interface <http://docs.aws.amazon.com/cli/latest/userguide/controlling-output.html>`__.
 
-.. _common-error-messages-1:
-
-Common Error Messages
-~~~~~~~~~~~~~~~~~~~~~
+Common Error Messages when Describing AFIs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Invalid owner ID or filter alias:
 
-::
+.. code-block:: bash
 
-       $ aws ec2 describe-fpga-images --owners 12345
+   $ aws ec2 describe-fpga-images --owners 12345
 
-       An error occurred (InvalidUserID.Malformed) when calling the DescribeFpgaImages operation: User ID '12345' is invalid
+   An error occurred (InvalidUserID.Malformed) when calling the DescribeFpgaImages operation: User ID '12345' is invalid
 
 - Invalid AFI ID:
 
-::
+.. code-block:: bash
 
-       $ aws ec2 describe-fpga-images --fpga-image-ids afi-06d0ffc989feeeXXX
+   $ aws ec2 describe-fpga-images --fpga-image-ids afi-06d0ffc989feeeXXX
 
-       An error occurred (InvalidFpgaImageID.Malformed) when calling the DescribeFpgaImages operation: Image ID 'afi-06d0ffc989feeeXXX' is invalid
+   An error occurred (InvalidFpgaImageID.Malformed) when calling the DescribeFpgaImages operation: Image ID 'afi-06d0ffc989feeeXXX' is invalid
 
 - AFI ID not found:
 
-::
+.. code-block:: bash
 
-       $ aws ec2 describe-fpga-images --fpga-image-ids afi-03d027a3318440a77
+   $ aws ec2 describe-fpga-images --fpga-image-ids afi-03d027a3318440a77
 
-       An error occurred (InvalidFpgaImageID.NotFound) when calling the DescribeFpgaImages operation: Image ID 'afi-03d027a3318440a77' not found
+   An error occurred (InvalidFpgaImageID.NotFound) when calling the DescribeFpgaImages operation: Image ID 'afi-03d027a3318440a77' not found
 
 - Invalid filter name:
 
-::
+.. code-block:: bash
 
-       $ aws ec2 describe-fpga-images --filters "Name=bad-filter,Values=value"
+   $ aws ec2 describe-fpga-images --filters "Name=bad-filter,Values=value"
 
-       An error occurred (InvalidParameterValue) when calling the DescribeFpgaImages operation: The filter 'bad-filter' is invalid
+   An error occurred (InvalidParameterValue) when calling the DescribeFpgaImages operation: The filter 'bad-filter' is invalid
 
-``describe-fpga-image-attribute, modify-fpga-image-attribute and reset-fpga-image-attribute``
----------------------------------------------------------------------------------------------
+``describe-fpga-image-attribute``, ``modify-fpga-image-attribute``, and ``reset-fpga-image-attribute``
+------------------------------------------------------------------------------------------------------
 
 AWS provides the following EC2 operations to manage AFI attributes:
 
@@ -664,7 +607,8 @@ Supported AFI attributes include:
   ``modify-fpga-image-attribute`` and this attribute to control who can
   load your AFI:
 
-  - User ID load permissions allow sharing AFIs to specific AWS accounts
+  - User ID load permissions allow sharing AFIs with specific AWS
+    accounts
   - Group load permissions only support ``all`` to make the AFI public
     or private
 
@@ -676,175 +620,179 @@ prevents users with revoked permission from re-loading the AFI.
 Fpga image attribute. At this time, product codes are only available for
 AWS marketplace use and not discussed in this documentation.
 
-.. _example-usage-4:
+Example Usage of FPGA Image Attribute API’s
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Example usage
-~~~~~~~~~~~~~
+- The ``help`` command will display the command manual page which can
+  also be found in the AWS EC2 documentation for
+  `describe-fpga-image-attribute <https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-fpga-image-attribute.html>`__,
+  `modify-fpga-image-attribute <https://docs.aws.amazon.com/cli/latest/reference/ec2/modify-fpga-image-attribute.html>`__,
+  `reset-fpga-image-attribute <https://docs.aws.amazon.com/cli/latest/reference/ec2/reset-fpga-image-attribute.html>`__.
 
-- Show command manual page:
+.. code-block:: bash
 
-::
-
-       $ aws ec2 describe-fpga-image-attribute help
-       $ aws ec2 modify-fpga-image-attribute help
-       $ aws ec2 reset-fpga-image-attribute help
+   aws ec2 describe-fpga-image-attribute help
+   aws ec2 modify-fpga-image-attribute help
+   aws ec2 reset-fpga-image-attribute help
 
 - Describe *name* attribute:
 
-::
+.. code-block:: bash
 
-       $ aws ec2 --region us-east-1 describe-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --attribute name
-       {
-           "FpgaImageAttribute": {
-               "FpgaImageId": "afi-0e5361a69d2af203d",
-               "Name": "cl_dram_dma.17_07_21-234442"
-           }
+   $ aws ec2 --region us-east-1 describe-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --attribute name
+   {
+       "FpgaImageAttribute": {
+           "FpgaImageId": "afi-0e5361a69d2af203d",
+           "Name": "cl_dram_dma.17_07_21-234442"
        }
+   }
 
 - Describe *description* attribute:
 
-::
+.. code-block:: bash
 
-       $ aws ec2 --region us-east-1 describe-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --attribute description
-       {
-           "FpgaImageAttribute": {
-               "FpgaImageId": "afi-0e5361a69d2af203d",
-               "Description": "cl_dram_dma example"
-           }
+   $ aws ec2 --region us-east-1 describe-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --attribute description
+   {
+       "FpgaImageAttribute": {
+           "FpgaImageId": "afi-0e5361a69d2af203d",
+           "Description": "cl_dram_dma example"
        }
+   }
 
 - Describe *load permissions* attribute:
 
-::
+.. code-block:: bash
 
-       $ aws ec2 --region us-east-1 describe-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --attribute loadPermission
-       {
-           "FpgaImageAttribute": {
-               "FpgaImageId": "afi-0e5361a69d2af203d",
-               "LoadPermissions": []
-           }
+   $ aws ec2 --region us-east-1 describe-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --attribute loadPermission
+   {
+       "FpgaImageAttribute": {
+           "FpgaImageId": "afi-0e5361a69d2af203d",
+           "LoadPermissions": []
        }
+   }
 
 - Change AFI *name* attribute:
 
-::
+.. code-block:: bash
 
-       $ aws ec2 --region us-east-1 modify-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --name "new fpga image name"
-       {
-           "FpgaImageAttribute": {
-               "FpgaImageId": "afi-0e5361a69d2af203d",
-               "Name": "new fpga image name"
-           }
+   $ aws ec2 --region us-east-1 modify-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --name "new fpga image name"
+   {
+       "FpgaImageAttribute": {
+           "FpgaImageId": "afi-0e5361a69d2af203d",
+           "Name": "new fpga image name"
        }
+   }
 
 - Change AFI *description* attribute:
 
-::
+.. code-block:: bash
 
-       $ aws ec2 --region us-east-1 modify-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --description "new fpga image description"
-       {
-           "FpgaImageAttribute": {
-               "FpgaImageId": "afi-0e5361a69d2af203d",
-               "Description": "new fpga image description"
-           }
+   $ aws ec2 --region us-east-1 modify-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --description "new fpga image description"
+   {
+       "FpgaImageAttribute": {
+           "FpgaImageId": "afi-0e5361a69d2af203d",
+           "Description": "new fpga image description"
        }
+   }
 
 - Add user ID (AWS account) load permission:
 
-::
+.. code-block:: bash
 
-       $ aws ec2 --region us-east-1 modify-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --operation-type add --user-ids 095707098027
-       {
-           "FpgaImageAttribute": {
-               "FpgaImageId": "afi-0e5361a69d2af203d",
-               "LoadPermissions": [
-                  {
-                      "UserId": "095707098027"
-                  }
-               ]
-           }
+   $ aws ec2 --region us-east-1 modify-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --operation-type add --user-ids 095707098027
+   {
+       "FpgaImageAttribute": {
+           "FpgaImageId": "afi-0e5361a69d2af203d",
+           "LoadPermissions": [
+               {
+                   "UserId": "095707098027"
+               }
+           ]
        }
+   }
 
 - Remove user ID (AWS account) load permission:
 
-::
+.. code-block:: bash
 
-       $ aws ec2 --region us-east-1 modify-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --operation-type remove --user-ids 095707098027
-       {
-           "FpgaImageAttribute": {
-              "FpgaImageId": "afi-0e5361a69d2af203d",
-              "LoadPermissions": []
-           }
+   $ aws ec2 --region us-east-1 modify-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --operation-type remove --user-ids 095707098027
+   {
+       "FpgaImageAttribute": {
+           "FpgaImageId": "afi-0e5361a69d2af203d",
+           "LoadPermissions": []
        }
+   }
 
 - Make AFI public:
 
-::
+.. code-block:: bash
 
-       $ aws ec2 --region us-east-1 modify-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --operation-type add --user-groups all
-       {
-           "FpgaImageAttribute": {
-               "FpgaImageId": "afi-0e5361a69d2af203d",
-               "LoadPermissions": [
-                   {
-                       "Group": "all"
-                   }
-               ]
-           }
+   $ aws ec2 --region us-east-1 modify-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --operation-type add --user-groups all
+   {
+       "FpgaImageAttribute": {
+           "FpgaImageId": "afi-0e5361a69d2af203d",
+           "LoadPermissions": [
+               {
+                   "Group": "all"
+               }
+           ]
        }
+   }
 
 - Make AFI private:
 
-::
+.. code-block:: bash
 
-       $ aws ec2 --region us-east-1 modify-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --operation-type remove --user-groups all
-       {
-           "FpgaImageAttribute": {
-               "FpgaImageId": "afi-0e5361a69d2af203d",
-               "LoadPermissions": []
-           }
+   $ aws ec2 --region us-east-1 modify-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --operation-type remove --user-groups all
+   {
+       "FpgaImageAttribute": {
+           "FpgaImageId": "afi-0e5361a69d2af203d",
+           "LoadPermissions": []
        }
+   }
 
 - Add load permission for multiple user IDs:
 
-::
+.. code-block:: bash
 
-       $ aws ec2 --region us-east-1 modify-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --operation-type add --user-ids 095707098027 951708639280
-       {
-           "FpgaImageAttribute": {
-               "FpgaImageId": "afi-0f42ec0869372c806",
-               "LoadPermissions": [
-                   {
-                       "UserId": "095707098027"
-                   },
-                   {
-                       "UserId": "951708639280"
-                   }
-               ]
-           }
+   $ aws ec2 --region us-east-1 modify-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --operation-type add --user-ids 095707098027 951708639280
+   {
+       "FpgaImageAttribute": {
+           "FpgaImageId": "afi-0f42ec0869372c806",
+           "LoadPermissions": [
+               {
+                   "UserId": "095707098027"
+               },
+               {
+                   "UserId": "951708639280"
+               }
+           ]
        }
+   }
 
 - Update (add/remove) load permissions using ``Shorthand Syntax``:
 
-::
+.. code-block:: bash
 
-       $ aws ec2 --region us-east-1 modify-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --load-permission 'Add=[{UserId=524807397729}],Remove=[{UserId=095707098027},{UserId=951708639280}]'
-       {
-           "FpgaImageAttribute": {
-               "FpgaImageId": "afi-0f42ec0869372c806",
-               "LoadPermissions": [
-                   {
-                       "UserId": "524807397729"
-                   }
-               ]
-           }
+   $ aws ec2 --region us-east-1 modify-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --load-permission 'Add=[{UserId=524807397729}],Remove=[{UserId=095707098027},{UserId=951708639280}]'
+   {
+       "FpgaImageAttribute": {
+           "FpgaImageId": "afi-0f42ec0869372c806",
+           "LoadPermissions": [
+               {
+                   "UserId": "524807397729"
+               }
+           ]
        }
+   }
 
 - Reset all load permissions:
 
-::
+.. code-block:: bash
 
-       $ aws ec2 --region us-east-1  reset-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --attribute loadPermission
-       {
-           "Return": true
-       }
+   $ aws ec2 --region us-east-1  reset-fpga-image-attribute --fpga-image-id afi-0e5361a69d2af203d --attribute loadPermission
+   {
+       "Return": true
+   }
+
+`Back to Home <../../index.html>`__

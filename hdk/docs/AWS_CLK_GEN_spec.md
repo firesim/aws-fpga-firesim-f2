@@ -2,28 +2,24 @@
 
 ## Table of Contents
 
-- [AWS\_CLK\_GEN - CL Clock Generator](#aws_clk_gen---cl-clock-generator)
-  - [Table of Contents](#table-of-contents)
-  - [Introduction](#introduction)
-  - [Architecture Overview](#architecture-overview)
-  - [Clock and Reset](#clock-and-reset)
-  - [Ports Description](#ports-description)
-  - [Address Space](#address-space)
-  - [Register Definitions](#register-definitions)
-  - [Clock Recipes User Guide](#clock-recipes-user-guide)
-  - [Implementation Example](#implementation-example)
+- [Introduction](#introduction)
+- [Architecture Overview](#architecture-overview)
+- [Clock and Reset](#clock-and-reset)
+- [Ports Description](#ports-description)
+- [Address Space](#address-space)
+- [Register Definitions](#register-definitions)
+- [Clock Recipes User Guide](#clock-recipes-user-guide)
+- [Implementation Example](#implementation-example)
 
 ## Introduction
 
-F1 Shell provides eight clocks to the CL and supports multiple [clock recipes](https://github.com/aws/aws-fpga/blob/master/hdk/docs/clock_recipes.csv) to choose from at the time of CL builds. It also allows to scale clock frequencies during runtime (or after AFI/bitstream is loaded into FPGA) using [dynamic_clock_config](https://github.com/aws/aws-fpga/blob/master/hdk/docs/dynamic_clock_config.md). While this architecture provides multiple clock choices for customer designs, it locks up the global clock routing resources in the CL region. This can pose limitations for customers who do not require all the clocks provided from Shell to the CL.
+F2 Shell provides two clocks - `clk_main_a0` and `clk_hbm_ref` - to the CL, enabling more efficient use of global routing resources compared to F1. The `clk_main_a0 is` currently a fixed frequency 250MHz clock (❗️ dynamic frequency scaling as in F1 using the SW APIs will be added in a future release). The `clk_hbm_ref` is a fixed frequency 100MHz clock which can be used by customers as a reference clock for their MMCMs. This scheme provides flexibility for customers to devise their own clocking mechanisms with the desired number of clocks.
 
-Therefore, F2 Shell provides only two clocks - `clk_main_a0` and `clk_hbm_ref` - to the CL resulting in efficient use of global routing resources. The `clk_main_a0` is currently a fixed frequency 250MHz clock (:exclamation: dynamic scaling of frequency as F1 using the SW APIs will be added in a future release). The `clk_hbm_ref` is a fixed frequency 100MHz clock which can be used by customer as a reference clock for their MMCMs. This scheme provides flexibility for customers to devise their own clocking mechanisms with desired number of clocks.
+In order to provide F1-compatible clock recipes and support Vitis development in F2, AWS offers the Clock Generator (AWS_CLK_GEN) IP. AWS_CLK_GEN provides various clocks to the CL design and supports dynamic frequency scaling. The Vitis XSA for F2 relies on AWS_CLK_GEN for all the clocking needs in the design. This document details the Microarchitecture Specification for AWS_CLK_GEN.
 
-In order to provide F1’s clock recipes in F2, as well as support Vitis development in F2, AWS offers the Clock Generator (AWS_CLK_GEN) IP. AWS_CLK_GEN provides various clocks to the CL design and supports dynamic frequency scaling. The Vitis XSA for F2 relies on AWS_CLK_GEN for all the clocking needs in the design. This document details the Microarchitecture Specification for AWS_CLK_GEN.
+⚠️ The AWS_CLK_GEN instantiation **must** be named to `AWS_CLK_GEN` and located in the CL top module.
 
-:warning: The AWS_CLK_GEN instantiation **must** be named to `AWS_CLK_GEN` and located in the CL top module.
-
-:warning: The AWS_CLK_GEN is optional for CL designs that do not require same clocking scheme as F1. This block is not required if the CL designs use only `clk_main_a0` and/or `clk_hbm_ref`.
+⚠️ The AWS_CLK_GEN is optional for CL designs that do not require same clocking scheme as F1. This block is not required if the CL designs use only `clk_main_a0` and/or `clk_hbm_ref`.
 
 ## Architecture Overview
 
@@ -39,7 +35,7 @@ Figure 1 below shows an overview of the AWS_CLK_GEN IP. It primarily consists of
 
 5. AXI-Lite interface to connect to the AWS Shell or user defined address space.
 
-![Diagram](./images/aws_clk_gen.png)
+![Diagram](../../docs-rtd/source/_static/aws_clk_gen.png)
 
 ## Clock and Reset
 
@@ -62,9 +58,9 @@ The AWS_CLK_GEN IP requires following primary clocks and resets as inputs:
 | clk_extra_a1       | output                       | Max frequency = 125 MHz                                                                                                           |
 | clk_extra_a2       | output                       | Max frequency = 375 MHz                                                                                                           |
 | clk_extra_a3       | output                       | Max frequency = 500 MHz                                                                                                           |
-| clk_extra_b0       | output                       | Max Frequency = 450 MHz \| Used by Vitis as ap_clk0                                                                               |
+| clk_extra_b0       | output                       | Max Frequency = 450 MHz: Used by Vitis as ap_clk0                                                                               |
 | clk_extra_b1       | output                       | Max Frequency = 225 MHz                                                                                                           |
-| clk_extra_c0       | output                       | Max Frequency = 300 MHz \| used by Vitis as ap_clk1                                                                               |
+| clk_extra_c0       | output                       | Max Frequency = 300 MHz: used by Vitis as ap_clk1                                                                               |
 | clk_extra_c1       | output                       | Max Frequency = 400 MHz                                                                                                           |
 | clk_hbm_axi        | output                       | Max Frequency = 450 MHz                                                                                                           |
 | cl_rst_main_n      | output                       | rst_main_n sync'ed to clk_main_a0 and controlled by SYS_RST                                                                       |
@@ -98,7 +94,7 @@ The AXI-Lite address space is decoded as shown in the table below:
 
 ## Register Definitions
 
-Following registers are housed inside AWS_CLK_REGS component and are accessible from the AXIL interface from base address = `BASE_REG` as described in [Address Space](#ancAddressSpace)
+Following registers are housed inside AWS_CLK_REGS component and are accessible from the AXIL interface from base address = `BASE_REG` as described in [Address Space](#address-space)
 
 | **Address Offset** | **Register Name** | **Bits** | **Access** | **Default Value** | **Description**                                                                                                                                                                                             |
 |--------------------|-------------------|----------|------------|-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -107,15 +103,15 @@ Following registers are housed inside AWS_CLK_REGS component and are accessible 
 | 0x08               | BUILD_REG         | 31:0     | RO         | 0x0923_2223       | build timestamp in 0xMM_DD_YY_HH format                                                                                                                                                                     |
 |                    |                   |          |            |                   |                                                                                                                                                                                                             |
 | 0x0C               | CLKS_AVAIL_REG    | 31:9     | RO         | 0x0               | Reserved                                                                                                                                                                                                    |
-|                    |                   | 8        | RO         | 0x1               | 1 = clk_hbm_axi available \| 0 = clock unavailable                                                                                                                                                           |
-|                    |                   | 7        | RO         | 0x1               | 1 = clk_extra_c1 available \| 0 = clock unavailable                                                                                                                                                          |
-|                    |                   | 6        | RO         | 0x1               | 1 = clk_extra_c0 available \| 0 = clock unavailable                                                                                                                                                          |
-|                    |                   | 5        | RO         | 0x1               | 1 = clk_extra_b1 available \| 0 = clock unavailable                                                                                                                                                          |
-|                    |                   | 4        | RO         | 0x1               | 1 = clk_extra_b0 available \| 0 = clock unavailable                                                                                                                                                          |
-|                    |                   | 3        | RO         | 0x1               | 1 = clk_extra_a3 available \| 0 = clock unavailable                                                                                                                                                          |
-|                    |                   | 2        | RO         | 0x1               | 1 = clk_extra_a2 available \| 0 = clock unavailable                                                                                                                                                          |
-|                    |                   | 1        | RO         | 0x1               | 1 = clk_extra_a1 available \| 0 = clock unavailable                                                                                                                                                          |
-|                    |                   | 0        | RO         | 0x1               | 1 = clk_main_a0 available \| 0 = clock unavailable                                                                                                                                                           |
+|                    |                   | 8        | RO         | 0x1               | 1 = clk_hbm_axi available, 0 = clock unavailable                                                                                                                                                           |
+|                    |                   | 7        | RO         | 0x1               | 1 = clk_extra_c1 available, 0 = clock unavailable                                                                                                                                                          |
+|                    |                   | 6        | RO         | 0x1               | 1 = clk_extra_c0 available, 0 = clock unavailable                                                                                                                                                          |
+|                    |                   | 5        | RO         | 0x1               | 1 = clk_extra_b1 available, 0 = clock unavailable                                                                                                                                                          |
+|                    |                   | 4        | RO         | 0x1               | 1 = clk_extra_b0 available, 0 = clock unavailable                                                                                                                                                          |
+|                    |                   | 3        | RO         | 0x1               | 1 = clk_extra_a3 available, 0 = clock unavailable                                                                                                                                                          |
+|                    |                   | 2        | RO         | 0x1               | 1 = clk_extra_a2 available, 0 = clock unavailable                                                                                                                                                          |
+|                    |                   | 1        | RO         | 0x1               | 1 = clk_extra_a1 available, 0 = clock unavailable                                                                                                                                                          |
+|                    |                   | 0        | RO         | 0x1               | 1 = clk_main_a0 available, 0 = clock unavailable                                                                                                                                                           |
 |                    |                   |          |            |                   |                                                                                                                                                                                                             |
 | 0x10               | G_RST_REG         | 31:0     | RW         | 0x0               | Write 0xFFFF_FFFF to globally reset AWS_CLK_GEN IP. Following blocks are affected: - Assert reset to all MMCMs - Assert reset to SYS_RST and its output to CL  Write 0x0000_0000 to de-assert global resets |
 |                    |                   |          |            |                   |                                                                                                                                                                                                             |

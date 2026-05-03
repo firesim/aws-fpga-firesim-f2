@@ -1,0 +1,12 @@
+{
+  "ROCKY_8_10": {
+    "amiId": "ami-05a3890358c102c97",
+    "user": "rocky",
+    "description": "Rocky Linux 8.10"
+  },
+  "UBUNTU_24_04": {
+    "amiId": "ami-04b4f1a9cf54c11d0",
+    "user": "ubuntu",
+    "description": "Ubuntu 24.04 LTS"
+  }
+}

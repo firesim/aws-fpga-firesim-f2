@@ -3,7 +3,7 @@
 # =============================================================================
 # Amazon FPGA Hardware Development Kit
 #
-# Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2025 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Amazon Software License (the "License"). You may not use
 # this file except in compliance with the License. A copy of the License is
@@ -30,7 +30,6 @@ from collections import defaultdict
 from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
 from urllib.parse import unquote, urljoin
 
 import requests
@@ -54,6 +53,8 @@ MAX_RETRIES = 1
 BACKOFF_FACTOR = 1
 ERROR = "ERROR"
 EXCEPTION = "EXCEPTION"
+# Restart the local HTTP server every BATCH_SIZE links
+BATCH_SIZE = 500
 
 
 class ResultEnum(IntEnum):
@@ -84,52 +85,48 @@ class ResponseInfo:
     msg: str = ""
 
 
+def get_repo_root(timeout: int = 5) -> str:
+    result = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],
+        capture_output=True,
+        text=True,
+        cwd=os.path.dirname(__file__),
+        timeout=timeout,
+        check=True,
+    )
+    return result.stdout.strip()
+
+
 class LinkChecker:
-    def __init__(self, exceptions_file: Optional[str] = None, worker_name: str = "links_logger"):
-        self.rtd_source_dir: Path = Path(f"{self._get_repo_root()}/docs-rtd/source")
-        self.rtd_build_dir: Path = Path(f"{self._get_repo_root()}/docs-rtd/build/html")
+    def __init__(self, exceptions_file: str | None = None, worker_name: str = "links_logger"):
+        repo_root = get_repo_root()
+        self.rtd_source_dir: Path = Path(f"{repo_root}/docs-rtd/source")
+        self.rtd_build_dir: Path = Path(f"{repo_root}/docs-rtd/build/html")
         self.exceptions: set[str] = self._load_exceptions(exceptions_file) if exceptions_file else set()
         self.session: requests.Session = self._create_session()
-        self.server_process: Optional[subprocess.Popen] = None
+        self.server_process: subprocess.Popen | None = None
+        self.links_since_last_restart = 0
 
         self.total_checked = 0
         self.total_ok = 0
         self.total_errors = 0
         self.total_exceptions = 0
-        self.error_links: Dict[str, List[Tuple[str, str]]] = defaultdict(list)
-        self.exception_links: Dict[str, List[Tuple[str, str]]] = defaultdict(list)
+        self.error_links: dict[str, list[tuple[str, str]]] = defaultdict(list)
+        self.exception_links: dict[str, list[tuple[str, str]]] = defaultdict(list)
 
         # Register cleanup
         atexit.register(self._cleanup)
 
-    def _get_repo_root(self) -> str:
-        try:
-            result = subprocess.run(
-                ["git", "rev-parse", "--show-toplevel"],
-                capture_output=True,
-                text=True,
-                cwd=os.path.dirname(__file__),
-                timeout=5,
-                check=True,
-            )
-            return result.stdout.strip()
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
-            current_dir = Path(__file__).parent.parent.parent
-            return str(current_dir.resolve())
-
-    def _load_exceptions(self, exceptions_file: str) -> Set[str]:
+    def _load_exceptions(self, exceptions_file: str) -> set[str]:
         exceptions = set()
         try:
-            with open(exceptions_file, "r", encoding="utf-8") as f:
+            with open(exceptions_file, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
-                    if line and not line.startswith("#"):
-                        # Extract URL from "URL: filepath" format
-                        # Split on the last ": " to handle URLs with colons (https://)
-                        if ": " in line:
-                            url = line.rsplit(": ", 1)[0].strip()
-                            if url:
-                                exceptions.add(url)
+                    if line and not line.startswith("#") and ": " in line:
+                        url = line.rsplit(": ", 1)[0].strip()
+                        if url:
+                            exceptions.add(url)
             logger.info(f"Loaded {len(exceptions)} link exceptions")
         except FileNotFoundError:
             logger.exception(f"Exceptions file not found: {exceptions_file}")
@@ -168,7 +165,17 @@ class LinkChecker:
             self.session.close()
         self._stop_server()
 
-    def find_rst_files(self, file_patterns: List[str]) -> List[str]:
+    def _restart_server_and_session(self) -> None:
+        """Recycle the local HTTP server and HTTP session every BATCH_SIZE links to
+        prevent stale connection pool exhaustion on large link sets."""
+        logger.info(f"  [Batch restart] Recycling server and session after {self.links_since_last_restart} links...")
+        self._stop_server()
+        self.session.close()
+        self.session = self._create_session()
+        self.links_since_last_restart = 0
+        self._start_local_server()
+
+    def find_rst_files(self, file_patterns: list[str]) -> list[str]:
         if not self.rtd_source_dir.exists():
             raise FileNotFoundError(f"Documentation source directory not found: {self.rtd_source_dir}")
 
@@ -182,10 +189,10 @@ class LinkChecker:
         logger.info(f"Found {len(rst_file_paths)} RST files to check")
         return rst_file_paths
 
-    def extract_links_from_file(self, rst_file: str) -> List[Tuple[str, str]]:
+    def extract_links_from_file(self, rst_file: str) -> list[tuple[str, str]]:
         content = None
         try:
-            with open(rst_file, "r", encoding="utf-8") as f:
+            with open(rst_file, encoding="utf-8") as f:
                 content = f.read()
         except Exception as e:
             logger.exception(f"Error reading file {rst_file}: {e}")
@@ -207,8 +214,7 @@ class LinkChecker:
     def _start_local_server(self) -> None:
         if not self.rtd_build_dir.exists():
             raise FileNotFoundError(
-                f"Build directory not found: {self.rtd_build_dir}! "
-                "Please build the documentation first with 'make html' in docs-rtd/"
+                f"Build directory not found: {self.rtd_build_dir}! Please build the documentation first with 'make html' in docs-rtd/"
             )
 
         try:
@@ -228,10 +234,10 @@ class LinkChecker:
                     logger.error(f"Server responded with status {response.status_code}")
             except Exception as e:
                 logger.exception(f"Server not responding: {e}")
-                raise WebServerNotStartedError("Local web server did not respond! Cannot check RTD doc links!")
+                raise WebServerNotStartedError("Local web server did not respond! Cannot check RTD doc links!") from e
         except Exception as e:
             logger.exception(f"Failed to start server: {e}")
-            raise WebServerNotStartedError("Failed to start local web server! Cannot check RTD doc links!")
+            raise WebServerNotStartedError("Failed to start local web server! Cannot check RTD doc links!") from e
 
     def _stop_server(self) -> None:
         if self.server_process:
@@ -245,6 +251,7 @@ class LinkChecker:
                     self.server_process.wait(timeout=2)
                 except Exception:
                     pass
+            self.server_process = None
 
     def _check_external_link(self, url: str) -> ResponseInfo:
         try:
@@ -265,9 +272,7 @@ class LinkChecker:
                 return self._check_anchor_in_response(url, response)
             return ResponseInfo(response.status_code == 200, response.status_code, "")
         except Exception as e:
-            return ResponseInfo(
-                False, 0, f"Exception: {e.__class__.__name__} occurred during external link check: {str(e)}"
-            )
+            return ResponseInfo(False, 0, f"Exception: {e.__class__.__name__} occurred during external link check: {str(e)}")
 
     def _check_internal_link(self, rst_file: str, link_url: str) -> ResponseInfo:
         try:
@@ -277,33 +282,27 @@ class LinkChecker:
                 return self._check_internal_file_link(rst_file, link_url)
 
         except Exception as e:
-            return ResponseInfo(
-                False, 0, f"Exception: {e.__class__.__name__} occurred during internal link check: {str(e)}"
-            )
+            return ResponseInfo(False, 0, f"Exception: {e.__class__.__name__} occurred during internal link check: {str(e)}")
 
     def _check_anchor_link(self, rst_file: str, link_url: str) -> ResponseInfo:
-        SAME_PAGE_ANCHOR = "same-page anchor"
-        OTHER_PAGE_ANCHOR = "other-page anchor"
+        same_page_anchor = "same-page anchor"
+        other_page_anchor = "other-page anchor"
 
         full_url, link_type = "", ""
         if link_url.startswith("#"):
             full_url = self._rst_path_to_html_url(rst_file) + link_url
-            link_type = SAME_PAGE_ANCHOR
+            link_type = same_page_anchor
         else:
             full_url = self._resolve_relative_link(rst_file, link_url)
-            link_type = OTHER_PAGE_ANCHOR
+            link_type = other_page_anchor
 
         try:
             response = self.session.get(full_url, timeout=REQUEST_TIMEOUT)
             if response.status_code == 200:
                 return self._check_anchor_in_response(full_url, response)
-            return ResponseInfo(
-                False, response.status_code, f"Page not found when attemptiong to check anchor link: {full_url}!"
-            )
+            return ResponseInfo(False, response.status_code, f"Page not found when attempting to check anchor link: {full_url}!")
         except Exception as e:
-            return ResponseInfo(
-                False, 0, f"Exception {e.__class__.__name__} occurred when checking {link_type}: {str(e)}"
-            )
+            return ResponseInfo(False, 0, f"Exception {e.__class__.__name__} occurred when checking {link_type}: {str(e)}")
 
     def _check_internal_file_link(self, rst_file: str, link_url: str) -> ResponseInfo:
         full_url = self._resolve_relative_link(rst_file, link_url)
@@ -312,9 +311,7 @@ class LinkChecker:
             response = self.session.head(full_url, timeout=REQUEST_TIMEOUT)
             return ResponseInfo(response.status_code == 200, response.status_code, "")
         except Exception as e:
-            return ResponseInfo(
-                False, 0, f"Exception {e.__class__.__name__} occurred when checking for internal file: {str(e)}"
-            )
+            return ResponseInfo(False, 0, f"Exception {e.__class__.__name__} occurred when checking for internal file: {str(e)}")
 
     def _rst_path_to_html_url(self, rst_file: str) -> str:
         rel_path = Path(rst_file).relative_to(self.rtd_source_dir)
@@ -388,7 +385,12 @@ class LinkChecker:
 
     def check_link(self, rst_file: str, link_text: str, link_url: str) -> ResultEnum:
         self.total_checked += 1
+        self.links_since_last_restart += 1
         display_text = self._format_display_text(link_text)
+
+        # Restart server and recycle session every BATCH_SIZE links
+        if self.links_since_last_restart > BATCH_SIZE:
+            self._restart_server_and_session()
 
         if link_url in self.exceptions:
             self.total_exceptions += 1
@@ -416,7 +418,7 @@ class LinkChecker:
         logger.error(f"                   | {link_url}{error_detail}")
         return ResultEnum.ERROR
 
-    def check_files(self, rst_files: List[str]) -> None:
+    def check_files(self, rst_files: list[str]) -> None:
         if not rst_files:
             raise NoFilesToCheckError("No RST files to check!")
 
@@ -433,9 +435,7 @@ class LinkChecker:
             for link_text, link_url in links:
                 self.check_link(rst_file, link_text, link_url)
 
-    def _print_error_or_exception_links(
-        self, to_print: Dict[str, List[Tuple[str, str]]], list_enum: LinkListEnum
-    ) -> None:
+    def _print_error_or_exception_links(self, to_print: dict[str, list[tuple[str, str]]], list_enum: LinkListEnum) -> None:
         logger.error(f"\n{'-' * 80}")
         logger.error(f"DETAILS for ({self.total_errors} {ERROR} links):")
         logger.error(f"{'-' * 80}")
@@ -460,9 +460,7 @@ class LinkChecker:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="RST files link checker", formatter_class=argparse.RawDescriptionHelpFormatter
-    )
+    parser = argparse.ArgumentParser(description="RST files link checker", formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("-e", "--exceptions_file_path", type=str, help="Path to file containing link exceptions")
     parser.add_argument("-f", "--check_file_paths", nargs="+", help="Specific file patterns to check (optional)")
     parser.add_argument(
@@ -482,6 +480,7 @@ def main():
     checker.check_files(rst_files)
     checker.print_summary()
     assert checker.total_errors == 0, "Broken links found!"
+    logger.info("NO ISSUES DETECTED!")
 
 
 if __name__ == "__main__":

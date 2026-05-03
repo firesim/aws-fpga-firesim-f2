@@ -33,9 +33,7 @@ module test_dram_dma();
 
    initial begin
 
-      tb.power_up(.clk_recipe_a(ClockRecipe::A1),
-                  .clk_recipe_b(ClockRecipe::B0),
-                  .clk_recipe_c(ClockRecipe::C0));
+      tb.power_up(.clk_recipe_a(ClockRecipe::A1));
       `ifdef AWS_CLKGEN_BASE_REG
           aws_clkgen_dsrt_rst();
       `endif

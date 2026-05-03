@@ -23,8 +23,8 @@ Host-FPGA communication, configurable clock management through
 predefined recipes, and auxiliary signal ports like VLED/VDIP. It
 enables seamless integration between CL designs and the F2 Shell.
 
-To configure the AWS IP, double-click the AWS IP block in the 'Block
-Diagram'. The 'Re-customize IP' GUI displays four configuration
+To configure the AWS IP, double-click the AWS IP block in the ‘Block
+Diagram’. The ‘Re-customize IP’ GUI displays four configuration
 categories.
 
 Enable IP Interfaces
@@ -36,32 +36,41 @@ automatically to show enabled interfaces, ports, and clocks
 For details about the shell interface, see `AWS Shell Interface
 Specification <./AWS-Shell-Interface-Specification.html>`__.
 
-|aws-ip-interfaces|
+.. figure::
+   ../../_static/hlx_images/aws_ip_interfaces.png
+   :alt: Diagram
+
+   Diagram
 
 Clock Signals
 -------------
 
-Review the `Clock Recipes User
-Guide <./Clock-Recipes-User-Guide.html>`__ to determine
-the number of clocks needed for Groups A, B, and C, and select
-appropriate clock recipes for all CL clocks.
+Review the `Clock Recipes User Guide <./Clock-Recipes-User-Guide.html>`__
+to determine the number of clocks needed for Groups A, B, and C, and
+select appropriate clock recipes for all CL clocks.
 
-|aws_ip_clocks|
+.. figure:: ../../_static/hlx_images/aws_ip_clocks.png
+   :alt: Diagram
+
+   Diagram
 
 **NOTE**: ``clk_main_a0_out`` is a required clock and cannot be
 disabled.
 
-**NOTE**: You must select 'Enable Ports for HBM in CL' in the 'Enable IP
-Interfaces' tab to see HBM AXI clock recipe options.
+**NOTE**: You must select ‘Enable Ports for HBM in CL’ in the ‘Enable IP
+Interfaces’ tab to see HBM AXI clock recipe options.
 
 CL Partition ID
 ---------------
 
 The PCIe Vendor ID, Device ID, Subsystem Vendor ID and Subsystem ID can
-be configured. For now these default values match typically AWS examples
-and shouldn't be modified at this time.
+be configured. For now these default values typically match AWS examples
+and shouldn’t be modified at this time.
 
-|aws_ip_ids|
+.. figure:: ../../_static/hlx_images/aws_ip_ids.png
+   :alt: Diagram
+
+   Diagram
 
 Advanced
 --------
@@ -72,8 +81,4 @@ Pipeline stages configuration:
 - Applies to the ``sh_cl_ddr_stat_`` interface for DDR in the CL
 - Selection depends on design size and complexity
 
-.. |aws-ip-interfaces| image:: ./../../_static/hlx_images/aws_ip_interfaces.png
-.. |aws_ip_clocks| image:: ./../../_static/hlx_images/aws_ip_clocks.png
-.. |aws_ip_ids| image:: ./../../_static/hlx_images/aws_ip_ids.png
-
-`Back to Vivado IPI GUI Setup Guide <./IPI-GUI-Vivado-Setup.html>`__
+`Back to Home <../../index.html>`__

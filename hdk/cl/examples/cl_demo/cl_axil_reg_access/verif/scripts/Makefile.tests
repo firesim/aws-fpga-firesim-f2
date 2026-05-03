@@ -1,0 +1,44 @@
+# =============================================================================
+# Amazon FPGA Hardware Development Kit
+#
+# Copyright 2026 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Amazon Software License (the "License"). You may not use
+# this file except in compliance with the License. A copy of the License is
+# located at
+#
+#    http://aws.amazon.com/asl/
+#
+# or in the "license" file accompanying this file. This file is distributed on
+# an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, express or
+# implied. See the License for the specific language governing permissions and
+# limitations under the License.
+# =============================================================================
+
+
+test_null: TEST=test_null
+test_null: all
+
+test_adder: TEST=test_adder
+test_adder: all
+
+test_arithmetic_operations: TEST=test_arithmetic_operations
+test_arithmetic_operations: all
+
+test_axil_registers: TEST=test_axil_registers
+test_axil_registers: all
+
+test_control_bits: TEST=test_control_bits
+test_control_bits: all
+
+test_error_handling: TEST=test_error_handling
+test_error_handling: all
+
+test_random: TEST=test_random
+test_random: all
+
+test_reset: TEST=test_reset
+test_reset: all
+
+test_stress_axil: TEST=test_stress_axil
+test_stress_axil: all

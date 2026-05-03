@@ -82,15 +82,15 @@ int main(int argc, char **argv) {
   ret = partition_user_buffers(sde_buffers, NUM_BUFFERS, params.pkt_size, dma_buffer_pa);
 
   ret = sde_mgmt_init(params.slot_id, SDE_EXAMPLE_DIR_C2H, params.pkt_size, SDE_BUFFER_USER_MANAGED);
-  fail_on(ret, err, "failed to init sde_mgmt");
+  fail_on(ret, cleanup, "failed to init sde_mgmt");
 
   ret = sde_mgmt_reset(params.slot_id);
-  fail_on(ret, err, "failed to reset sde_mgmt");
+  fail_on(ret, cleanup, "failed to reset sde_mgmt");
 
   ret = sde_mgmt_set_dma_buffers(params.slot_id, SDE_SUBSYSTEM_C2H, sde_buffers, NUM_BUFFERS);
 
   ret = sde_mgmt_cfg(params.slot_id);
-  fail_on(ret, err, "failed to cfg sde_mgmt");
+  fail_on(ret, cleanup, "failed to cfg sde_mgmt");
 
   size_t num_descriptors = params.pkt_cnt < C2H_DESC_COALESCE_CNT ? params.pkt_cnt : C2H_DESC_COALESCE_CNT;
   size_t num_packets = 0;

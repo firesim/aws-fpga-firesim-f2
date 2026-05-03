@@ -296,12 +296,8 @@ end
 `endif
 
    task power_up(input int slot_id = 0,
-                       ClockRecipe::A_RECIPE clk_recipe_a = ClockRecipe::A0,
-                       ClockRecipe::B_RECIPE clk_recipe_b = ClockRecipe::B0,
-                       ClockRecipe::C_RECIPE clk_recipe_c = ClockRecipe::C0);
-   `SLOT_MACRO_TASK(power_up(.clk_recipe_a(clk_recipe_a),
-                             .clk_recipe_b(clk_recipe_b),
-                             .clk_recipe_c(clk_recipe_c)))
+                       ClockRecipe::A_RECIPE clk_recipe_a = ClockRecipe::A0);
+   `SLOT_MACRO_TASK(power_up(.clk_recipe_a(clk_recipe_a)))
    endtask
 
    task power_down(input int slot_id = 0);

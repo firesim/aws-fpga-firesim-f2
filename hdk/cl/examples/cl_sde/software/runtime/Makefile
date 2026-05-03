@@ -71,6 +71,7 @@ ve_run: check_env ve_install sde_examples
 sde_examples: $(SDE_EXAMPLES)
 
 clean:
+	-sudo $(APP_SCRIPTS_DIR)/virtual_ethernet_unbind.py $(DPDK_DIR) $(SLOT_NUM)
 	$(RM) $(APP_INSTALL_DIR) $(SDE_EXAMPLES) $(SDELIB_SO) $(OBJS) $(DEPS)
 
 check_env:

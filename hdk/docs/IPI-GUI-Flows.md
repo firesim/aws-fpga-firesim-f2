@@ -23,7 +23,7 @@ This section specifies the end-to-end flow for creating a pre-defined IPI exampl
 
 ### Setup HLx Environment
 
-Clone the `aws-fpga` repository and follow the [Vivado HLx Setup Instructions](./IPI-GUI-Vivado-Setup.md) to set up the HLx environemnt.
+Clone the `aws-fpga` repository and follow the [Vivado HLx Setup Instructions](./IPI-GUI-Vivado-Setup.md) to set up the HLx environment.
 
 ### Create Design
 

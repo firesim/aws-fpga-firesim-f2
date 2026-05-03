@@ -12,7 +12,7 @@ Table of Contents
     Environment <#install-the-hdk-and-setup-environment>`__
   - `Try Out One of HDK Examples or Write Your
     Own <#try-out-one-of-hdk-examples-or-write-your-own>`__
-  - `Xilinx's Library
+  - `Xilinx’s Library
     Compilation <#xilinxs-library-compilation-complib-dir>`__
 
 - `Create Your Own Tests for RTL
@@ -39,10 +39,13 @@ Introduction
 The HDK development environment comes with a shell simulation model that
 supports RTL-level simulation using Vivado XSIM, Synopsys VCS or Siemens
 Questa RTL simulators. Developers can leverage this simulation model and
-create test cases in SystemVerilog to verify CL design's
+create test cases in SystemVerilog to verify CL design’s
 functionalities.
 
-|alt tag|
+.. figure:: ../../_static/hdk/docs/cl-sim-testbench.png
+   :alt: Testbench Top-Level Diagram
+
+   Testbench Top-Level Diagram
 
 Quick Start
 -----------
@@ -64,7 +67,7 @@ Install the HDK and Setup Environment
 AWS FPGA HDK can be cloned and installed on your EC2 instance or server
 by calling:
 
-.. code:: bash
+.. code-block:: bash
 
    git clone https://github.com/aws/aws-fpga.git
    cd aws-fpga
@@ -73,7 +76,7 @@ by calling:
 Try Out One of HDK Examples or Write Your Own
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code:: bash
+.. code-block:: bash
 
    # $CL_DIR must be set before running simulations
    export CL_DIR=$PWD/hdk/cl/examples/cl_sde
@@ -82,10 +85,10 @@ Try Out One of HDK Examples or Write Your Own
    cd ${CL_DIR}/verif/scripts
 
    # Run the default test using the VCS SIM
-   export TEST_NAME=test_ddr
+   export TEST_NAME=test_simple_c2h
    make ${TEST_NAME} VCS=1
 
-   # To view the test log files (this is defined by SIM_DIR makefile variable)
+   # To view the test log files (this is defined by SIM_DIR Makefile variable)
    cd ${CL_DIR}/verif/sim/vcs/${TEST_NAME}_sv
    # Compile log
    vi compile.vcs.log
@@ -94,39 +97,41 @@ Try Out One of HDK Examples or Write Your Own
 
 The call of the ``make ${TEST_NAME}`` as above executes following steps.
 
-+-------+-------------+----------------------------------------------+
-| Order | Flow        | Description                                  |
-+=======+=============+==============================================+
-| 1st   | ``ip-gen``  | Generate Xilinx IPs. Executed only once when |
-|       |             | the IPs are initially generated. \ **NOTE:** |
-|       |             | An IP must be regenerated if the IP's XCI    |
-|       |             | file gets updated                            |
-+-------+-------------+----------------------------------------------+
-| 2nd   | ``complib`` | Compile Xilinx libraries. Executed only once |
-|       |             | when the libraries are initially compiled    |
-+-------+-------------+----------------------------------------------+
-| 3rd   | ``compile`` | compile RTL source and testbench             |
-+-------+-------------+----------------------------------------------+
-| 4th   | ``pre-run`` | Pre-simulation. Generate simulation input    |
-|       |             | files etc                                    |
-+-------+-------------+----------------------------------------------+
-| 5th   | ``run``     | Run the simulation                           |
-+-------+-------------+----------------------------------------------+
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-.. _xilinxs-library-compilation-complib-dir:
+   * - Order
+     - Flow
+     - Description
+   * - 1st
+     - ``ip-gen``
+     - Generate Xilinx IPs. Executed only once when the IPs are initially generated. **NOTE:** An IP must be regenerated if the IP's XCI file gets updated
+   * - 2nd
+     - ``complib``
+     - Compile Xilinx libraries. Executed only once when the libraries are initially compiled
+   * - 3rd
+     - ``compile``
+     - compile RTL source and testbench
+   * - 4th
+     - ``pre-run``
+     - Pre-simulation. Generate simulation input files etc
+   * - 5th
+     - ``run``
+     - Run the simulation
 
-Xilinx's Library Compilation (``COMPLIB_DIR``)
+Xilinx’s Library Compilation (``COMPLIB_DIR``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When using simulator other than Vivado SIM, the Xilinx's library will be
+When using simulator other than Vivado SIM, the Xilinx’s library will be
 compiled under the ``COMPLIB_DIR``. The default ``COMPLIB_DIR`` path is
 identified as below.
 
-.. code:: bash
+.. code-block:: bash
 
    COMPLIB_DIR = $CL_DIR/verif/sim/<simulator>/<simulator>_complib
 
-Compiling the Xilinx's library is very time consuming and can take up to
+Compiling the Xilinx’s library is very time consuming and can take up to
 2 hours to complete. User can skip this step if they already have a
 pre-compiled Xilinx library that was compiled using the current Vivado
 version.
@@ -138,14 +143,14 @@ into a new directory.
 - Set the COMPLIB_DIR environment variable pointing to the pre-compiled
   Xilinx library.
 
-.. code:: bash
+.. code-block:: bash
 
    export COMPLIB_DIR=/path/to/user/complib/dir
 
 - Create a ``.done`` file under the ``COMPLIB_DIR`` to tell the Makefile
   system to not recompile
 
-.. code:: bash
+.. code-block:: bash
 
    touch $COMPLIB_DIR/.done
 
@@ -158,9 +163,9 @@ SystemVerilog Tests
 One fast way to write your own test is to start with an example test
 from one of the examples designs and customize it for your design. All
 SV tests must be placed in the verif/tests sub-directory of CL design
-root and use the ".sv" file extension.
+root and use the “.sv” file extension.
 
-.. code:: bash
+.. code-block:: bash
 
        cl_my_design                 # Custom Logic (CL) design root directory
        |-- build
@@ -177,7 +182,7 @@ root and use the ".sv" file extension.
 with 64-bit Linux OS. Many of the tests and reference Custom Logic (CL)
 examples use 64-bit address formats
 
-.. code:: verilog
+.. code-block:: verilog
 
    module test_peek_poke();
 
@@ -232,7 +237,7 @@ examples use 64-bit address formats
 Once your test is written, you are ready to run a simulation. The
 ``/scripts`` directory is where you must launch all simulations.
 
-.. code:: bash
+.. code-block:: bash
 
    cd ${CL_DIR}/verif/scripts
    # Compile and run using XSIM by default (NOTE: Do Not include .sv)
@@ -243,7 +248,7 @@ Once your test is written, you are ready to run a simulation. The
 If your have Cadence and Synopsys VCS RTL simulator or Modelsim Questa,
 then add ``VCS=1`` or ``QUESTA=1``.
 
-.. code:: bash
+.. code-block:: bash
 
    make TEST='<your_test_name>' VCS=1
 
@@ -253,13 +258,148 @@ environment variables to be set to configure the design. HBM specific
 tests require ``VCS=1`` or ``QUESTA=1`` as well as ``COMPILE_HBM`` to be
 defined.
 
-Use only the SV test APIs supplied with the developer's kit to stimulate
+Use only the SV test APIs supplied with the developer’s kit to stimulate
 your CL design. They were designed specifically to mimic the behavior of
 the actual AWS Shell logic. If you choose to control CL signaling via
 another method, proper operation with Shell logic is not guaranteed.
+More information can be found in the `AWS Shell Interface
+specification <./AWS-Shell-Interface-Specification.html>`__.
 
-The AWS Shell Interface specification can be found
-`here <./AWS-Shell-Interface-Specification.html>`__
+C Tests
+-------
+
+As with the SystemVerilog (SV) testing, one fast way to write your own
+test is to start with an example test from one of the examples designs
+and customize it for your design. All C tests must be placed in the
+software/runtime sub-directory of CL design root and use the “.c” file
+extension. HW/SW simulation support is added to simulate the software
+tests. The ``SV_TEST`` should be used for any simulation specific code
+in the software test. The ``SCOPE`` macro is specific to VCS simulator.
+
+Header files to be included for HW/SW co-simulation
+---------------------------------------------------
+
+For HW/SW simulation the below header files need to be included. The
+``SV_TEST`` macro should be defined in HW Makefile to enable HW
+simulation of the cosim C test file (under
+``$CL_DIR/software/runtime``).
+
+- fpga_pci_sv.h is the SV wrapper for C functions
+- sh_dpi_tasks.c is the C file which has common functions to be used
+  between C and SV
+
+.. code-block:: c
+
+   #ifdef SV_TEST
+      #include "fpga_pci_sv.h"
+   #else
+      #include <fpga_pci.h>
+      #include <fpga_mgmt.h>
+   #endif
+
+   #include <sh_dpi_tasks.h>
+
+Code changes to enable HW/SW co-simulation
+------------------------------------------
+
+The logger will not work for HW simulation, so use the SV_TEST macro to
+exclude that. ``pci_vendor_id`` and ``pci_device_id`` are not used for
+HW simulation as well, so they should be excluded.
+
+.. code-block:: c
+
+   #ifndef SV_TEST
+   const struct logger *logger = &logger_stdout;
+   /*
+    * pci_vendor_id and pci_device_id values below are Amazon's and available to use for a given FPGA slot.
+    * Users may replace these with their own if allocated to them by PCI SIG
+    */
+   static uint16_t pci_vendor_id = 0x1D0F; /* Amazon PCI Vendor ID */
+   static uint16_t pci_device_id = 0xF000; /* PCI Device ID preassigned by Amazon for FPGA applications */
+
+   /*
+    * check if the corresponding AFI is loaded
+    */
+   #endif
+
+Use ``cosim_printf()`` function instead of ``printf()``.
+
+.. code-block:: c
+
+   cosim_printf("===== Starting with peek_poke_example =====\n");
+
+``test_main`` should be used for HW simulation as shown below.
+
+.. code-block:: c
+
+   #ifdef SV_TEST
+   void test_main(uint32_t *exit_code) {
+   #else
+   int main(int argc, char **argv) {
+   #endif
+
+Also ``SCOPE`` should be defined for HW simulation with VCS and QUESTA
+simulators.
+
+.. code-block:: c
+
+   //The statements within SCOPE ifdef below are needed for HW/SW co-simulation with VCS
+   #ifdef SCOPE
+     svScope scope;
+     scope = svGetScopeFromName("tb");
+     svSetScope(scope);
+   #endif
+
+HW/simulation does not require checking for AFI ready since the FPGA
+signals (hardware components) are directly accessed in simulation.
+
+.. code-block:: c
+
+   #ifndef SV_TEST
+       rc = check_afi_ready(slot_id);
+   #endif
+
+The test exit codes below should be used for HW/SW co-simulation.
+
+.. code-block:: c
+
+   #ifndef SV_TEST
+       return rc;
+
+   out:
+       return 1;
+   #else
+
+   out:
+      *exit_code = 0;
+   #endif
+
+For
+`test_dram_dma_hwsw_cosim.c <https://github.com/aws/aws-fpga/tree/f2/hdk/cl/examples/cl_dram_hbm_dma/software/runtime/test_dram_dma_hwsw_cosim.c>`__,
+the two functions below are used for DMA transfers from host and to
+host.
+
+.. code-block:: c
+
+   //This function on the SV side sets up the string buffer and does Host to cl transfer.
+   sv_fpga_start_buffer_to_cl(slot_id, channel, buffer_size, write_buffer, (0x10000000 + channel*MEM_16G));
+
+   //This function on the SV side sets up the string buffer and does CL to Host transfer.
+   sv_fpga_start_cl_to_buffer(slot_id, channel, buffer_size, (0x10000000 + channel*MEM_16G));
+
+   //This function updates the buffer on 'C' side.
+   int send_rdbuf_to_c(char* rd_buf)
+
+Once your test is written, you are ready to run a simulation. The
+``scripts/`` directory is where you must launch all simulations.
+
+.. code-block:: bash
+
+   cd verif/scripts
+   make C_TEST={your_test_name} # compile and run using XSIM (NOTE: Do Not include .c)
+   make C_TEST={your_test_name} VCS=1 # compile and run using VCS (NOTE: Do Not include .c)
+   make C_TEST={your_test_name} QUESTA=1 # compile and run using QUESTA (NOTE: Do Not include .c)
+   cd ../sim/{your_test_name} # to view the test log files
 
 Accessing Host Memory During Simulation
 ---------------------------------------
@@ -269,21 +409,21 @@ To verify your CL is accessing host memory, the test bench includes a
 host memory implemented using an associative array. The address is the
 key to locate a 32-bit data value.
 
-.. code:: verilog
+.. code-block:: verilog
 
-      logic [31:0]        sv_host_memory[*];
+   logic [31:0]        sv_host_memory[*];
 
 If you are are using C to verify your CL, then use C domain host memory.
 Allocate a memory buffer in your C code and pass the pointer to the SV
-domain. The AXI BFM connected to the PCIM port will use DPI calls to
-read and write the memory buffer.
+domain. The AXI Bus Functional Model (BFM) connected to the PCIM port
+will use DPI calls to read and write the memory buffer.
 
 Backdoor access to host memory is provided by two functions:
 
-.. code:: c
+.. code-block:: c
 
-      function void hm_put_byte(input longint unsigned addr, byte d);
-      function byte hm_get_byte(input longint unsigned addr);
+   function void hm_put_byte(input longint unsigned addr, byte d);
+   function byte hm_get_byte(input longint unsigned addr);
 
 Use these functions when you need to access data in the host memory.
 They take zero simulation time and are useful for initializing memory or
@@ -294,7 +434,8 @@ Debugging Custom Logic using the AWS HDK
 
 If a simulation fails, developers can debug issues by dumping waves of
 the simulation and then view them to determine the source of the
-problem.
+problem. Protocol checkers can also be a useful tool to supplement wave
+traces.
 
 The process for dumping and viewing waves can differ depending on the
 simulator being used. To dump and view waves using the Xilinx Vivado
@@ -307,24 +448,31 @@ tools included with the AWS HDK:
 VCS .vpd files can be found under
 ``$CL_DIR/verif/sim/vcs/<TEST>_sv/<TEST>.vpd`` and viewed with DVE.
 
-Protocol Checkers
-~~~~~~~~~~~~~~~~~
+Specify scope of logic for wave dump
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Xilinx Protocol Checkers are instantiated on all AXI4 and AXIL
-interfaces in Shell BFM. By default, all the tests run with protocol
-checkers enabled. If there is a protocol error in any one of the AXI
-interfaces, then the protocol checker will fire an error as below.
+The file
+``$AWS_FPGA_REPO_DIR/hdk/cl/examples/cl_dram_hbm_dma/verif/scripts/waves.tcl``
+specifies the scope of logic for wave dump. The default behavior is to
+dump only the signals at the very top of the design:
 
-.. code:: verilog
+.. code-block:: text
 
-   tb.card.fpga.sh.axl_pc_sda_slv_inst.REP   : BIT(         35) :   ERROR : Invalid state x
-   tb.card.fpga.sh.axi_pc_mstr_inst_pcim.REP : BIT(         33) :   ERROR : Invalid state x
-   tb.card.fpga.sh.axi_pc_mstr_inst_pcis.REP : BIT(         35) :   ERROR : Invalid state x
-   tb.card.fpga.sh.axl_pc_ocl_slv_inst.REP   : BIT(         35) :   ERROR : Invalid state x
+   add_wave /
 
-Please refer to the `protocol
-checker <https://github.com/aws/aws-fpga/tree/f2/hdk/common/verif/models/xilinx_axi_pc/axi_protocol_checker_v1_1_vl_rfs.v>`__
-for mapping between bit positions and the protocol errors.
+To recursively dump waves of all signal underneath the top level of the
+design, add ``-recursive``:
+
+.. code-block:: text
+
+   add_wave -recursive /
+
+Note that dumping all signals of a design will increase simulation time
+and result in a large file.
+
+For more information on the syntax for ``add_wave`` and other tcl
+functions, see the `Vivado Design Suite Tcl Command Reference
+Guide <https://docs.amd.com/r/en-US/ug835-vivado-tcl-commands/add_wave>`__
 
 Re-Run Simulation to Dump Waves
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -342,14 +490,14 @@ database should appear as ``tb.wdb``.
 To view the waves, first create a Tcl file called ``open_waves.tcl``
 with the following commands:
 
-.. code:: tcl
+.. code-block:: text
 
    current_fileset
    open_wave_database tb.wdb
 
 Then open Vivado and specify this Tcl file to execute:
 
-.. code:: bash
+.. code-block:: bash
 
    vivado -source open_waves.tcl
 
@@ -358,8 +506,27 @@ inspected and debugged
 
 The usage of Vivado for wave debug is beyond the scope of this document.
 See the `Vivado Design Suite
-Tutorials <https://www.xilinx.com/support/documentation/sw_manuals/xilinx2015_4/ug936-vivado-tutorial-programming-debugging.pdf>`__
+Tutorials <https://docs.amd.com/r/en-US/ug949-vivado-design-methodology/Vivado-Design-Suite-Tutorials>`__
 for more details.
+
+Protocol Checkers
+~~~~~~~~~~~~~~~~~
+
+Xilinx Protocol Checkers are instantiated on all AXI4 and AXIL
+interfaces in Shell Bus Functional Model (BFM). By default, all the
+tests run with protocol checkers enabled. If there is a protocol error
+in any one of the AXI interfaces, then the protocol checker will log an
+error similar to the example below.
+
+.. code-block:: verilog
+
+   tb.card.fpga.sh.axl_pc_sda_slv_inst.REP   : BIT(         35) :   ERROR : Invalid state x
+   tb.card.fpga.sh.axi_pc_mstr_inst_pcim.REP : BIT(         33) :   ERROR : Invalid state x
+   tb.card.fpga.sh.axi_pc_mstr_inst_pcis.REP : BIT(         35) :   ERROR : Invalid state x
+   tb.card.fpga.sh.axl_pc_ocl_slv_inst.REP   : BIT(         35) :   ERROR : Invalid state x
+
+Please refer to the `protocol checker <https://github.com/aws/aws-fpga/tree/f2/hdk/common/verif/models/xilinx_axi_pc/axi_protocol_checker_v1_1_vl_rfs.v>`__
+for mapping between bit positions and the protocol errors.
 
 SV Test API Reference
 ---------------------
@@ -375,15 +542,19 @@ Writes virtual dip switches.
 Declaration
 ^^^^^^^^^^^
 
-task set_virtual_dip_switch(input int slot_id=0, int dip);
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+task set_virtual_dip_switch(input int slot_id=0, int dip)
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-======== ========================
-Argument Description
-======== ========================
-slot_id  Slot ID
-dip      16bit dip switch setting
-======== ========================
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
+   * - dip
+     - 16bit dip switch setting
 
 *get_virtual_dip_switch*
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -400,14 +571,17 @@ Reads virtual dip switches.
 Declaration
 ^^^^^^^^^^^
 
-function logic [15:0] get_virtual_dip_switch(input int slot_id=0);
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+function logic [15:0] get_virtual_dip_switch(input int slot_id=0)
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-======== ===========
-Argument Description
-======== ===========
-slot_id  Slot ID
-======== ===========
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
 
 *get_virtual_led*
 ~~~~~~~~~~~~~~~~~
@@ -424,14 +598,17 @@ Reads virtual LEDs.
 Declaration
 ^^^^^^^^^^^
 
-function logic [15:0] get_virtual_led(input int slot_id=0);
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+function logic [15:0] get_virtual_led(input int slot_id=0)
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-======== ===========
-Argument Description
-======== ===========
-slot_id  Slot ID
-======== ===========
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
 
 *kernel_reset*
 ~~~~~~~~~~~~~~
@@ -448,17 +625,19 @@ Issues a kernel reset.
 Declaration
 ^^^^^^^^^^^
 
-.. _function-void-kernel_resetinput-int-slot_id0-logic-d--1:
+function void kernel_reset(input int slot_id=0, logic d = 1)
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-function void kernel_reset(input int slot_id=0, logic d = 1);
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-======== ===========
-Argument Description
-======== ===========
-slot_id  Slot ID
-d        reset value
-======== ===========
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
+   * - d
+     - reset value
 
 *poke*
 ~~~~~~
@@ -468,7 +647,7 @@ d        reset value
 Description
 ^^^^^^^^^^^
 
-The SV Test API task 'poke' writes 512 bits of data to the CL via the
+The SV Test API task ‘poke’ writes 512 bits of data to the CL via the
 AXI PCIeS interface.
 
 .. _declaration-4:
@@ -476,21 +655,27 @@ AXI PCIeS interface.
 Declaration
 ^^^^^^^^^^^
 
-.. _task-pokeinput-int-slot_id--0-logic-630-addr-logic-5110-data-logic-50-id--6h0-datasizedata_size-size--datasizeuint32-axiportaxi_port-intf--axiportport_dma_pcis:
+task poke(input int slot_id = 0, logic [63:0] addr, logic [511:0] data, logic [5:0] id = 6’h0, DataSize::DATA_SIZE size = DataSize::UINT32, AxiPort::AXI_PORT intf = AxiPort::PORT_DMA_PCIS)
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-task poke(input int slot_id = 0, logic [63:0] addr, logic [511:0] data, logic [5:0] id = 6'h0, DataSize::DATA_SIZE size = DataSize::UINT32, AxiPort::AXI_PORT intf = AxiPort::PORT_DMA_PCIS);
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-======== =============
-Argument Description
-======== =============
-slot_id  Slot ID
-addr     Write Address
-data     Write Data
-id       AXI ID
-size     Data Size
-intf     AXI CL Port
-======== =============
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
+   * - addr
+     - Write Address
+   * - data
+     - Write Data
+   * - id
+     - AXI ID
+   * - size
+     - Data Size
+   * - intf
+     - AXI CL Port
 
 *poke_pcis*
 ~~~~~~~~~~~
@@ -500,7 +685,7 @@ intf     AXI CL Port
 Description
 ^^^^^^^^^^^
 
-The SV Test API task 'poke_pcis' writes 512 bits of data to the CL via
+The SV Test API task ‘poke_pcis’ writes 512 bits of data to the CL via
 the AXI PCIE interface.
 
 .. _declaration-5:
@@ -508,20 +693,25 @@ the AXI PCIE interface.
 Declaration
 ^^^^^^^^^^^
 
-.. _task-poke_pcisinput-int-slot_id--0-logic-630-addr-logic-5110-data-logic-630-strb-logic-50-id--6h0:
+task poke_pcis(input int slot_id = 0, logic [63:0] addr, logic [511:0] data, logic [63:0] strb, logic [5:0] id = 6’h0)
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-task poke_pcis(input int slot_id = 0, logic [63:0] addr, logic [511:0] data, logic [63:0] strb, logic [5:0] id = 6'h0);
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-======== =============
-Argument Description
-======== =============
-slot_id  Slot ID
-addr     Write Address
-data     Write Data
-strb     Write Strobe
-id       AXI ID
-======== =============
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
+   * - addr
+     - Write Address
+   * - data
+     - Write Data
+   * - strb
+     - Write Strobe
+   * - id
+     - AXI ID
 
 *poke_pcis_wc*
 ~~~~~~~~~~~~~~
@@ -531,7 +721,7 @@ id       AXI ID
 Description
 ^^^^^^^^^^^
 
-The SV Test API task 'poke' writes 64 bits of data to the CL via the AXI
+The SV Test API task ‘poke’ writes 64 bits of data to the CL via the AXI
 PCIeS interface.
 
 .. _declaration-6:
@@ -539,20 +729,25 @@ PCIeS interface.
 Declaration
 ^^^^^^^^^^^
 
-.. _task-poke_pcis_wcinput-int-slot_id--0-input-logic-630-addr-logic-310-data--logic-50-id--6h0-logic-20-size--3d6:
+task poke_pcis_wc(input int slot_id = 0, input logic [63:0] addr, logic [31:0] data [$], logic [5:0] id = 6’h0, logic [2:0] size = 3’d6)
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-task poke_pcis_wc(input int slot_id = 0, input logic [63:0] addr, logic [31:0] data [$], logic [5:0] id = 6'h0, logic [2:0] size = 3'd6);
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-======== =======================
-Argument Description
-======== =======================
-slot_id  Slot ID
-addr     Write Address
-data [$] DW array for Write Data
-id       AXI ID
-size     Data Size
-======== =======================
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
+   * - addr
+     - Write Address
+   * - data [$]
+     - DW array for Write Data
+   * - id
+     - AXI ID
+   * - size
+     - Data Size
 
 *peek*
 ~~~~~~
@@ -562,7 +757,7 @@ size     Data Size
 Description
 ^^^^^^^^^^^
 
-The SV Test API task 'peek' reads up to 512 bits of data from the CL via
+The SV Test API task ‘peek’ reads up to 512 bits of data from the CL via
 the AXI PCIeS interface.
 
 .. _declaration-7:
@@ -570,21 +765,27 @@ the AXI PCIeS interface.
 Declaration
 ^^^^^^^^^^^
 
-.. _task-peekinput-int-slot_id--0-input-logic-630-addr-output-logic-5110-data-input-logic-50-id--6h0-datasizedata_size-size--datasizeuint32-axiportaxi_port-intf--axiportport_dma_pcis:
+task peek(input int slot_id = 0, input logic [63:0] addr, output logic [511:0] data, input logic [5:0] id = 6’h0, DataSize::DATA_SIZE size = DataSize::UINT32, AxiPort::AXI_PORT intf = AxiPort::PORT_DMA_PCIS)
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-task peek(input int slot_id = 0, input logic [63:0] addr, output logic [511:0] data, input logic [5:0] id = 6'h0, DataSize::DATA_SIZE size = DataSize::UINT32, AxiPort::AXI_PORT intf = AxiPort::PORT_DMA_PCIS);
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-======== ============
-Argument Description
-======== ============
-slot_id  Slot ID
-addr     Read Address
-data     Read Data
-id       AXI ID
-size     Data Size
-intf     AXI CL Port
-======== ============
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
+   * - addr
+     - Read Address
+   * - data
+     - Read Data
+   * - id
+     - AXI ID
+   * - size
+     - Data Size
+   * - intf
+     - AXI CL Port
 
 *peek_pcis*
 ~~~~~~~~~~~
@@ -594,7 +795,7 @@ intf     AXI CL Port
 Description
 ^^^^^^^^^^^
 
-The SV Test API function 'task peek_pcis' reads 512 bits of data from
+The SV Test API function ‘task peek_pcis’ reads 512 bits of data from
 the CL via the AXI PCIS interface.
 
 .. _declaration-8:
@@ -602,19 +803,23 @@ the CL via the AXI PCIS interface.
 Declaration
 ^^^^^^^^^^^
 
-.. _task-peek_pcisinput-int-slot_id--0-logic-630-addr-output-logic-5110-data-input-logic-50-id--6h0:
+task peek_pcis(input int slot_id = 0, logic [63:0] addr, output logic [511:0] data, input logic [5:0] id = 6’h0)
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-task peek_pcis(input int slot_id = 0, logic [63:0] addr, output logic [511:0] data, input logic [5:0] id = 6'h0);
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-======== ============
-Argument Description
-======== ============
-slot_id  Slot ID
-addr     Read Address
-data     Read Data
-id       AXI ID
-======== ============
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
+   * - addr
+     - Read Address
+   * - data
+     - Read Data
+   * - id
+     - AXI ID
 
 *issue_flr*
 ~~~~~~~~~~~
@@ -631,14 +836,17 @@ Issues a PCIe Function Level Reset (FLR).
 Declaration
 ^^^^^^^^^^^
 
-task issue_flr(input int slot_id=0);
-''''''''''''''''''''''''''''''''''''
+task issue_flr(input int slot_id=0)
+'''''''''''''''''''''''''''''''''''
 
-======== ===========
-Argument Description
-======== ===========
-slot_id  Slot ID
-======== ===========
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
 
 *nsec_delay*
 ~~~~~~~~~~~~
@@ -655,16 +863,17 @@ Wait dly nanoseconds.
 Declaration
 ^^^^^^^^^^^
 
-.. _task-nsec_delayinput-int-dly--10000:
+task nsec_delay(input int dly = 10000)
+''''''''''''''''''''''''''''''''''''''
 
-task nsec_delay(input int dly = 10000);
-'''''''''''''''''''''''''''''''''''''''
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-======== ====================
-Argument Description
-======== ====================
-dly      delay in nanoseconds
-======== ====================
+   * - Argument
+     - Description
+   * - dly
+     - delay in nanoseconds
 
 *poke_ocl*
 ~~~~~~~~~~
@@ -674,7 +883,7 @@ dly      delay in nanoseconds
 Description
 ^^^^^^^^^^^
 
-The SV Test API task 'poke_ocl' writes 32 bits of data to the CL via the
+The SV Test API task ‘poke_ocl’ writes 32 bits of data to the CL via the
 AXI OCL interface.
 
 .. _declaration-11:
@@ -682,19 +891,23 @@ AXI OCL interface.
 Declaration
 ^^^^^^^^^^^
 
-.. _task-poke_oclinput-int-slot_id--0-logic-630-addr-logic-310-data-logic-50-id--6h0:
+task poke_ocl(input int slot_id = 0, logic [63:0] addr, logic [31:0] data, logic [5:0] id = 6’h0)
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-task poke_ocl(input int slot_id = 0, logic [63:0] addr, logic [31:0] data, logic [5:0] id = 6'h0);
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-======== =============
-Argument Description
-======== =============
-slot_id  Slot ID
-addr     Write Address
-data     Write Data
-id       AXI ID
-======== =============
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
+   * - addr
+     - Write Address
+   * - data
+     - Write Data
+   * - id
+     - AXI ID
 
 *peek_ocl*
 ~~~~~~~~~~
@@ -704,7 +917,7 @@ id       AXI ID
 Description
 ^^^^^^^^^^^
 
-The SV Test API function 'task peek_ocl' reads 64 bits of data from the
+The SV Test API function ‘task peek_ocl’ reads 64 bits of data from the
 CL via the AXI OCL interface.
 
 .. _declaration-12:
@@ -712,19 +925,23 @@ CL via the AXI OCL interface.
 Declaration
 ^^^^^^^^^^^
 
-.. _task-peek_oclinput-int-slot_id--0-logic-630-addr-output-logic-630-data-input-logic-50-id--6h0:
+task peek_ocl(input int slot_id = 0, logic [63:0] addr, output logic [63:0] data, input logic [5:0] id = 6’h0)
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-task peek_ocl(input int slot_id = 0, logic [63:0] addr, output logic [63:0] data, input logic [5:0] id = 6'h0);
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-======== ============
-Argument Description
-======== ============
-slot_id  Slot ID
-addr     Read Address
-data     Read Data
-id       AXI ID
-======== ============
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
+   * - addr
+     - Read Address
+   * - data
+     - Read Data
+   * - id
+     - AXI ID
 
 *poke_sda*
 ~~~~~~~~~~
@@ -734,7 +951,7 @@ id       AXI ID
 Description
 ^^^^^^^^^^^
 
-The SV Test API task 'poke_sda' writes 32 bits of data to the CL via the
+The SV Test API task ‘poke_sda’ writes 32 bits of data to the CL via the
 AXI OCL interface.
 
 .. _declaration-13:
@@ -742,19 +959,23 @@ AXI OCL interface.
 Declaration
 ^^^^^^^^^^^
 
-.. _task-poke_sdainput-int-slot_id--0-logic-630-addr-logic-310-data-logic-50-id--6h0:
+task poke_sda(input int slot_id = 0, logic [63:0] addr, logic [31:0] data, logic [5:0] id = 6’h0)
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-task poke_sda(input int slot_id = 0, logic [63:0] addr, logic [31:0] data, logic [5:0] id = 6'h0);
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-======== =============
-Argument Description
-======== =============
-slot_id  Slot ID
-addr     Write Address
-data     Write Data
-id       AXI ID
-======== =============
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
+   * - addr
+     - Write Address
+   * - data
+     - Write Data
+   * - id
+     - AXI ID
 
 *peek_sda*
 ~~~~~~~~~~
@@ -764,7 +985,7 @@ id       AXI ID
 Description
 ^^^^^^^^^^^
 
-The SV Test API function 'task peek_sda' reads 64 bits of data from the
+The SV Test API function ‘task peek_sda’ reads 64 bits of data from the
 CL via the AXI SDA interface.
 
 .. _declaration-14:
@@ -772,19 +993,23 @@ CL via the AXI SDA interface.
 Declaration
 ^^^^^^^^^^^
 
-.. _task-peek_sdainput-int-slot_id--0-logic-630-addr-output-logic-630-data-input-logic-50-id--6h0:
+task peek_sda(input int slot_id = 0, logic [63:0] addr, output logic [63:0] data, input logic [5:0] id = 6’h0)
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-task peek_sda(input int slot_id = 0, logic [63:0] addr, output logic [63:0] data, input logic [5:0] id = 6'h0);
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-======== ============
-Argument Description
-======== ============
-slot_id  Slot ID
-addr     Read Address
-data     Read Data
-id       AXI ID
-======== ============
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
+   * - addr
+     - Read Address
+   * - data
+     - Read Data
+   * - id
+     - AXI ID
 
 *is_dma_to_cl_done*
 ~~~~~~~~~~~~~~~~~~~
@@ -801,17 +1026,19 @@ Returns non-zero if the DMA to the CL is complete.
 Declaration
 ^^^^^^^^^^^
 
-.. _function-bit-is_dma_to_cl_doneinput-int-slot_id--0-input-int-chan:
+function bit is_dma_to_cl_done(input int slot_id = 0, input int chan)
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-function bit is_dma_to_cl_done(input int slot_id = 0, input int chan);
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-======== ========================
-Argument Description
-======== ========================
-slot_id  Slot ID
-chan     DMA channel to use (0-3)
-======== ========================
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
+   * - chan
+     - DMA channel to use (0-3)
 
 *is_dma_to_buffer_done*
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -828,17 +1055,19 @@ Returns non-zero if the DMA to the buffer is complete.
 Declaration
 ^^^^^^^^^^^
 
-.. _function-bit-is_dma_to_buffer_doneinput-int-slot_id--0-input-int-chan:
+function bit is_dma_to_buffer_done(input int slot_id = 0, input int chan)
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-function bit is_dma_to_buffer_done(input int slot_id = 0, input int chan);
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-======== ========================
-Argument Description
-======== ========================
-slot_id  Slot ID
-chan     DMA channel to use (0-3)
-======== ========================
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
+   * - chan
+     - DMA channel to use (0-3)
 
 *set_chk_clk_freq*
 ~~~~~~~~~~~~~~~~~~
@@ -848,8 +1077,8 @@ chan     DMA channel to use (0-3)
 Description
 ^^^^^^^^^^^
 
-The SV test API function 'function void set_chk_clk_freq(input int
-slot_id = 0, logic chk_freq = 1'b1);' is used to enable frequency checks
+The SV test API function ‘function void set_chk_clk_freq(input int
+slot_id = 0, logic chk_freq = 1’b1);’ is used to enable frequency checks
 in shell model.
 
 .. _declaration-17:
@@ -857,17 +1086,19 @@ in shell model.
 Declaration
 ^^^^^^^^^^^
 
-.. _function-void-set_chk_clk_freqinput-int-slot_id--0-logic-chk_freq--1b1:
+function void set_chk_clk_freq(input int slot_id = 0, logic chk_freq = 1’b1)
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-function void set_chk_clk_freq(input int slot_id = 0, logic chk_freq = 1'b1);
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-======== ===========
-Argument Description
-======== ===========
-slot_id  Slot ID
-chk_freq enable bit
-======== ===========
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
+   * - chk_freq
+     - enable bit
 
 *chk_prot_err_stat*
 ~~~~~~~~~~~~~~~~~~~
@@ -877,24 +1108,25 @@ chk_freq enable bit
 Description
 ^^^^^^^^^^^
 
-The SV test API function 'function logic chk_prot_err_stat(input int
-slot_id = 0);' is used to check protocol error status.
+The SV test API function ‘function logic chk_prot_err_stat(input int
+slot_id = 0);’ is used to check protocol error status.
 
 .. _declaration-18:
 
 Declaration
 ^^^^^^^^^^^
 
-.. _function-logic-chk_clk_err_cntinput-int-slot_id--0:
+function logic chk_clk_err_cnt(input int slot_id = 0)
+'''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-function logic chk_clk_err_cnt(input int slot_id = 0);
-''''''''''''''''''''''''''''''''''''''''''''''''''''''
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-======== ===========
-Argument Description
-======== ===========
-slot_id  Slot ID
-======== ===========
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
 
 *que_buffer_to_cl*
 ~~~~~~~~~~~~~~~~~~
@@ -911,20 +1143,25 @@ Queues a buffer for the DMA to send data to the CL.
 Declaration
 ^^^^^^^^^^^
 
-.. _function-void-que_buffer_to_clinput-int-slot_id--0-int-chan-logic-630-src_addr-logic-630-cl_addr-logic-270-len:
+function void que_buffer_to_cl(input int slot_id = 0, int chan, logic [63:0] src_addr, logic [63:0] cl_addr, logic [27:0] len)
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-function void que_buffer_to_cl(input int slot_id = 0, int chan, logic [63:0] src_addr, logic [63:0] cl_addr, logic [27:0] len);
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-======== ========================
-Argument Description
-======== ========================
-slot_id  Slot ID
-chan     DMA channel to use (0-3)
-src_addr Data's Source Address
-cl_addr  Custom Logic Address
-len      Length of DMA in bytes
-======== ========================
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
+   * - chan
+     - DMA channel to use (0-3)
+   * - src_addr
+     - Data's Source Address
+   * - cl_addr
+     - Custom Logic Address
+   * - len
+     - Length of DMA in bytes
 
 *que_cl_to_buffer*
 ~~~~~~~~~~~~~~~~~~
@@ -941,20 +1178,25 @@ Queues a buffer for the DMA to receive data from the CL.
 Declaration
 ^^^^^^^^^^^
 
-.. _function-void-que_cl_to_bufferinput-int-slot_id--0-int-chan-logic-630-dst_addr-logic-630-cl_addr-logic-270-len:
+function void que_cl_to_buffer(input int slot_id = 0, int chan, logic [63:0] dst_addr, logic [63:0] cl_addr, logic [27:0] len)
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-function void que_cl_to_buffer(input int slot_id = 0, int chan, logic [63:0] dst_addr, logic [63:0] cl_addr, logic [27:0] len);
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-======== ==========================
-Argument Description
-======== ==========================
-slot_id  Slot ID
-chan     DMA channel to use (0-3)
-dst_addr Data's Destination Address
-cl_addr  Custom Logic Address
-len      Length of DMA in bytes
-======== ==========================
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
+   * - chan
+     - DMA channel to use (0-3)
+   * - dst_addr
+     - Data's Destination Address
+   * - cl_addr
+     - Custom Logic Address
+   * - len
+     - Length of DMA in bytes
 
 *start_que_to_cl*
 ~~~~~~~~~~~~~~~~~
@@ -971,17 +1213,19 @@ Starts the DMA operation to the CL.
 Declaration
 ^^^^^^^^^^^
 
-.. _function-void-start_que_to_clinput-int-slot_id--0-int-chan:
+function void start_que_to_cl(input int slot_id = 0, int chan)
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-function void start_que_to_cl(input int slot_id = 0, int chan);
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-======== ========================
-Argument Description
-======== ========================
-slot_id  Slot ID
-chan     DMA channel to use (0-3)
-======== ========================
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
+   * - chan
+     - DMA channel to use (0-3)
 
 *start_que_to_buffer*
 ~~~~~~~~~~~~~~~~~~~~~
@@ -998,17 +1242,19 @@ Starts the DMA operation from the CL.
 Declaration
 ^^^^^^^^^^^
 
-.. _function-void-start_que_to_bufferinput-int-slot_id--0-int-chan:
+function void start_que_to_buffer(input int slot_id = 0, int chan)
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-function void start_que_to_buffer(input int slot_id = 0, int chan);
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-======== ========================
-Argument Description
-======== ========================
-slot_id  Slot ID
-chan     DMA channel to use (0-3)
-======== ========================
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
+   * - chan
+     - DMA channel to use (0-3)
 
 *map_host_memory*
 ~~~~~~~~~~~~~~~~~
@@ -1018,7 +1264,7 @@ chan     DMA channel to use (0-3)
 Description
 ^^^^^^^^^^^
 
-The SV Test API function 'task map_host_memory(input logic [63:0] addr)'
+The SV Test API function ‘task map_host_memory(input logic [63:0] addr)’
 maps host memory to 64-bit address.
 
 .. _declaration-23:
@@ -1026,14 +1272,17 @@ maps host memory to 64-bit address.
 Declaration
 ^^^^^^^^^^^
 
-task map_host_memory(input logic [63:0] addr);
-''''''''''''''''''''''''''''''''''''''''''''''
+task map_host_memory(input logic [63:0] addr)
+'''''''''''''''''''''''''''''''''''''''''''''
 
-======== ===========
-Argument Description
-======== ===========
-addr     Address
-======== ===========
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Argument
+     - Description
+   * - addr
+     - Address
 
 *hm_put_byte*
 ~~~~~~~~~~~~~
@@ -1043,23 +1292,27 @@ addr     Address
 Description
 ^^^^^^^^^^^
 
-The SV Test API function 'function void hm_put_byte(input longint
-unsigned addr, byte d)' is used to backdoor load host memory.
+The SV Test API function ‘function void hm_put_byte(input longint
+unsigned addr, byte d)’ is used to backdoor load host memory.
 
 .. _declaration-24:
 
 Declaration
 ^^^^^^^^^^^
 
-function void hm_put_byte(input longint unsigned addr, byte d);
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+function void hm_put_byte(input longint unsigned addr, byte d)
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-======== ===========
-Argument Description
-======== ===========
-addr     Address
-d        data
-======== ===========
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Argument
+     - Description
+   * - addr
+     - Address
+   * - d
+     - data
 
 *hm_get_byte*
 ~~~~~~~~~~~~~
@@ -1069,22 +1322,25 @@ d        data
 Description
 ^^^^^^^^^^^
 
-The SV Test API function 'function void hm_get_byte(input longint
-unsigned addr)' is used to read data from host memory using backdoor.
+The SV Test API function ‘function void hm_get_byte(input longint
+unsigned addr)’ is used to read data from host memory using backdoor.
 
 .. _declaration-25:
 
 Declaration
 ^^^^^^^^^^^
 
-function void hm_get_byte(input longint unsigned addr);
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''
+function void hm_get_byte(input longint unsigned addr)
+''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-======== ===========
-Argument Description
-======== ===========
-addr     Address
-======== ===========
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Argument
+     - Description
+   * - addr
+     - Address
 
 C Test API Reference
 --------------------
@@ -1097,8 +1353,8 @@ C Test API Reference
 Description
 ^^^^^^^^^^^
 
-The C Test API function 'extern void cl_poke(uint64_t addr, uint32_t
-data)' writes 32 bits of data to the CL via the AXI PCIeS interface.
+The C Test API function ‘extern void cl_poke(uint64_t addr, uint32_t
+data)’ writes 32 bits of data to the CL via the AXI PCIeS interface.
 This function calls the SV poke function via DPI calls.
 
 .. _declaration-26:
@@ -1106,15 +1362,19 @@ This function calls the SV poke function via DPI calls.
 Declaration
 ^^^^^^^^^^^
 
-extern void cl_poke(uint64_t addr, uint32_t data);
-''''''''''''''''''''''''''''''''''''''''''''''''''
+extern void cl_poke(uint64_t addr, uint32_t data)
+'''''''''''''''''''''''''''''''''''''''''''''''''
 
-======== =============
-Argument Description
-======== =============
-addr     Write Address
-data     Write Data
-======== =============
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Argument
+     - Description
+   * - addr
+     - Write Address
+   * - data
+     - Write Data
 
 *cl_peek*
 ~~~~~~~~~
@@ -1124,7 +1384,7 @@ data     Write Data
 Description
 ^^^^^^^^^^^
 
-The C Test API function 'extern void cl_peek(uint64_t addr)' Reads 32
+The C Test API function ‘extern void cl_peek(uint64_t addr)’ Reads 32
 bits of data from the CL via the AXI PCIeS interface. This function
 calls the SV peek function via DPI calls.
 
@@ -1133,15 +1393,19 @@ calls the SV peek function via DPI calls.
 Declaration
 ^^^^^^^^^^^
 
-extern void cl_peek(uint64_t addr, uint32_t data);
-''''''''''''''''''''''''''''''''''''''''''''''''''
+extern void cl_peek(uint64_t addr, uint32_t data)
+'''''''''''''''''''''''''''''''''''''''''''''''''
 
-======== ============
-Argument Description
-======== ============
-addr     Read Address
-data     Read Data
-======== ============
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Argument
+     - Description
+   * - addr
+     - Read Address
+   * - data
+     - Read Data
 
 *sv_map_host_memory*
 ~~~~~~~~~~~~~~~~~~~~
@@ -1151,8 +1415,8 @@ data     Read Data
 Description
 ^^^^^^^^^^^
 
-The C Test API function 'extern void sv_map_host_memory(uint8_t
-\*memory)' maps host memory to memory allocated by memory buffer. This
+The C Test API function ’extern void sv_map_host_memory(uint8_t
+\*memory)’ maps host memory to memory allocated by memory buffer. This
 function calls the SV map_host_memory function via DPI calls.
 
 .. _declaration-28:
@@ -1160,14 +1424,17 @@ function calls the SV map_host_memory function via DPI calls.
 Declaration
 ^^^^^^^^^^^
 
-extern void sv_map_host_memory(uint8_t \*memory);
-'''''''''''''''''''''''''''''''''''''''''''''''''
+extern void sv_map_host_memory(uint8_t \*memory)
+''''''''''''''''''''''''''''''''''''''''''''''''
 
-======== ========================
-Argument Description
-======== ========================
-\*memory pointer to memory buffer
-======== ========================
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Argument
+     - Description
+   * - \*memory
+     - pointer to memory buffer
 
 *host_memory_putc*
 ~~~~~~~~~~~~~~~~~~
@@ -1177,8 +1444,8 @@ Argument Description
 Description
 ^^^^^^^^^^^
 
-The C Test API function 'void host_memory_putc(uint64_t addr, uint8_t
-data)' is used to backdoor load host memory.
+The C Test API function ‘void host_memory_putc(uint64_t addr, uint8_t
+data)’ is used to backdoor load host memory.
 
 .. _declaration-29:
 
@@ -1188,12 +1455,16 @@ Declaration
 void host_memory_putc(uint64_t addr, uint8_t data)
 ''''''''''''''''''''''''''''''''''''''''''''''''''
 
-======== ===========
-Argument Description
-======== ===========
-addr     Address
-data     data
-======== ===========
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Argument
+     - Description
+   * - addr
+     - Address
+   * - data
+     - data
 
 *host_memory_getc*
 ~~~~~~~~~~~~~~~~~~
@@ -1203,7 +1474,7 @@ data     data
 Description
 ^^^^^^^^^^^
 
-The C Test API function 'void host_memory_getc(uint64_t addr)' is used
+The C Test API function ‘void host_memory_getc(uint64_t addr)’ is used
 to backdoor load host memory.
 
 .. _declaration-30:
@@ -1216,11 +1487,14 @@ Declaration
 void host_memory_putc(uint64_t addr, uint8_t data)
 ''''''''''''''''''''''''''''''''''''''''''''''''''
 
-======== ===========
-Argument Description
-======== ===========
-addr     Address
-======== ===========
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Argument
+     - Description
+   * - addr
+     - Address
 
 *log_printf*
 ~~~~~~~~~~~~
@@ -1230,26 +1504,27 @@ addr     Address
 Description
 ^^^^^^^^^^^
 
-The C Test API function 'void log_printf(const char \*format, ...)' is
-used to print messages when running a simulation. The regular 'C' printf
-will not work when running a 'C' and 'SV' mixed language simulation.
-This 'C' function calls SV function sv_printf via DPI calls.
+The C Test API function ’void log_printf(const char \*format, …)’ is
+used to print messages when running a simulation. The regular ‘C’ printf
+will not work when running a ‘C’ and ‘SV’ mixed language simulation.
+This ‘C’ function calls SV function sv_printf via DPI calls.
 
 .. _declaration-31:
 
 Declaration
 ^^^^^^^^^^^
 
-.. _void-log_printfconst-char-format-:
+void log_printf(const char \*format, …)
+'''''''''''''''''''''''''''''''''''''''
 
-void log_printf(const char \*format, ...);
-''''''''''''''''''''''''''''''''''''''''''
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-======== =====================
-Argument Description
-======== =====================
-\*format message to be printed
-======== =====================
+   * - Argument
+     - Description
+   * - \*format
+     - message to be printed
 
 *sv_printf*
 ~~~~~~~~~~~
@@ -1259,7 +1534,7 @@ Argument Description
 Description
 ^^^^^^^^^^^
 
-The C Test API function 'extern void sv_printf(char \*msg)' is used to
+The C Test API function ’extern void sv_printf(char \*msg)’ is used to
 send a message buffer to the SV side of simulation.
 
 .. _declaration-32:
@@ -1267,14 +1542,17 @@ send a message buffer to the SV side of simulation.
 Declaration
 ~~~~~~~~~~~
 
-extern void sv_printf(char \*msg);
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+extern void sv_printf(char \*msg)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-======== ================
-Argument Description
-======== ================
-\*msg    Character buffer
-======== ================
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Argument
+     - Description
+   * - \*msg
+     - Character buffer
 
 *sv_pause*
 ~~~~~~~~~~
@@ -1284,7 +1562,7 @@ Argument Description
 Description
 ^^^^^^^^^^^
 
-The C test API function 'extern void sv_pause(uint32_t x);' is used to
+The C test API function ‘extern void sv_pause(uint32_t x);’ is used to
 add delay to a simulation.
 
 .. _declaration-33:
@@ -1292,14 +1570,17 @@ add delay to a simulation.
 Declaration
 ^^^^^^^^^^^
 
-extern void sv_pause(uint32_t x);
-'''''''''''''''''''''''''''''''''
+extern void sv_pause(uint32_t x)
+''''''''''''''''''''''''''''''''
 
-======== ======================
-Argument Description
-======== ======================
-x        Delay in micro seconds
-======== ======================
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Argument
+     - Description
+   * - x
+     - Delay in micro seconds
 
 *sv_fpga_start_buffer_to_cl*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1309,8 +1590,8 @@ x        Delay in micro seconds
 Description
 ^^^^^^^^^^^
 
-The C test API function 'extern "DPI-C" task
-sv_fpga_start_buffer_to_cl;' is used to do DMA data transfer from Host
+The C test API function ‘extern “DPI-C” task
+sv_fpga_start_buffer_to_cl;’ is used to do DMA data transfer from Host
 to CL.
 
 .. _declaration-34:
@@ -1318,18 +1599,25 @@ to CL.
 Declaration
 ^^^^^^^^^^^
 
-extern void sv_fpga_start_buffer_to_cl(uint32_t slot_id, uint32_t chan, uint32_t buf_size, const char \*wr_buffer, uint64_t cl_addr);
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+extern void sv_fpga_start_buffer_to_cl(uint32_t slot_id, uint32_t chan, uint32_t buf_size, const char \*wr_buffer, uint64_t cl_addr)
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-========= ======================
-Argument  Description
-========= ======================
-slot_id   Slot ID
-chan      DMA channel
-buf_size  Size of the buffer
-wr_buffer Data to be transferred
-cl_addr   Destination CL address
-========= ======================
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
+   * - chan
+     - DMA channel
+   * - buf_size
+     - Size of the buffer
+   * - wr_buffer
+     - Data to be transferred
+   * - cl_addr
+     - Destination CL address
 
 *sv_fpga_start_cl_to_buffer*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1339,8 +1627,8 @@ cl_addr   Destination CL address
 Description
 ^^^^^^^^^^^
 
-The C test API function 'extern "DPI-C" task
-sv_fpga_start_cl_to_buffer;' is used to do DMA data transfer from Host
+The C test API function ‘extern “DPI-C” task
+sv_fpga_start_cl_to_buffer;’ is used to do DMA data transfer from Host
 to CL.
 
 .. _declaration-35:
@@ -1348,18 +1636,25 @@ to CL.
 Declaration
 ^^^^^^^^^^^
 
-extern void sv_fpga_start_cl_to_buffer(uint32_t slot_id, uint32_t chan, uint32_t buf_size, uint64_t cl_addr);
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+extern void sv_fpga_start_cl_to_buffer(uint32_t slot_id, uint32_t chan, uint32_t buf_size, uint64_t cl_addr)
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-========= ======================
-Argument  Description
-========= ======================
-slot_id   Slot ID
-chan      DMA channel
-buf_size  Size of the buffer
-wr_buffer Data to be transferred
-cl_addr   Destination CL address
-========= ======================
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
+   * - chan
+     - DMA channel
+   * - buf_size
+     - Size of the buffer
+   * - wr_buffer
+     - Data to be transferred
+   * - cl_addr
+     - Destination CL address
 
 *get_global_counter_0*
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -1369,8 +1664,8 @@ cl_addr   Destination CL address
 Description
 ^^^^^^^^^^^
 
-The SV test API function 'function logic [63:0]
-get_global_counter_0(input int slot_id = 0);' is used to get global
+The SV test API function ‘function logic [63:0]
+get_global_counter_0(input int slot_id = 0);’ is used to get global
 counter_0 value.
 
 .. _declaration-36:
@@ -1378,16 +1673,17 @@ counter_0 value.
 Declaration
 ^^^^^^^^^^^
 
-.. _function-logic-630-get_global_counter_0input-int-slot_id--0:
+function logic [63:0] get_global_counter_0(input int slot_id = 0)
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-function logic [63:0] get_global_counter_0(input int slot_id = 0);
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-======== ===========
-Argument Description
-======== ===========
-slot_id  Slot ID
-======== ===========
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
 
 *get_global_counter_1*
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -1397,8 +1693,8 @@ slot_id  Slot ID
 Description
 ^^^^^^^^^^^
 
-The SV test API function 'function logic [63:0]
-get_global_counter_1(input int slot_id = 0);' is used to get global
+The SV test API function ‘function logic [63:0]
+get_global_counter_1(input int slot_id = 0);’ is used to get global
 counter_1 value.
 
 .. _declaration-37:
@@ -1406,17 +1702,16 @@ counter_1 value.
 Declaration
 ^^^^^^^^^^^
 
-.. _function-logic-630-get_global_counter_1input-int-slot_id--0:
+function logic [63:0] get_global_counter_1(input int slot_id = 0)
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-function logic [63:0] get_global_counter_1(input int slot_id = 0);
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-======== ===========
-Argument Description
-======== ===========
-slot_id  Slot ID
-======== ===========
+   * - Argument
+     - Description
+   * - slot_id
+     - Slot ID
 
-.. |alt tag| image:: ../../_static/hdk/docs/cl-sim-testbench.png
-
-`Back to HDK README <../README.html>`__
+`Back to Home <../../index.html>`__

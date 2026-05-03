@@ -17,6 +17,7 @@
 #include <utils/lcd.h>
 #include <utils/log.h>
 #include <fpga_clkgen.h>
+#include <string.h>
 
 //
 // Frequency Table with multiplier and divider values for MMCM, sorted as per increasing frequency order.
@@ -223,8 +224,8 @@ static int aws_clkgen_set_freq(enum fpga_clkgen_mmcm_group group, uint32_t req_f
     fail_on_with_code(!reset && req_freq < FREQ_TABLE[0][0], out, rc, FPGA_ERR_INVALID_CLKGEN_INPUTS, "freq for clock group invalid");
 
     int idx_choice = 0;
-
     struct clkgen_recipe recipe;
+    memset(&recipe, 0, sizeof(recipe));
 
     // get index of closest match to the target freq from the FREQ_TABLE
     if (!reset) {
@@ -321,10 +322,10 @@ out:
 int aws_clkgen_get_dynamic(int slot_id, struct fpga_clkgen_info* info) {
 
     int rc = 0;
-    fail_on_with_code(info == NULL, out, rc, FPGA_ERR_SOFTWARE_PROBLEM, "info invalid pointer");
-
     pci_bar_handle_t pci_bar_handle = PCI_BAR_HANDLE_INIT;
     int fpga_attach_flags = 0;
+
+    fail_on_with_code(info == NULL, out, rc, FPGA_ERR_SOFTWARE_PROBLEM, "info invalid pointer");
 
     // Attach to PCIe PF/BAR
     rc = fpga_pci_attach(slot_id, AWS_CLKGEN_PF, AWS_CLKGEN_BAR, fpga_attach_flags, &pci_bar_handle);
@@ -359,6 +360,8 @@ out:
 int aws_clkgen_set_recipe(int slot_id, uint32_t recipe_a, uint32_t recipe_b, uint32_t recipe_c, uint32_t recipe_hbm, uint32_t reset) {
 
     int rc = 0;
+    pci_bar_handle_t pci_bar_handle = PCI_BAR_HANDLE_INIT;
+    int fpga_attach_flags = 0;
     if (!reset) {
       fail_on_with_code(recipe_a >= CLKGEN_A_RECIPE_TABLE_ROWS, out, rc, FPGA_ERR_INVALID_CLKGEN_INPUTS, "recipe for clock group a invalid");
       fail_on_with_code(recipe_b >= CLKGEN_B_RECIPE_TABLE_ROWS, out, rc, FPGA_ERR_INVALID_CLKGEN_INPUTS, "recipe for clock group b invalid");
@@ -367,9 +370,6 @@ int aws_clkgen_set_recipe(int slot_id, uint32_t recipe_a, uint32_t recipe_b, uin
     } else {
       recipe_a = recipe_b = recipe_c = recipe_hbm = 0;
     }
-
-    pci_bar_handle_t pci_bar_handle = PCI_BAR_HANDLE_INIT;
-    int fpga_attach_flags = 0;
 
     rc = fpga_pci_attach(slot_id, AWS_CLKGEN_PF, AWS_CLKGEN_BAR, fpga_attach_flags, &pci_bar_handle);
     fail_on(rc, out, "Unable to attach to the AFI on slot id %d", fpga_attach_flags);
@@ -408,6 +408,8 @@ out:
 
 int aws_clkgen_set_dynamic(int slot_id, uint32_t clk_a_freq, uint32_t clk_b_freq, uint32_t clk_c_freq, uint32_t clk_hbm_freq, uint32_t reset) {
     int rc = 0;
+    pci_bar_handle_t pci_bar_handle = PCI_BAR_HANDLE_INIT;
+    int fpga_attach_flags = 0;
     if (!reset) {
       fail_on_with_code(clk_a_freq > CLKGEN_A_1_MAX, out, rc, FPGA_ERR_INVALID_CLKGEN_INPUTS, "frequency for clock group a invalid");
       fail_on_with_code(clk_b_freq > CLKGEN_B_0_MAX, out, rc, FPGA_ERR_INVALID_CLKGEN_INPUTS, "frequency for clock group b invalid");
@@ -416,9 +418,6 @@ int aws_clkgen_set_dynamic(int slot_id, uint32_t clk_a_freq, uint32_t clk_b_freq
     } else {
       clk_a_freq = clk_b_freq = clk_c_freq = clk_hbm_freq = 0;
     }
-
-    pci_bar_handle_t pci_bar_handle = PCI_BAR_HANDLE_INIT;
-    int fpga_attach_flags = 0;
 
     // Attach to PCIe PF/BAR
     rc = fpga_pci_attach(slot_id, AWS_CLKGEN_PF, AWS_CLKGEN_BAR, fpga_attach_flags, &pci_bar_handle);

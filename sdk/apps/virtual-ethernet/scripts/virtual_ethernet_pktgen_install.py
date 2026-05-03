@@ -2,7 +2,7 @@
 
 # Amazon FPGA Hardware Development Kit
 #
-# Copyright 2016 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2026 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Amazon Software License (the "License"). You may not use
 # this file except in compliance with the License. A copy of the License is
@@ -15,18 +15,16 @@
 # implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import print_function
-import os
-import sys
-import distro
-import glob
+
 import argparse
+import glob
 import logging
+import os
 import platform
+import sys
 
 dpdk_git = "https://github.com/DPDK/dpdk.git"
 pktgen_git = "git://dpdk.org/apps/pktgen-dpdk"
-dpdk_kmods_git = "git://dpdk.org/dpdk-kmods"
 numa_git = "https://github.com/numactl/numactl.git"
 
 # Use a version that is "known good" for use with pktgen
@@ -36,30 +34,34 @@ numa_ver = "v2.0.12"
 
 # Patch file directory
 patches_dir = "../patches/pktgen-dpdk"
-dpdk_kmods_patches_dir = "../patches/spp-dpdk-kmods"
 
 # DPDK make target
 make_tgt = "x86_64-native-linuxapp-gcc"
 
 # Logger
-logger = logging.getLogger('logger')
+logger = logging.getLogger("logger")
+
 
 def print_success(scripts_path, install_path):
-    print("")
-    print("pktgen-dpdk installation and build complete!")
-    print("pktgen-dpdk may be setup via the following step:")
-    print("  sudo %s/virtual_ethernet_pktgen_setup.py %s --eni_dbdf <ENI_DBDF> --eni_ethdev <ENI_ETHDEV>" % (scripts_path, install_path))
+    logger.info(
+        "pktgen-dpdk installation and build complete!\n"
+        "pktgen-dpdk may be setup via the following step:\n"
+        f"  sudo {scripts_path}/virtual_ethernet_pktgen_setup.py {install_path} "
+        "--eni_dbdf <ENI_DBDF> --eni_ethdev <ENI_ETHDEV>"
+    )
+
 
 def cmd_exec(cmd):
     # Execute the cmd, check the return and exit on failures
     ret = os.system(cmd)
-    if ret != 0:
-        logger.error("cmd='%s' failed with ret=%d, exiting" % (cmd, ret))
+    if ret:
+        logger.error(f"{cmd=} failed with {ret=}, exiting")
         sys.exit(1)
 
+
 def install_dpdk_dep():
-    installed_distro = distro.name()
-    if (installed_distro == "Ubuntu"):
+    installed_distro = platform.freedesktop_os_release().get("NAME", "")
+    if "Ubuntu" in installed_distro:
         cmd_exec("sudo apt -y install libnuma-dev")
         cmd_exec("sudo apt -y install libpcap-dev")
         cmd_exec("sudo apt -y install meson")
@@ -68,19 +70,22 @@ def install_dpdk_dep():
         cmd_exec("sudo apt -y install libtool")
     else:
         cmd_exec("sudo yum -y install numactl-devel")
+        if "Rocky" in installed_distro:
+            cmd_exec("sudo dnf -y install dnf-plugins-core")
+            cmd_exec("sudo dnf config-manager --set-enabled powertools || sudo dnf config-manager --set-enabled crb")
         cmd_exec("sudo yum -y install libpcap-devel")
         cmd_exec("sudo yum -y install meson")
         cmd_exec("sudo yum -y install python3-pyelftools")
         cmd_exec("sudo yum -y install autoconf")
         cmd_exec("sudo yum -y install libtool")
 
+
 def install_pktgen_dpdk(install_path):
-    logger.debug("install_pktgen_dpdk: install_path=%s" % (install_path))
+    logger.debug(f"{install_path=}")
 
     if os.path.exists(install_path):
         # Allow the user to remove an already existing install_path
-        logger.error("install_path=%s allready exists." % (install_path))
-        logger.error("Please specify a different directory or remove the existing directory, exiting")
+        logger.error(f"{install_path=} already exists.\nPlease specify a different directory or remove the existing directory, exiting")
         sys.exit(1)
 
     # Install DPDK dependencies
@@ -89,64 +94,48 @@ def install_pktgen_dpdk(install_path):
     # Stash away the current working directory
     cwd = os.getcwd()
     scripts_path = os.path.dirname(os.path.abspath(sys.argv[0]))
-    logger.debug("scripts directory path is %s" % (scripts_path))
+    logger.debug(f"{scripts_path=}")
 
     # Make the install_path directory
-    cmd_exec("mkdir %s" % (install_path))
-
-    # Construct the path to the dpdk-kmods git patch files
-    dpdk_kmods_patches_path = "%s/%s" % (scripts_path, dpdk_kmods_patches_dir)
-    logger.info("Patches will be installed from %s" % (dpdk_kmods_patches_path))
-
-    # Read in the patch filenames
-    dpdk_kmods_patchfiles = []
-    for patchfile in sorted(glob.iglob("%s/000*.patch" % (dpdk_kmods_patches_path))):
-        logger.debug("found patchfile=%s" % patchfile)
-        dpdk_kmods_patchfiles.append(os.path.abspath(patchfile))
+    cmd_exec(f"mkdir {install_path}")
 
     # Construct the path to the git patch files
-    patches_path = "%s/%s" % (scripts_path, patches_dir)
-    logger.info("Patches will be installed from %s" % (patches_path))
+    patches_path = f"{scripts_path}/{patches_dir}"
+    logger.info(f"Patches will be installed from {patches_path}")
     # Read in the pktgen patch filenames
     patchfiles = []
-    for patchfile in sorted(glob.iglob("%s/000*.patch" % (patches_path))):
-        logger.debug("found patchfile=%s for pktgen" % patchfile)
+    patchfiles_log = []
+    for patchfile in sorted(glob.iglob(f"{patches_path}/000*.patch")):
+        patchfiles_log.append(f"found {patchfile=} for pktgen")
         patchfiles.append(os.path.abspath(patchfile))
+    if patchfiles_log:
+        logger.debug("\n".join(patchfiles_log))
     # Read in the dpdk patch filenames
     dpdk_patchfiles = []
-    for dpdk_patchfile in sorted(glob.iglob("%s/dpdk*.patch" % (patches_path))):
-        logger.debug("found patchfile=%s for dpdk" % dpdk_patchfile)
+    dpdk_patchfiles_log = []
+    for dpdk_patchfile in sorted(glob.iglob(f"{patches_path}/dpdk*.patch")):
+        dpdk_patchfiles_log.append(f"found {dpdk_patchfile=}")
         dpdk_patchfiles.append(os.path.abspath(dpdk_patchfile))
+    if dpdk_patchfiles_log:
+        logger.debug("\n".join(dpdk_patchfiles_log))
 
     # cd to the install_path directory
-    os.chdir("%s" % (install_path))
-
-    # Clone the DPDK-KMODS repo
-    logger.info("Cloning %s into %s" % (dpdk_kmods_git, install_path))
-    cmd_exec("git clone %s" % (dpdk_kmods_git))
-
-    # cd to the dpdk-kmods directory
-    os.chdir("dpdk-kmods")
-
-    # Apply the patches
-    for patchfile in dpdk_kmods_patchfiles:
-        logger.info("Applying patch for patchfile=%s" % patchfile)
-        cmd_exec("git am %s" % (patchfile))
+    os.chdir(install_path)
 
     # Clone the DPDK repo
-    os.chdir("%s" % (install_path))
-    logger.info("Cloning %s version of %s into %s" % (dpdk_ver, dpdk_git, install_path))
-    cmd_exec("git clone -b %s %s" % (dpdk_ver, dpdk_git))
+    os.chdir(install_path)
+    logger.info(f"Cloning {dpdk_ver} version of {dpdk_git} into {install_path}")
+    cmd_exec(f"git clone -b {dpdk_ver} {dpdk_git}")
 
     # cd to the dpdk directory
     os.chdir("dpdk")
 
     # Apply the patches
+    patches_log = []
     for dpdk_patchfile in dpdk_patchfiles:
-        logger.info("Applying patch for patchfile=%s" % dpdk_patchfile)
-        cmd_exec("git apply %s" % (dpdk_patchfile))
-
-    cmd_exec("cp -r ../dpdk-kmods/linux ./kernel/")
+        patches_log.append(f"Applying patch for {dpdk_patchfile=}")
+        cmd_exec(f"git apply {dpdk_patchfile}")
+    logger.info("\n".join(patches_log))
 
     # Configure the DPDK build
     cmd_exec("meson build")
@@ -155,9 +144,9 @@ def install_pktgen_dpdk(install_path):
     cmd_exec("sudo meson install")
 
     # Clone the numactl repo
-    os.chdir("%s" % (install_path))
-    logger.info("Cloning %s version of %s into %s" % (numa_ver, numa_git, install_path))
-    cmd_exec("git clone -b %s %s" % (numa_ver, numa_git))
+    os.chdir(install_path)
+    logger.info(f"Cloning {numa_ver} version of {numa_git} into {install_path}")
+    cmd_exec(f"git clone -b {numa_ver} {numa_git}")
 
     # cd to the numactl directory
     os.chdir("numactl")
@@ -169,53 +158,65 @@ def install_pktgen_dpdk(install_path):
     cmd_exec("sudo make install")
 
     # Clone the pktgen-dpdk repo
-    os.chdir("%s" % (install_path))
-    logger.info("Cloning %s version of %s into %s" % (pktgen_ver, pktgen_git, install_path))
-    cmd_exec("git clone -b %s %s" % (pktgen_ver, pktgen_git))
+    os.chdir(install_path)
+    logger.info(f"Cloning {pktgen_ver} version of {pktgen_git} into {install_path}")
+    cmd_exec(f"git clone -b {pktgen_ver} {pktgen_git}")
 
     # cd to the pktgen-dpdk directory
     os.chdir("pktgen-dpdk")
 
     # Apply the patches
+    patches_log = []
     for patchfile in patchfiles:
-        logger.info("Applying patch for patchfile=%s" % patchfile)
-        cmd_exec("git apply %s" % (patchfile))
+        patches_log.append(f"Applying patch for {patchfile=}")
+        cmd_exec(f"git apply {patchfile}")
+    if patches_log:
+        logger.info("\n".join(patches_log))
 
     # Build pktgen-dpdk
     cmd_exec("meson build")
     cmd_exec("ninja -C build")
 
     # cd back to the original directory
-    os.chdir("%s" % (cwd))
+    os.chdir(cwd)
 
     # Print a success message
     print_success(scripts_path, install_path)
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Installs pktgen-dpdk and applies pktgen related patches for ENA use.")
-    parser.add_argument('install_path', metavar='INSTALL_DIR', type=str,
-        help = "specify the full installation directory path")
-    parser.add_argument('--debug', action='store_true', required=False,
-        help='Enable debug messages')
-    args = parser.parse_args()
 
-    logging_level = logging.INFO
-    if args.debug:
-        logging_level = logging.DEBUG
-
-    logging_format = '%(levelname)s:%(asctime)s: %(message)s'
-
+def setup_logging(debug=False):
+    logging_level = logging.DEBUG if debug else logging.INFO
+    logging_format = "%(levelname)s:%(asctime)s: %(message)s"
     logger.setLevel(logging_level)
-
     fh = logging.StreamHandler()
-
     fh.setLevel(logging_level)
     formatter = logging.Formatter(logging_format)
     fh.setFormatter(formatter)
     logger.addHandler(fh)
 
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Installs pktgen-dpdk and applies pktgen related patches for ENA use.")
+    parser.add_argument(
+        "install_path",
+        metavar="INSTALL_DIR",
+        type=str,
+        help="specify the full installation directory path",
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        required=False,
+        help="Enable debug messages",
+    )
+    return parser.parse_args()
+
+
+def main():
+    args = parse_arguments()
+    setup_logging(args.debug)
     install_pktgen_dpdk(args.install_path)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

@@ -20,19 +20,17 @@
 
 import os
 import sys
-from glob import glob
 from argparse import ArgumentParser, Namespace
-from typing import Dict, List
-
+from glob import glob
 
 parser = ArgumentParser(prog="Regression Log Generator", description="Generate a log for all tests ran for the simulator specified")
-parser.add_argument('--simulator', dest='simulator', required=True)
-parser.add_argument('--cl_dir', dest='cl_dir', required=True)
-parser.add_argument('--regression_results_log', dest='regression_results_log', required=True)
-parser.add_argument('--sim_dir_extension', dest='sim_dir_extension', required=True)
+parser.add_argument("--simulator", dest="simulator", required=True)
+parser.add_argument("--cl_dir", dest="cl_dir", required=True)
+parser.add_argument("--regression_results_log", dest="regression_results_log", required=True)
+parser.add_argument("--sim_dir_extension", dest="sim_dir_extension", required=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = parser.parse_args()
 
     is_python3 = sys.version_info >= (3, 0) and sys.version_info < (4, 0)
@@ -48,19 +46,19 @@ class LogGenerator:
         self.regression_results_log: str = args.regression_results_log
         self.sim_dir_extension: str = args.sim_dir_extension
         self.makefile_testlist_path: str = f"{self.cl_dir}/verif/scripts/Makefile.tests"
-        self.test_results: Dict[str,str] = {}
+        self.test_results: dict[str, str] = {}
 
     def generate_regression_log(self) -> None:
         self.update_test_results()
 
         self.warn_of_test_count_mismatch()
 
-        with open(self.regression_results_log, 'w') as f:
+        with open(self.regression_results_log, "w") as f:
             table: str = print_table(self.test_results)
             f.write(table)
 
     def update_test_results(self) -> str:
-        all_logs: List[str] = glob(f"{self.cl_dir}/verif/sim/{self.simulator}/*{self.sim_dir_extension}/*.log")
+        all_logs: list[str] = glob(f"{self.cl_dir}/verif/sim/{self.simulator}/*{self.sim_dir_extension}/*.log")
         test_logs = [path for path in all_logs if self.is_test_log(path) and "backup" not in path]
         for test_log in test_logs:
             test_name: str = self.get_test_name_as_test_dirname(test_log)
@@ -68,7 +66,7 @@ class LogGenerator:
 
     @staticmethod
     def is_test_log(log_path: str) -> bool:
-        test_log_name: str = os.path.basename(log_path).replace('.log', '')
+        test_log_name: str = os.path.basename(log_path).replace(".log", "")
         test_name: str = LogGenerator.get_test_name_as_test_dirname(log_path)
         parent_dir: str = os.path.basename(os.path.dirname(log_path))
         return test_name in parent_dir and test_log_name in parent_dir and test_log_name in test_name
@@ -88,35 +86,35 @@ class LogGenerator:
         return "NONE (possible compile error)"
 
     def warn_of_test_count_mismatch(self) -> None:
-        expected_test_list: List[str] = self.get_expected_test_list(self.makefile_testlist_path)
+        expected_test_list: list[str] = self.get_expected_test_list(self.makefile_testlist_path)
         num_test_results: int = len(self.test_results.values())
         if num_test_results != len(expected_test_list):
-            found_tests: List[str] = list(self.test_results.keys())
-            print(f"""
-
-    WARNING: Found {num_test_results} test results in 'sim' directory, but found {len(expected_test_list)} in {self.makefile_testlist_path}.
-        EXPECTED: {expected_test_list}
-        FOUND in 'sim' dir: {found_tests}
-
-        MISSING: {list(set(expected_test_list) - set(found_tests))}
-        ADDITIONAL: {list(set(found_tests) - set(expected_test_list))}
-            """)
+            found_tests: list[str] = list(self.test_results.keys())
+            makefile_path = self.makefile_testlist_path
+            print(
+                f"WARNING: Found {num_test_results} test results in 'sim' directory, "
+                f"but found {len(expected_test_list)} in {makefile_path}.\n"
+                f"EXPECTED: {expected_test_list}\n"
+                f"FOUND in 'sim' dir: {found_tests}\n\n"
+                f"MISSING: {list(set(expected_test_list) - set(found_tests))}"
+                f"ADDITIONAL: {list(set(found_tests) - set(expected_test_list))}"
+            )
 
     @staticmethod
-    def get_expected_test_list(makefile_testlist_path: str) -> List[str]:
+    def get_expected_test_list(makefile_testlist_path: str) -> list[str]:
         makefile_test_signature: str = "TEST="
-        expected_tests: List[str] = []
+        expected_tests: list[str] = []
         with open(makefile_testlist_path) as f:
             for line in f:
                 line = line.strip()
-                if makefile_test_signature in line and not line.startswith('#'):
+                if makefile_test_signature in line and not line.startswith("#"):
                     test_name: str = line.split(makefile_test_signature)[1].strip()
                     expected_tests.append(test_name)
         return expected_tests
 
 
-def print_table(data: Dict[str, str]) -> str:
-    max_key_length: int = max([len(key) for key in data.keys()])
+def print_table(data: dict[str, str]) -> str:
+    max_key_length: int = max([len(key) for key in data])
     max_value_length: int = max([len(value) for value in data.values()])
     test_name_header: str = f"{'TEST NAME':<{max_key_length}}"
     test_result_header: str = f"{'TEST RESULT':<{max_value_length}}"
@@ -124,7 +122,7 @@ def print_table(data: Dict[str, str]) -> str:
     max_key_length = len(test_name_header)
     max_value_length = len(test_result_header)
 
-    rows: List[str] = get_rows(data, max_key_length, max_value_length)
+    rows: list[str] = get_rows(data, max_key_length, max_value_length)
     border: str = get_border(max_key_length, max_value_length)
     content: str = "".join([f"{row}\n" for row in rows])
     table: str = f"""
@@ -139,21 +137,21 @@ def print_table(data: Dict[str, str]) -> str:
 
 
 def get_border(max_key_length: int, max_value_length: int) -> str:
-    SPACE_PADDING = 2
-    border_sections = ['-' * (val + SPACE_PADDING) for val in [max_key_length, max_value_length]]
+    space_padding = 2
+    border_sections = ["-" * (val + space_padding) for val in [max_key_length, max_value_length]]
     return f"|{'|'.join(border_sections)}|"
 
 
-def get_rows(data: Dict[str, str], max_key_length: int, max_value_length: int) -> List[str]:
-    rows: List[str] = []
+def get_rows(data: dict[str, str], max_key_length: int, max_value_length: int) -> list[str]:
+    rows: list[str] = []
     for key, value in data.items():
-        rows.append(f"| {str(key):<{max_key_length}} " + '|' + f" {str(value):<{max_value_length}} |")
+        rows.append(f"| {str(key):<{max_key_length}} " + "|" + f" {str(value):<{max_value_length}} |")
     return rows
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         generator = LogGenerator(args)
         generator.generate_regression_log()
-    except:
-        raise Exception("The Python script experienced a failure. Please review and make sure Python 3.8+ is installed\n")
+    except Exception as e:
+        raise Exception("The Python script experienced a failure. Please review and make sure Python 3.8+ is installed\n") from e

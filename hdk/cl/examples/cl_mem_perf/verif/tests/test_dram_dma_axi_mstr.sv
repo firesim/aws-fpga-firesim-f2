@@ -50,9 +50,7 @@ module test_dram_dma_axi_mstr();
        logic [63:0] host_memory_buffer_address;
 
 
-       tb.power_up(.clk_recipe_a(ClockRecipe::A1),
-                  .clk_recipe_b(ClockRecipe::B0),
-                  .clk_recipe_c(ClockRecipe::C0));
+       tb.power_up(.clk_recipe_a(ClockRecipe::A1));
        initialize_ddr();
        deselect_cl_tst_hw();
 

@@ -11,14 +11,26 @@ In order to get the most from this document, readers may want to familiarize the
 1. The [F2 customer logic flow](../../../hdk/README.md#build-accelerator-afi-using-hdk-design-flow); creating and loading AFIs (Amazon FPGA Images)
 2. [DPDK](https://dpdk.org) (Data Plane Development Kit), a framework for creating high performance network traffic handling tools in userspace by limiting context switches, locks, or other blocking logic.
 3. [EC2 Networking Concepts](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_Network_and_Security.html)
+4. [EC2 Placement Groups](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/placement-groups.html) for optimal network performance
+
+## Network Performance Considerations
+
+**For optimal network performance and lowest latency, instances should be launched in the same placement group.**
+
+When using Virtual Ethernet with multiple instances (e.g., an F2 instance communicating with a packet generator instance), network latency and throughput are critical factors for performance. AWS provides several mechanisms to optimize network performance:
+
+**Cluster Placement Groups** Packs instances close together inside an Availability Zone. This strategy enables workloads to achieve the low-latency network performance necessary for tightly-coupled node-to-node communication that is typical of high-performance computing (HPC) applications.
+
+For more information, see:
+- [Working with placement groups](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/placement-groups.html)
 
 # Virtual Ethernet Architecture
 
-The Virtual Ethernet architecture is built upon DPDK (http://dpdk.org). DPDK is an open source set of libraries and drivers for fast packet processing, and runs mostly in Linux user-space.
+The Virtual Ethernet architecture is built upon [DPDK](http://dpdk.org). DPDK is an open source set of libraries and drivers for fast packet processing, and runs mostly in Linux user-space.
 
 The following diagram shows the high level architecture for the Virtual Ethernet sample application(s) and Bringup/Debug tools.
 
-![alt tag](./images/Virtual_Ethernet_Arch.jpg)
+![Virtual Ethernet Arch](./../../../docs-rtd/source/_static/sdk/apps/virtual-ethernet/Virtual_Ethernet_Arch.jpg)
 
 ## User Space
 

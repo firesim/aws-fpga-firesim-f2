@@ -59,6 +59,10 @@ Fully documented in [FPGA Management Tools](./userspace/fpga_mgmt_tools/README.m
 - **[Virtual Ethernet](./apps/virtual-ethernet/README.md)** - High-performance networking
 - **[MSI-X Interrupts](./apps/msix-interrupts/README.md)** - Interrupt handling implementation
 
+### Interactive Jupyter Notebooks
+
+- **[F2 Jupyter Notebooks](./notebooks/README.md)** - Hands-on tutorials for FPGA register access and development from Python
+
 ### Performance & Optimization
 
 - **[Performance Optimization Guide](./docs/F2_Software_Performance_Optimization_Guide.md)**

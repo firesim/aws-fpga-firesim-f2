@@ -349,7 +349,7 @@ int number_of_open_files(pid_t pid)
 	/* Account for ".", ".." */
 	n -= 2;
 
-	/* Acount for opening "/proc/self/fd" if we're checking ourself. */
+	/* Account for opening "/proc/self/fd" if we're checking ourself. */
 	if (getpid() == pid)
 		n--;
 

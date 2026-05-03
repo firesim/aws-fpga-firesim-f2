@@ -1,13 +1,20 @@
-# Software Performance Optimizations for F2.48xlarge Instances
+# Software Performance Optimizations
 
-This guide outlines strategies for maximizing performance on `f2.48xlarge` instances through effective CPU-to-FPGA mapping and NUMA optimization. In dual-socket configurations, implementing NUMA-aware techniques is essential for minimizing latency and maximizing PCIe bandwidth between CPUs and FPGA accelerators. The optimizations within this document do not apply to `f2.6xlarge` and `f2.12xlarge` instances because all CPU resources, memory, NVMe devices, and FPGA devices are on a single NUMA node.
+## Network Performance Optimization
 
-## Quick Start Guide
+**For multi-instance applications requiring low-latency inter-instance communication**, such as the [Virtual Ethernet framework](../apps/virtual-ethernet/README.md), using **EC2 Placement Groups** is critical for optimal network performance. Cluster placement groups ensure instances are placed on hardware with shared high-capacity networking infrastructure, providing the lowest possible network latency and highest throughput between instances.
+
+For detailed information about placement groups, see:
+- [Working with placement groups](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/placement-groups.html)
+
+## NUMA Node Optimization
+
+This guide outlines strategies for maximizing performance on `f2.48xlarge` instances through effective CPU-to-FPGA mapping and NUMA optimization. In dual-socket configurations, implementing NUMA-aware techniques is essential for minimizing latency and maximizing PCIe bandwidth between CPUs and FPGA accelerators. The optimizations within this section do not apply to `f2.6xlarge` and `f2.12xlarge` instances because all CPU resources, memory, NVMe devices, and FPGA devices are on a single NUMA node.
 
 To optimize your application's performance running on an `f2.48xlarge` instance, refer to the [Script to Construct a FPGA to NUMA Node and vCPU Mapping](#script-to-construct-an-fpga-to-numa-node-and-vcpu-mapping) or follow the steps below:
 
 1. Determine the FPGA slot numbers using `fpga-describe-local-image`
-2. Locate the optimal vCPUs for your slot in the [mapping table](#ideal-vcpu---fpga-mapping-for-optimal-pcie-performance)
+2. Locate the optimal vCPUs for your slot in the [mapping table](#ideal-vcpu-to-fpga-mapping-for-optimal-pcie-performance)
 3. Apply CPU pinning using either:
    * `numactl --localalloc --physcpubind <vCPU list> <bash command>` command
    * Application-specific CPU affinity settings
@@ -51,7 +58,7 @@ NUMA awareness is crucial for performance because:
 3. Memory bandwidth is higher for local access
 4. Improper NUMA alignment can cause significant performance degradation
 
-This is why the [vCPU to FPGA mapping table](#ideal-vcpu---fpga-mapping-for-optimal-pcie-performance) in this guide is important - it ensures your application uses the optimal CPU cores for each FPGA device.
+This is why the [vCPU to FPGA mapping table](#ideal-vcpu-to-fpga-mapping-for-optimal-pcie-performance) in this guide is important - it ensures your application uses the optimal CPU cores for each FPGA device.
 
 ### Identifying the CPU <-> FPGA NUMA Mapping
 
@@ -88,7 +95,7 @@ node   0   1
   1:  32  10
 ```
 
-### Ideal vCPU <-> FPGA Mapping for Optimal PCIe Performance
+### Ideal vCPU to FPGA Mapping for Optimal PCIe Performance
 
 Processes can be pinned to particular vCPUs by using Linux tools such as `numactl`. The "Optimal vCPUs" below refer to the optimal 16 vCPUs (shared L3 cache) for that slot. Below is a table of the optimal vCPUs for each FPGA slot on an `f2.48xlarge` instance.
 

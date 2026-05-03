@@ -2,37 +2,36 @@
 
 ## Table of Contents
 
-- [AWS FPGA Hardware Development Kit (HDK)](#aws-fpga-hardware-development-kit-hdk)
-  - [Table of Contents](#table-of-contents)
-  - [HDK Overview](#hdk-overview)
-  - [Getting Started](#getting-started)
-    - [Quick Start HW/SW Example: Host-to-FPGA Communication via the OCL Interface](#quick-start-hwsw-example-host-to-fpga-communication-via-the-ocl-interface)
-    - [Build Accelerator AFI using HDK Design Flow](#build-accelerator-afi-using-hdk-design-flow)
-      - [Step 1. Setup Development Environment](#step-1-setup-development-environment)
-      - [Step 2. Clone Developer Kit Repository](#step-2-clone-developer-kit-repository)
-      - [Step 3. Setup Environment for HDK Design Flow](#step-3-setup-environment-for-hdk-design-flow)
-      - [Step 4. Build CL Design Check Point (DCP)](#step-4-build-cl-design-check-point-dcp)
-      - [Step 5. Explore Build Artifacts](#step-5-explore-build-artifacts)
-      - [Step 6. Submit Generated DCP for AFI Creation](#step-6-submit-generated-dcp-for-afi-creation)
-      - [Step 7. Load Accelerator AFI on F2 Instance](#step-7-load-accelerator-afi-on-f2-instance)
-      - [Step 8. Validate your AFI using Example Runtime Software](#step-8-validate-your-afi-using-example-runtime-software)
-  - [AFI PCIe IDs](#afi-pcie-ids)
-  - [CL Examples](#cl-examples)
-    - [cl\_sde](#cl_sde)
-    - [cl\_dram\_hbm\_dma](#cl_dram_hbm_dma)
-    - [cl\_mem\_perf](#cl_mem_perf)
-    - [CL\_TEMPLATE - Create your own design](#cl_template---create-your-own-design)
-  - [CL Example Hierarchy](#cl-example-hierarchy)
-    - [Design](#design)
-    - [Verification](#verification)
-    - [Software](#software)
-    - [Build](#build)
-  - [HDK Common Library](#hdk-common-library)
-    - [/shell\_stable](#shell_stable)
-    - [/verif](#verif)
-    - [/ip](#ip)
-    - [/lib](#lib)
-  - [Getting Started](#getting-started-1)
+- [HDK Overview](#hdk-overview)
+- [Getting Started](#getting-started)
+  - [Quick Start HW and SW Example: Host-to-FPGA Communication via the OCL Interface](#quick-start-hw-and-sw-example-host-to-fpga-communication-via-the-ocl-interface)
+  - [Build Accelerator AFI using HDK Design Flow](#build-accelerator-afi-using-hdk-design-flow)
+    - [Step 1. Setup Development Environment](#step-1-setup-development-environment)
+    - [Step 2. Clone Developer Kit Repository](#step-2-clone-developer-kit-repository)
+    - [Step 3. Setup Environment for HDK Design Flow](#step-3-setup-environment-for-hdk-design-flow)
+    - [Step 4. Build CL Design Check Point (DCP)](#step-4-build-cl-design-check-point-dcp)
+    - [Step 5. Explore Build Artifacts](#step-5-explore-build-artifacts)
+    - [Step 6. Submit Generated DCP for AFI Creation](#step-6-submit-generated-dcp-for-afi-creation)
+    - [Step 7. Load Accelerator AFI on F2 Instance](#step-7-load-accelerator-afi-on-f2-instance)
+    - [Step 8. Validate your AFI using Example Runtime Software](#step-8-validate-your-afi-using-example-runtime-software)
+- [AFI PCIe IDs](#afi-pcie-ids)
+- [CL Examples](#cl-examples)
+  - [cl\_axil\_reg\_access](#cl_axil_reg_access)
+  - [cl\_sde](#cl_sde)
+  - [cl\_dram\_hbm\_dma](#cl_dram_hbm_dma)
+  - [cl\_mem\_perf](#cl_mem_perf)
+  - [CL\_TEMPLATE - Create your own design](#cl_template-to-create-your-own-design)
+- [CL Example Hierarchy](#cl-example-hierarchy)
+  - [Design](#design)
+  - [Verification](#verification)
+  - [Software](#software)
+  - [Build](#build)
+- [HDK Common Library](#hdk-common-library)
+  - [/shell\_stable](#shell_stable)
+  - [/verif](#verif)
+  - [/ip](#ip)
+  - [/lib](#lib)
+- [Next Steps](#next-steps)
 
 ## HDK Overview
 
@@ -40,17 +39,15 @@ The HDK design flow enables developers to create RTL-based accelerator designs f
 
 ## Getting Started
 
-### Quick Start HW/SW Example: Host-to-FPGA Communication via the OCL Interface
+### Quick Start HW and SW Example: Host-to-FPGA Communication via the OCL Interface
 
-The [test_aws_clk_gen.c software runtime example](./cl/examples/cl_mem_perf/software/runtime/test_aws_clk_gen.c)
-utilizes the [OCL AXI interface](./docs/AWS_Shell_Interface_Specification.md)
-to program the [AWS Clock Generation IP](./docs/AWS_CLK_GEN_spec.md) within the CL_MEM_PERF AFI.
+The [cl_axil_reg_access](./cl/examples/cl_demo/cl_axil_reg_access) example is the recommended starting point for new HDK developers. It demonstrates host-to-FPGA register communication using the [OCL AXI-Lite interface](./docs/AWS_Shell_Interface_Specification.md) by implementing a simple 32-bit adder: the host writes two operands to FPGA registers, triggers the addition, and reads back the result.
 
-The example can be run by following the steps in the following documentation references:
+The example can be run by following the steps:
 
-1. Build and ingest the [CL_MEM_PERF](./cl/examples/cl_mem_perf/README.md) example by following the [Build Accelerator AFI using HDK Design Flow](#build-accelerator-afi-using-hdk-design-flow) section below
+1. Build and ingest the [cl_axil_reg_access](./cl/examples/cl_demo/cl_axil_reg_access/README.md) example by following the [Build Accelerator AFI using HDK Design Flow](#build-accelerator-afi-using-hdk-design-flow) section below
 2. [Load the AGFI](#step-7-load-accelerator-afi-on-f2-instance) generated by the `create-fpga-image` command
-3. Follow the [CL_MEM_PERF software runtime compilation instructions](./cl/examples/cl_mem_perf/README.md#software) and execute `./test_aws_clk_gen`
+3. Follow the [cl_axil_reg_access software runtime instructions](./cl/examples/cl_demo/cl_axil_reg_access/README.md#software-runtime) to compile and run a test, for example `./test_sum`
 
 ### Build Accelerator AFI using HDK Design Flow
 
@@ -93,7 +90,7 @@ cd build/scripts
 ./aws_build_dcp_from_cl.py -c cl_sde
 ```
 
-The Shell supplies two base clocks to the CL: a 250MHz `clk_main_a0` clock and a 100MHz `clk_hbm_ref` clock. However, the CL can run at higher frequencies using locally generated clocks. F2 Developer Kit offers an [AWS Clock Generation (AWS_CLK_GEN) IP](./hdk/docs/AWS_CLK_GEN_spec.md) that you can leverage in your design to generate CL clocks with frequencies specified in the [Clock Recipes User Guide](./docs/Clock_Recipes_User_Guide.md).
+The Shell supplies two base clocks to the CL: a 250MHz `clk_main_a0` clock and a 100MHz `clk_hbm_ref` clock. However, the CL can run at higher frequencies using locally generated clocks. F2 Developer Kit offers an [AWS Clock Generation (AWS_CLK_GEN) IP](./docs/AWS_CLK_GEN_spec.md) that you can leverage in your design to generate CL clocks with frequencies specified in the [Clock Recipes User Guide](./docs/Clock_Recipes_User_Guide.md).
 
 Run the command below to build a DCP with desired clock recipes:
 
@@ -110,7 +107,8 @@ A few more notes on [aws_build_dcp_from_cl.py](https://github.com/aws/aws-fpga/b
 
 - Use `--mode small_shell` option to build CL designs with Small Shell.
 - Use `--cl <CL name>` option to build a different CL design. This is default to `cl_dram_hbm_dma`.
-- Use `--aws_clk_gen` option to annotate the use of [AWS clock generation block](./hdk/docs/AWS_CLK_GEN_spec.md) and [customer clock recipes](./docs/Clock_Recipes_User_Guide.md).
+- Use `--aws_clk_gen` option to annotate the use of [AWS clock generation block](./docs/AWS_CLK_GEN_spec.md) and [customer clock recipes](./docs/Clock_Recipes_User_Guide.md).
+- Use `--no-encrypt` option to disable encryption of the design's source code and DCPs. Encryption, enabled by default, may impede debugging as errors from encrypted envelope do not provide meaningful information.
 - The script also allows developers to pass different Vivado directives as shown below:
   - `--place <directive>`: Default to `SSI_SpreadLogic_high` placement strategy. Please refer to [Vivado User Guide](https://docs.amd.com/r/en-US/ug904-vivado-implementation/Available-Directives) for supported directives.
   - `--phy_opt <directive>` : Default to `AggressiveExplore` physical optimization strategy. Please refer to [Vivado User Guide](https://docs.amd.com/r/en-US/ug904-vivado-implementation/Using-Directives?tocId=9xJiGeSV35ApxUsX7pAVDg) for supported directives
@@ -132,9 +130,9 @@ tail <YYYYY_MM_DD-HHMMSS.vivado.log>
 
 Generated post-route DCP and design manifest files are archived into a tarball file `<YYYY_MM_DD-HHMMSS>.Developer_CL.tar` and saved in the `$CL_DIR/build/checkpoints/` directory. All design timing reports are saved in the `$CL_DIR/build/reports/` directory.
 
-:warning: If Vivado cannot achieve timing closure for the design, the post-route DCP file name will be marked with `.VIOLATED` as an indicator. Developers need to refer to the DCPs and timing reports for detailed timing failures.
+⚠️ If Vivado cannot achieve timing closure for the design, the post-route DCP file name will be marked with `.VIOLATED` as an indicator. Developers need to refer to the DCPs and timing reports for detailed timing failures.
 
-:warning: The build process will generate a DCP tarball file regardless of the design’s timing closure state. However, in case of a DCP with timing failures, the design’s functionality is no longer guaranteed. Therefore, the AFI created using this DCP should be used for testing purpose ONLY. The following warning is shown in this case:
+⚠️ The build process will generate a DCP tarball file regardless of the design’s timing closure state. However, in case of a DCP with timing failures, the design’s functionality is no longer guaranteed. Therefore, the AFI created using this DCP should be used for testing purpose ONLY. The following warning is shown in this case:
 
 ```text
 !!! WARNING: Detected a post-route DCP with timing failure for AFI creation. Design functionalities are NOT guaranteed.
@@ -142,11 +140,14 @@ Generated post-route DCP and design manifest files are archived into a tarball f
 
 #### Step 6. Submit Generated DCP for AFI Creation
 
-Once developers have built their DCP, they may submit their FPGA design for AFI creation in one of two ways:
+Once developers have built their DCP, they may submit their FPGA design for AFI creation.
+
+Before doing so, an IAM role capable of S3 and EC2 access must be attached to the instance where the DCP will be submitted from.
+See the [Setting Up IAM Roles for Use with the AWS EC2 FPGA Development Kit](../developer_resources/Setting_up_IAM_roles_for_devkit_use.md#afi-creation-permissions) guide for the required permissions.
 
 1. Execute the [create_afi.py utility](./scripts/create_afi.py) from anywhere within the `aws-fpga` repository:
     - `$AWS_FPGA_REPO_DIR/hdk/scripts/create_afi.py`
-    - Make require a Python virtual env which can be started with: `source $AWS_FPGA_REPO_DIR/hdk/scripts/start_venv.sh`
+    - May require a Python virtual environment which can be started with: `source $AWS_FPGA_REPO_DIR/hdk/scripts/start_venv.sh`
 
 2. OR: Upload the DCP to S3 and specify all fields to the `aws ec2 create-fpga-image` utility according to instructions in [Manual AFI Creation](./docs/Amazon_FPGA_Images_Afis_Guide.md#option-2-manual-afi-creation)
 
@@ -258,7 +259,7 @@ Bye...
 
 ## AFI PCIe IDs
 
-Customers can customize the PCIe IDs for generated AFIs, including Vendor ID (VID), Device ID (DID), Subsystem Vendor ID (SVID) and Subsystem Device ID (SSID), to facilitate the proper driver binding. These PCIe IDs are required for the AFI generation process and must be defined in the [cl_id_defines.vh](./cl/examples/cl_sde/design/cl_id_defines.vh) file under each exmaple. Here is an exmaple in the `CL_SDE` example:
+Customers can customize the PCIe IDs for generated AFIs, including Vendor ID (VID), Device ID (DID), Subsystem Vendor ID (SVID) and Subsystem Device ID (SSID), to facilitate the proper driver binding. These PCIe IDs are required for the AFI generation process and must be defined in the [cl_id_defines.vh](./cl/examples/cl_sde/design/cl_id_defines.vh) file under each example. Here is an example in the `CL_SDE` example:
 
 ```Verilog
 // CL_SH_ID0
@@ -279,7 +280,7 @@ Customers can customize the PCIe IDs for generated AFIs, including Vendor ID (VI
 `define CL_SH_ID1       32'h1D51_FEDC
 ```
 
-When a DCP tarball file gets generated, the IDs are included in the manifest file within the tarball:
+When a DCP tarball file gets generated, the IDs are included in the [manifest file](./docs/AFI_Manifest.md) within the tarball:
 
 ```bash
 pci_device_id=0xF002
@@ -297,6 +298,12 @@ All examples have the following features:
 
 - Simulation model, tests, and scripts
 - Xilinx Vivado implementation scripts for generating bitstream
+
+### [cl_axil_reg_access](./cl/examples/cl_demo/cl_axil_reg_access)
+
+The cl_axil_reg_access example demonstrates basic host-to-FPGA register communication using the OCL AXI-Lite interface. It implements a simple 32-bit adder with control/status registers. Verification tests are included for register access patterns, arithmetic correctness, control/status handshaking, error handling, and reset behavior.
+
+See [cl_axil_reg_access](./cl/examples/cl_demo/cl_axil_reg_access) for more information.
 
 ### [cl_sde](./cl/examples/cl_sde)
 
@@ -317,7 +324,7 @@ The cl_mem_perf is a reference design for F2 where the objective is to demonstra
 
 See [cl_mem_perf](./cl/examples/cl_mem_perf) for more information
 
-### [CL_TEMPLATE](./cl/examples/CL_TEMPLATE) - Create your own design
+### [CL_TEMPLATE](./cl/examples/CL_TEMPLATE) to Create your own design
 
 CL_TEMPLATE is targeted to help customers create a new CustomLogic example. Users can update the design, verification, and build flow to meet their needs without having to tear down a separate example. We recommend going through other CL examples before creating a new CL.
 
@@ -335,13 +342,13 @@ cd hdk/cl/examples
 
 ## CL Example Hierarchy
 
-The following sections describe common functionality across all CL examples. [CL_TEMPLATE](./CL_TEMPLATE) can be used as a reference for what features are available in all CL examples; as well as what's required to verify, test, and build.
+The following sections describe common functionality across all CL examples. [CL_TEMPLATE](./cl/examples/CL_TEMPLATE) can be used as a reference for what features are available in all CL examples; as well as what's required to verify, test, and build.
 
 ### Design
 
 - All CL examples store the design files under `/hdk/cl/examples/$CL_DIR/design/`
   - For example: [/hdk/cl/examples/CL_TEMPLATE/design/](./cl/examples/CL_TEMPLATE/design/)
-- All IP designs available by default are stored in [/hdk/common/ip/cl_ip](./common/ip/)
+- All IP designs available by default are stored in [/hdk/common/ip/cl_ip/](./common/)
   - More can be added from the Xilinx Vivado IP catalog
 
 ### Verification
@@ -349,8 +356,8 @@ The following sections describe common functionality across all CL examples. [CL
 - All CL examples utilize infrastructure found under [/hdk/common/verif/](./common/verif)
 - Simulation libraries are generated under `/hdk/common/verif/ip_simulation_libraries/`
 - All examples should list out the `/hdk/cl/examples/$CL_DIR/verif/tests/` and `Makefile.tests`
-  - For example [/hdk/cl/examples/CL_TEMPLATE/verif/tests/](./cl/examples/CL_TEMPLATE/verif/tests/)
-  - and [](./cl/examples/CL_TEMPLATE/verif/scripts/Makefile.tests)
+  - For example $AWS_FPGA_REPO_DIR/[hdk/cl/examples/CL_TEMPLATE/verif/tests/](./cl/examples/CL_TEMPLATE/verif/tests/)
+  - and [CL_TEMPLATE Makefile.tests](./cl/examples/CL_TEMPLATE/verif/scripts/Makefile.tests)
 - All HDK examples support a SH_DDR with 64GB access with an optional user controlled auto-precharge mode. Users can select the DDR access modes as follows:
 
 ```bash
@@ -365,14 +372,14 @@ make TEST=${TEST_NAME} USE_AP_64GB_DDR_DIMM=1
 
 **NOTE**: Please refer to [Supported_DDR_Modes.md](./docs/Supported_DDR_Modes.md) for details on supported DDR configurations.
 
-After adding new design IPs, make sure to add the new simulation `COMMON_LIBLISTS` in [$AWS-FPGA/hdk/common/verif/tb/scripts/Makefile.common.inc](./common/verif/tb/scripts/Makefile.common.inc)
+After adding new design IPs, make sure to add the new simulation `COMMON_LIBLISTS` in $AWS-FPGA/[hdk/common/verif/tb/scripts/Makefile.common.inc](./common/verif/tb/scripts/Makefile.common.inc)
 
-:warning: **Required for XSIM and Questa simulations**
+⚠️ **Required for XSIM and Questa simulations**
 
-- Make sure to add the new simulation libraries to `COMMON_LIBLISTS` in [$AWS_FPGA_REPO_DIR/hdk/common/verif/tb/scripts/Makefile.common.inc](./common/verif/tb/scripts/Makefile.common.inc)
+- Make sure to add the new simulation libraries to `COMMON_LIBLISTS` in $AWS_FPGA_REPO_DIR/[hdk/common/verif/tb/scripts/Makefile.common.inc](./common/verif/tb/scripts/Makefile.common.inc)
   - This is required for XSIM and Questa simulations
-  - These libraries can be found in [$AWS_FPGA_REPO_DIR/hdk/common/ip/cl_ip/cl_ip.ip_user_files/sim_scripts](https://github.com/aws/aws-fpga-resources/blob/-/cl_ip/cl_ip.ip_user_files/sim_scripts) followed by `"IP_NAME"/"SIMULATOR"/"IP_NAME".sh`
-- After adding new IP's to [$AWS_FPGA_REPO_DIR/hdk/common/ip](./common/ip) the simulation libraries need to be recompiled
+  - These libraries can be found in $AWS_FPGA_REPO_DIR/[hdk/common/ip/cl_ip/cl_ip.ip_user_files/sim_scripts](https://github.com/aws/aws-fpga-resources/blob/-/cl_ip/cl_ip.ip_user_files/sim_scripts) followed by `"IP_NAME"/"SIMULATOR"/"IP_NAME".sh`
+- After adding new IP's to $AWS_FPGA_REPO_DIR/[hdk/common/ip/](./common/) the simulation libraries need to be recompiled
   - Run `make regenerate_sim_libs <XSIM/VCS/QUESTA>=1`
 
 ### Software
@@ -381,7 +388,7 @@ All software runtime code can be found under the `software` directory.
 
 ### Build
 
-- All CL examples utilize infrastructure found under [$AWS_FPGA_REPO_DIR/hdk/common/shell_stable/build](./common/shell_stable/build)
+- All CL examples utilize infrastructure found under $AWS_FPGA_REPO_DIR/[hdk/common/shell_stable/build](./common/shell_stable/build)
 - Users can modify the following files to meet their build requirements:
   - [synth_CL_NAME.tcl](./cl/examples/CL_TEMPLATE/build/scripts/synth_CL_TEMPLATE.tcl) - top level script that reads design, IP, and constraint files
   - [cl_synth_user.xdc](./cl/examples/CL_TEMPLATE/build/constraints/cl_synth_user.xdc) - synthesis build constraints specific to that example
@@ -407,7 +414,7 @@ Developers should not modify or remove these files.
 
 The [shell_stable](./common/shell_stable) contains all the IPs, constraints and scripts for each shell release.
 
-### [/verif](./hdk/verif)
+### [/verif](./common/verif)
 
 The [verif directory](./common/verif) includes reference verification modules to be used as Bus Functional Models (BFM) as the external interface to simulate the CL. The verification related files common to all the CL examples are located in this directory. It has models, include, scripts, tb directories.
 
@@ -421,7 +428,7 @@ The [verif tb directory](./common/verif/tb) includes top level test bench relate
 
 The verif ip_simulation_libraries directory is created during runtime and includes the simulation libraries and CL IP compilation for all supported simulators.
 
-### [/ip](./common/ip)
+### [/ip](./common/)
 
 The [ip directory](https://github.com/aws/aws-fpga-resources) includes basic IP that is used by CL's.
 
@@ -457,9 +464,12 @@ The [lib directory](./common/lib) includes basic "library" elements that may be 
 - sync.v - Synchronizer
 - xpm_fifo.sv - Synchronous clock FIFO
 
-## Getting Started
+## Next Steps
 
-* Review the [cl_dram_hbm_dma](./cl/examples/cl_dram_hbm_dma/README.md) and [cl_sde](./cl/examples/cl_sde) examples
-* [Run RTL Simulations](./docs/RTL_Simulation_Guide_for_HDK_Design_Flow.md) on the example designs
-* Dive deep into [Shell interface specifications](./docs/AWS_Shell_Interface_Specification.md) and [PCIe Memory map](./docs/AWS_Fpga_Pcie_Memory_Map.md)
-* Create your own designs/Port F1 designs to F2 systems.
+- Start with the introductory [cl_axil_reg_access](./cl/examples/cl_demo/cl_axil_reg_access/README.md) example to learn host-to-FPGA register access via the OCL interface
+- Review the [cl_dram_hbm_dma](./cl/examples/cl_dram_hbm_dma/README.md) and [cl_sde](./cl/examples/cl_sde) examples
+- [Run RTL Simulations](./docs/RTL_Simulation_Guide_for_HDK_Design_Flow.md) on the example designs
+- Dive deep into [Shell interface specifications](./docs/AWS_Shell_Interface_Specification.md) and [PCIe Memory map](./docs/AWS_Fpga_Pcie_Memory_Map.md)
+- Create your own designs/Port F1 designs to F2 systems
+- Try the [Virtual JTAG XVC debug flow](./docs/Virtual_JTAG_XVC.md) and understand the [shell timeout behavior](./docs/How_To_Detect_Shell_Timeout.md)
+- (Optional) After creating your accelerator design, [create your own runtime AMI](../developer_resources/runtime_ami_builder/README.md)

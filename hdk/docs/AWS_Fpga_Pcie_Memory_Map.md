@@ -25,7 +25,7 @@ This document describes the size and attributes of each BAR. Even though all of 
   |        * 64-bit, prefetchable
   |        * 128GiB (0x00_0000_0000 to 0x1F_FFFF_FFFF)
   |        * Mapped to the PCIS AXI4 interface of CL
-  |        * Typically used for DMA traffic bewteen the host and HBM/DDR memories on the card
+  |        * Typically used for DMA traffic between the host and HBM/DDR memories on the card
   |
   |--- Management PF (MgmtPF)
      |-- BAR0

@@ -224,6 +224,12 @@ if { [info exists ::env(VIVADO_TOOL_VERSION)] } {
     exit
 }
 
+if { [info exists ::env(ENCRYPT)] } {
+    set ENCRYPT $::env(ENCRYPT)
+} else {
+    set ENCRYPT 1
+}
+
 if { [info exists ::env(DESIRED_HOST_FREQUENCY)] } {
     set desired_host_frequency $::env(DESIRED_HOST_FREQUENCY)
     print "Using DESIRED_HOST_FREQUENCY from environment: $desired_host_frequency MHz"
@@ -255,21 +261,15 @@ set src_post_enc_dir "${build_dir}/src_post_encryption"
 
 cd $scripts_dir
 
-#
 # Create clock constraints file based on clock recipes
-#
 print "Generating clock contraints for CL source clocks"
 source $HDK_SHELL_DIR/build/scripts/aws_gen_clk_constraints.tcl
 
-#
 # Add source code
-#
-print "Encrypting CL source code"
+print "Checking for source code encryption"
 source encrypt.tcl
 
-#
 # Build
-#
 switch $BUILD_FLOW {
   "SynthCL" {
     source ${scripts_dir}/synth_${CL}.tcl

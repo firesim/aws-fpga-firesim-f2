@@ -63,7 +63,7 @@ enum {
 	FPGA_CMD_CLEAR_HW_METRICS = 1 << 2,
 	/** F2 does not support forcing the Shell to Reload */
 	FPGA_CMD_FORCE_SHELL_RELOAD = 1 << 3,
-	/** F2 does not support DRAMN data retention */
+	/** F2 does not support DRAM data retention */
 	FPGA_CMD_DRAM_DATA_RETENTION = 1 << 4,
 	/** F2 does not support extended metrics size */
 	FPGA_CMD_EXTENDED_METRICS_SIZE = 1 << 6,
@@ -309,7 +309,7 @@ struct fpga_slot_spec {
 } __attribute__((packed));
 
 /**
- * AFI vendor/device/subsytem vendor/subsystem IDs.
+ * AFI vendor/device/subsystem vendor/subsystem IDs.
  * e.g. the expected PCI IDs for a loaded AFI.
  */
 struct afi_device_ids {
