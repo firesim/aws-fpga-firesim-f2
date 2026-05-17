@@ -155,3 +155,8 @@ developer_resources/runtime_ami_builder/dist/
 developer_resources/runtime_ami_builder/node_modules
 developer_resources/runtime_ami_builder/.idea
 developer_resources/runtime_ami_builder/cdk.out
+
+hdk/cl/developer_designs/cl_firesim/design/xsim.dir/
+hdk/cl/developer_designs/cl_firesim/design/xvlog.log
+hdk/cl/developer_designs/cl_firesim/xsim.dir/
+hdk/cl/developer_designs/cl_firesim/xvlog.log
