@@ -23,10 +23,8 @@ module test_hbm_perf_kernel_cfg();
    `include "base_test_utils.svh";
 
    initial begin
-     automatic logic [31:0] read_data = 32'h0;
-     tb.power_up(.clk_recipe_a(ClockRecipe::A1),
-          .clk_recipe_b(ClockRecipe::B0),
-          .clk_recipe_c(ClockRecipe::C0));
+      automatic logic [31:0] read_data = 32'h0;
+      tb.power_up(.clk_recipe_a(ClockRecipe::A1));
       aws_clkgen_dsrt_rst();
       initialize_hbm();
       deselect_cl_tst_hw();

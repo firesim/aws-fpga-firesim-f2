@@ -2,19 +2,19 @@
 
 ## Table of Contents
 
-1. [Overview](#Overview)
-2. [Functional Description](#FuncDesc)
-3. [Interfaces and Address Range](#Interfaces)
-4. [Software](#Software)
-5. [Metadata](#Metadata)
+1. [Overview](#overview)
+2. [Functional Description](#functional-description)
+3. [Interfaces and Address Range](#interfaces-and-address-range)
+4. [Software](#software)
+5. [Metadata](#metadata)
 
-⚠️**Note**: Please note that Virtual Ethernet/SDE is not supported by Vitis (XRT).
+⚠️ **Note**: Please note that Virtual Ethernet/SDE is not supported by Vitis (XRT).
 
 ## Overview
 
 The CL_SDE example implements the FPGA custom logic used to generate the AFI to demonstrate the [Virtual Ethernet Application](../../../../sdk/apps/virtual-ethernet/doc/Virtual_Ethernet_Application_Guide.md). The CL_SDE demonstrates the following:
 
-1. Using the [Streaming Data Engine](https://github.com/aws/aws-fpga/blob/-/sdk/apps/virtual-ethernet/doc/SDE_HW_Guide.md) (SDE) IP Block in your custom logic.
+1. Using the [Streaming Data Engine](../../../../sdk/apps/virtual-ethernet/doc/SDE_HW_Guide.md) (SDE) IP Block in your custom logic.
 2. Connectivity between the [Virtual Ethernet Application](../../../../sdk/apps/virtual-ethernet/doc/Virtual_Ethernet_Application_Guide.md) and the SDE.
 3. Connectivity between the Shell and the SDE.
 4. Clocks and Resets for the SDE.
@@ -22,7 +22,7 @@ The CL_SDE example implements the FPGA custom logic used to generate the AFI to 
 
 ### System Diagram
 
-![Diagram](./design/CL_SDE_Block_Diagram.jpg)
+![Diagram](./../../../../../docs-rtd/source/_static/cl_sde_images/CL_SDE_Block_Diagram.jpg)
 
 ## Functional Description
 
@@ -35,7 +35,7 @@ The following functionality is implemented in the CL_SDE:
 5. Configuration and Reset generation logic.
 6. Pipelining for PCIM and PCIS interfaces.
 
-See [SDE HW Guide](https://github.com/aws/aws-fpga/blob/-/sdk/apps/virtual-ethernet/doc/SDE_HW_Guide.md) for details about the functional description of the SDE.
+See [SDE HW Guide](../../../../sdk/apps/virtual-ethernet/doc/SDE_HW_Guide.md) for details about the functional description of the SDE.
 
 ## Interfaces and Address Range
 
@@ -52,7 +52,7 @@ The PCIM interfaces is used by the SDE to read and write to host memory.
 
 | Low Address | High Address | Description |
 |-------------|--------------|-------------|
-| 0x00_0000_0000 | 0x00_0000_3FFF | [SDE](https://github.com/aws/aws-fpga/blob/-/sdk/apps/virtual-ethernet/doc/SDE_HW_Guide.md) |
+| 0x00_0000_0000 | 0x00_0000_3FFF | [SDE](../../../../sdk/apps/virtual-ethernet/doc/SDE_HW_Guide.md) |
 | 0x00_0000_4000 | 0x1F_FFFF_FFFF | Unused |
 
 #### OCL

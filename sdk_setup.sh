@@ -18,7 +18,7 @@
 # When being run $0 and $_ will be the same.
 
 script=${BASH_SOURCE[0]}
-if [ $script == $0 ]; then
+if [ "$script" == "$0" ]; then
   echo "ERROR: You must source this script"
   exit 2
 fi
@@ -53,12 +53,15 @@ if ! bash $SDK_DIR/sdk_install.sh; then
 fi
 
 cd sdk/userspace/cython_bindings
-python3 -m venv venv
-source venv/bin/activate
-pip install setuptools Cython
-python3 setup.py build_ext --inplace
-deactivate
-echo "Cython bindings setup complete!"
-
+if python3 -m venv venv && \
+   source venv/bin/activate && \
+   pip install setuptools Cython && \
+   python3 setup.py build_ext --inplace; then
+    deactivate
+    echo "Cython bindings setup complete!"
+else
+    deactivate 2>/dev/null
+    echo "Warning: Cython bindings setup failed"
+fi
 cd $current_dir
 info_msg "$script_name PASSED"

@@ -34,9 +34,7 @@ module test_dma_sda_concurrent();
 
    initial begin
 
-      tb.power_up(.clk_recipe_a(ClockRecipe::A1),
-                  .clk_recipe_b(ClockRecipe::B0),
-                  .clk_recipe_c(ClockRecipe::C0));
+      tb.power_up(.clk_recipe_a(ClockRecipe::A1));
 	  initialize_ddr();
 
       fork begin

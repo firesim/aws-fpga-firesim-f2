@@ -1,46 +1,48 @@
 """
- * Copyright 2025 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"). You may
- * not use this file except in compliance with the License. A copy of the
- * License is located at
- *
- *     http://aws.amazon.com/apache2.0/
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+* Copyright 2025 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+*
+* Licensed under the Apache License, Version 2.0 (the "License"). You may
+* not use this file except in compliance with the License. A copy of the
+* License is located at
+*
+*     http://aws.amazon.com/apache2.0/
+*
+* or in the "license" file accompanying this file. This file is distributed
+* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+* express or implied. See the License for the specific language governing
+* permissions and limitations under the License.
 
- * This example demonstrates how to measure and monitor FPGA clock frequencies using the C API, including:
- * - PCI operations for reading clock frequency counters
- * - Monitoring multiple clock domains
- * - Resource mapping
- *
- * 0. Prerequisites: This example must be run on an F2 instance with an FPGA. Source the sdk
- *    by navigating to the root of this repo and running `source ./sdk_setup.sh`.
- * 1. Initialize FPGA management and PCI wrappers
- * 2. Load a specific memory performance AFI
- * 3. Attach to PCI device and access control registers
- * 4. Reset and trigger frequency measurements
- * 5. Read frequency counters for multiple clock domains:
- *    - Main clock (clk_main_a0)
- *    - Extra clocks (a1-a3, b0-b1, c0-c1)
- *    - HBM clocks (axi and ref)
- * 6. Display measured frequencies and resource mapping
- * 7. Clean up PCI resources
+* This example demonstrates how to measure and monitor FPGA clock frequencies using the C API, including:
+* - PCI operations for reading clock frequency counters
+* - Monitoring multiple clock domains
+* - Resource mapping
+*
+* 0. Prerequisites: This example must be run on an F2 instance with an FPGA. Source the sdk
+*    by navigating to the root of this repo and running `source ./sdk_setup.sh`.
+* 1. Initialize FPGA management and PCI wrappers
+* 2. Load a specific memory performance AFI
+* 3. Attach to PCI device and access control registers
+* 4. Reset and trigger frequency measurements
+* 5. Read frequency counters for multiple clock domains:
+*    - Main clock (clk_main_a0)
+*    - Extra clocks (a1-a3, b0-b1, c0-c1)
+*    - HBM clocks (axi and ref)
+* 6. Display measured frequencies and resource mapping
+* 7. Clean up PCI resources
 """
 
-from fpga_pci_wrapper import FpgaPCI
+import json
+import time
+from typing import Any
+
 from fpga_mgmt_wrapper import FpgaMgmt
-import time, json
-from typing import Dict, Any
-from utils import setup_logger, convert_info_to_json
+from fpga_pci_wrapper import FpgaPCI
+from utils import convert_info_to_json, setup_logger
 
 
-def read_freq_counters(handle: int, base_addr: int) -> Dict[str, float]:
+def read_freq_counters(handle: int, base_addr: int) -> dict[str, float]:
     fpga_pci_wrapper = FpgaPCI()
-    freq_counters: Dict[str, float] = {}
+    freq_counters: dict[str, float] = {}
     clk_names = [
         "clk_main_a0",
         "clk_extra_a1",
@@ -66,7 +68,7 @@ def read_freq_counters(handle: int, base_addr: int) -> Dict[str, float]:
 def main() -> None:
     setup_logger()
 
-    GET_HW_METRICS = 1 << 1
+    get_hw_metrics = 1 << 1
 
     fpga_mgmt_wrapper = FpgaMgmt()
     fpga_pci_wrapper = FpgaPCI()
@@ -75,14 +77,12 @@ def main() -> None:
 
     public_cl_mem_perf_afi_id = "agfi-080817d089f3cd2ed"
     print(f"Loading AFI for Mem Perf CL Example:  {public_cl_mem_perf_afi_id}\n")
-    image_info: Dict[str, Any] = fpga_mgmt_wrapper.load_local_image(slot_id, public_cl_mem_perf_afi_id)
+    image_info: dict[str, Any] = fpga_mgmt_wrapper.load_local_image(slot_id, public_cl_mem_perf_afi_id)
     status: str = image_info["status"]
     while status == "busy":
-        status = fpga_mgmt_wrapper.describe_local_image(slot_id, GET_HW_METRICS)[
-            "status"
-        ]
+        status = fpga_mgmt_wrapper.describe_local_image(slot_id, get_hw_metrics)["status"]
 
-    info: Dict[str, Any] = fpga_mgmt_wrapper.describe_local_image(slot_id, GET_HW_METRICS)
+    info: dict[str, Any] = fpga_mgmt_wrapper.describe_local_image(slot_id, get_hw_metrics)
     print(f"Info {convert_info_to_json(info)}\n")
 
     pf_id = 0
@@ -93,11 +93,11 @@ def main() -> None:
     handle = fpga_pci_wrapper.pci_attach(slot_id, pf_id, bar_id, fpga_attach_flags)
 
     # Reset frequency counters
-    rc = fpga_pci_wrapper.pci_poke(handle, addr, value=0x80000000)
-    rc = fpga_pci_wrapper.pci_poke(handle, addr, value=0x0)
+    fpga_pci_wrapper.pci_poke(handle, addr, value=0x80000000)
+    fpga_pci_wrapper.pci_poke(handle, addr, value=0x0)
 
     # Trigger measurement
-    rc = fpga_pci_wrapper.pci_poke(handle, addr, value=0x1)
+    fpga_pci_wrapper.pci_poke(handle, addr, value=0x1)
 
     # Wait for measurement to complete
     for _ in range(10):
@@ -119,8 +119,8 @@ def main() -> None:
     fpga_pci_wrapper.pci_detach(handle)
 
     print("\nResource Map")
-    map: Dict[str, Any] = json.dumps(fpga_pci_wrapper.pci_get_resource_map(slot_id, pf_id=0), indent=2)
-    print(f"{map}\n")
+    map_str: str = json.dumps(fpga_pci_wrapper.pci_get_resource_map(slot_id, pf_id=0), indent=2)
+    print(f"{map_str}\n")
 
 
 if __name__ == "__main__":

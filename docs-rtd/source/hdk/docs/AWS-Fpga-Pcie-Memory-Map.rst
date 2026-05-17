@@ -14,7 +14,7 @@ application before accessing them.
 Memory Map per Slot
 -------------------
 
-.. code:: text
+.. code-block:: text
 
    --- FPGA Slot X
      |--- Application PF (AppPF)
@@ -34,7 +34,7 @@ Memory Map per Slot
      |        * 64-bit, prefetchable
      |        * 128GiB (0x00_0000_0000 to 0x1F_FFFF_FFFF)
      |        * Mapped to the PCIS AXI4 interface of CL
-     |        * Typically used for DMA traffic bewteen the host and HBM/DDR memories on the card
+     |        * Typically used for DMA traffic between the host and HBM/DDR memories on the card
      |
      |--- Management PF (MgmtPF)
         |-- BAR0
@@ -78,16 +78,17 @@ this flexibility to F2 customers by advertising all the BARs in the
 shell as prefetchable. Customer applications must access BARs in a way
 supported by the customer logic (CL). For example, enabling
 write-combining on a prefetchable BAR requires a custom kernel driver or
-application to map and mark the target memory space as
-`write-combining (WC) memory <https://docs.kernel.org/driver-api/device-io.html#device-memory-mapping-modes>`__.
+application to map and mark the target memory space as `write-combining
+(WC)
+memory <https://docs.kernel.org/driver-api/device-io.html#device-memory-mapping-modes>`__.
 Additionally, applications enabling prefetching should avoid caching
 data from a memory space that contains any clear-on-read registers or
 FIFOs.
 
 The PCIe specification encourages the use of prefetchable BAR memory
 space whenever possible, even if a BAR might contain non-prefetchable
-logic. As stated in the "Additional Guidance on the Prefetchable Bit in
-Memory Space BARs" under the PCIe specification, section 7.5.1.2.1,
+logic. As stated in the “Additional Guidance on the Prefetchable Bit in
+Memory Space BARs” under the PCIe specification, section 7.5.1.2.1,
 there are system configurations where having the Prefetchable bit set
 can still allow correct operation, even if the conditions for
 prefetchability are not met.
@@ -100,4 +101,4 @@ prefetchable BARs. Aligning the F2 BAR settings with these cards
 provides our customers flexibility to migrate between on-premise and
 cloud without having to change software/hardware.
 
-`Back to HDK README <../README.html>`__
+`Back to Home <../../index.html>`__

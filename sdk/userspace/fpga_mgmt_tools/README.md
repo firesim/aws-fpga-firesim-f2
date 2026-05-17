@@ -203,7 +203,7 @@ wait
 - The Amazon FPGA Image Tools require `sudo` or `root` access level since AFI loads and clears are modifying the underlying system hardware.
 - `sudo` or `root` privilege is also required since the tools access the sysfs PCI subsystem and `/dev/kmsg` for `dmesg` logging.
 
-### Can the AFI Management Tools work concurently on multiple FPGA image slots?
+### Can the AFI Management Tools work concurrently on multiple FPGA image slots?
 
 - The tools can be executed on multiple FPGAs concurrently.  This may be done without synchronization between processes that are using the tools.
 

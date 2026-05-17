@@ -1,4 +1,5 @@
-import logging, json
+import json
+import logging
 
 
 def setup_logger() -> None:

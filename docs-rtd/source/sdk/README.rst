@@ -1,66 +1,118 @@
-AWS EC2 FPGA Software Development Kit (SDK)
-===========================================
+AWS EC2 FPGA Software Development Kit
+=====================================
 
-This directory includes the drivers and runtime environment required by
-any EC2 FPGA Instance.
+The AWS FPGA SDK directory provides drivers and runtime tools for
+managing Amazon FPGA Images (AFIs) on EC2 FPGA instances. Use this SDK
+to load, clear, and interact with pre-built AFIs on F2 instances in
+Linux environments.
 
-The `SDK userspace directory <https://github.com/aws/aws-fpga/tree/f2/sdk/userspace>`__ contains the `Amazon FPGA
-Image (AFI) Management Tools <./userspace/fpga_mgmt_tools/README.html>`__,
-which includes both the source code to the AFI Management Tools as well
-as detailed descriptions of the commands to use on an FPGA instance.
-
-The SDK is **NOT** used to build or register AFI, rather it is only used
-for managing and deploying pre-built AFIs. For building and registering
-AFIs, please refer to the `HDK <../hdk/README.html>`__.
-
-**NOTE:** This SDK is designed and tested for Linux environments only.
+**Note:** This SDK is for **deploying** AFIs, not building or
+registering them. For AFI development, see the
+`HDK <../hdk/README.html>`__.
 
 Quick Start
 -----------
 
-Using an AFI on an EC2 FPGA Instance
-------------------------------------
+The AWS FPGA SDK requires ``gcc`` to be installed on a Linux
+distribution AMI: ``sudo {yum|apt-get} install gcc``
 
-You can setup and install the SDK with the following few steps. Note
-that the first two steps may be skipped if you have already ran them in
-the above HDK setup.
+.. code-block:: bash
 
-.. code:: bash
+   # Clone and setup and install the SDK with env variables (if not already done)
+   git clone https://github.com/aws/aws-fpga.git
+   cd aws-fpga
+   source sdk_setup.sh
 
-       # Fetch the HDK and SDK code
-       git clone https://github.com/aws/aws-fpga.git
-       # Move to the root directory of the repository before running the next script
-       cd aws-fpga
-       # Set up the envronment variables, build and install the SDK
-       source sdk_setup.sh
+   # Check FPGA management tools
+   fpga-describe-local-image --help
+   fpga-load-local-image --help
 
-**NOTE:** The ``sdk_setup.sh`` would install the `FPGA management
-tools <./userspace/fpga_mgmt_tools/README.html>`__ if they are not already
-available in ``/usr/bin``. The ``sdk_setup.sh`` requires having ``gcc``
-installed. if it is not installed, try running the next command to
-install it on Amazon Linux, Centos or Redhat distributions:
+   # Verify SDK environment
+   echo $SDK_DIR
 
-Notes on using AFI Management Tools
------------------------------------
+   # Load an AFI (replace with your AFI ID and slot)
+   sudo fpga-load-local-image -S 0 -I agfi-0123456789abcdef0
 
-Early release of the AFI management tools may return uninformative
-errors or unexpected responses. We recommend running commands a second
-time after waiting 15-30 seconds if an unexpected response is received.
-For example, if a loaded image does not show up when using the
-``fpga-describe-local-image`` API, attempt rerunning the command prior
-to calling ``fpga-load-local-image`` again.
+   # Verify AFI loaded
+   sudo fpga-describe-local-image -S 0
 
-The ``fpga-describe-local-image`` API is currently asynchronous which
-will require polling with ``fpga-describe-local-image`` until the
-expected image appears. If the describe call does not provide the
-expected response, attempt the ``fpga-load-local-image`` one more time.
-Attempting to load images that are not compatible with the currently
-loaded shell will fail and may not return an informative error message.
-Please verify the design was built with the shell that is loaded on the
-instance.
+   # Test management tools
+   cd $SDK_DIR/userspace/fpga_mgmt_examples
+   make
+   sudo ./fpga_mgmt_example
 
-Please reach out to the AWS FPGA team with any instability issues so we
-can help as soon as possible.
+Core Tools
+----------
+
+Fully documented in `FPGA Management
+Tools <./userspace/fpga-mgmt-tools/README.html>`__
+
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Tool
+     - Purpose
+   * - ``fpga-describe-local-image-slots``
+     - List available FPGA slots
+   * - ``fpga-load-local-image``
+     - Load AFI to FPGA slot
+   * - ``fpga-describe-local-image``
+     - Check AFI status
+   * - ``fpga-clear-local-image``
+     - Clear AFI from slot
+
+**All tools require ``sudo`` privileges.** Use ``-help`` flag for
+detailed options.
+
+SDK Components
+--------------
+
+Management Tools
+~~~~~~~~~~~~~~~~
+
+- `FPGA Management Tools <./userspace/fpga-mgmt-tools/README.html>`__ -
+  Command-line AFI management
+- `C API Examples <./userspace/fpga-mgmt-examples/README.html>`__ -
+  Programmatic AFI control
+- `Python Bindings <./userspace/cython-bindings/README.html>`__ - Python
+  interface to FPGA APIs
+
+Applications
+~~~~~~~~~~~~
+
+- `Virtual Ethernet <./apps/virtual-ethernet/README.html>`__ -
+  High-performance networking
+- `MSI-X Interrupts <./apps/msix-interrupts/README.html>`__ - Interrupt
+  handling implementation
+
+Interactive Jupyter Notebooks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- `F2 Jupyter Notebooks <./notebooks/README.html>`__ - Hands-on tutorials
+  for FPGA register access and development from Python
+
+Performance & Optimization
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- `Performance Optimization
+  Guide <./docs/F2-Software-Performance-Optimization-Guide.html>`__
+- `Load Times Analysis <./docs/Load-Times.html>`__
+
+Troubleshooting
+---------------
+
+Refer to the `FAQ section for FPGA Mgmt
+Tools <./userspace/fpga-mgmt-tools/README.html#faq>`__ or respective
+applications and tools.
+
+**Need help?**
+
+- `GitHub Issues <https://github.com/aws/aws-fpga/issues>`__ -
+  Code/documentation problems
+- `AWS
+  re:Post <https://repost.aws/tags/TAc7ofO5tbQRO57aX1lBYbjA/fpga-development>`__
+  - F2 instance questions
 
 Additional SDK Documentation
 ----------------------------
@@ -74,12 +126,14 @@ Additional SDK Documentation
 
    apps/msix-interrupts/README
 
-   userspace/fpga_mgmt_examples/README
+   userspace/fpga-mgmt-examples/README
 
    userspace/cython-bindings/README
 
-   userspace/fpga_mgmt_tools/README
+   userspace/fpga-mgmt-tools/README
    docs/F2-Software-Performance-Optimization-Guide
    docs/Load-Times
+
+   notebooks/README
 
 `Back to Home <../index.html>`__

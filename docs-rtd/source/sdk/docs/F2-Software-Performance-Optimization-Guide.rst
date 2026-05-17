@@ -1,21 +1,34 @@
-.. _software-performance-optimizations-for-f248xlarge-instances:
+Software Performance Optimizations
+==================================
 
-Software Performance Optimizations for F2.48xlarge Instances
-============================================================
+Network Performance Optimization
+--------------------------------
+
+**For multi-instance applications requiring low-latency inter-instance
+communication**, such as the `Virtual Ethernet
+framework <../apps/virtual-ethernet/README.html>`__, using **EC2 Placement
+Groups** is critical for optimal network performance. Cluster placement
+groups ensure instances are placed on hardware with shared high-capacity
+networking infrastructure, providing the lowest possible network latency
+and highest throughput between instances.
+
+For detailed information about placement groups, see: - `Working with
+placement
+groups <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/placement-groups.html>`__
+
+NUMA Node Optimization
+----------------------
 
 This guide outlines strategies for maximizing performance on
 ``f2.48xlarge`` instances through effective CPU-to-FPGA mapping and NUMA
 optimization. In dual-socket configurations, implementing NUMA-aware
 techniques is essential for minimizing latency and maximizing PCIe
 bandwidth between CPUs and FPGA accelerators. The optimizations within
-this document do not apply to ``f2.6xlarge`` and ``f2.12xlarge``
+this section do not apply to ``f2.6xlarge`` and ``f2.12xlarge``
 instances because all CPU resources, memory, NVMe devices, and FPGA
 devices are on a single NUMA node.
 
-Quick Start Guide
------------------
-
-To optimize your application's performance running on an ``f2.48xlarge``
+To optimize your application’s performance running on an ``f2.48xlarge``
 instance, refer to the `Script to Construct a FPGA to NUMA Node and vCPU
 Mapping <#script-to-construct-an-fpga-to-numa-node-and-vcpu-mapping>`__
 or follow the steps below:
@@ -43,14 +56,25 @@ Linux System Tools
 
 The following Linux tools help verify system configuration:
 
-============== ========================= ==========================
-Tool           Purpose                   Installation/Usage
-============== ========================= ==========================
-``lspci -tv``  View PCI topology         Built-in
-``lstopo``     Visualize system topology ``sudo apt install hwloc``
-``lscpu -e``   View CPU/NUMA mapping     Built-in
-``numactl -H`` Show NUMA configuration   Built-in
-============== ========================= ==========================
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Tool
+     - Purpose
+     - Installation/Usage
+   * - ``lspci -tv``
+     - View PCI topology
+     - Built-in
+   * - ``lstopo``
+     - Visualize system topology
+     - ``sudo apt install hwloc``
+   * - ``lscpu -e``
+     - View CPU/NUMA mapping
+     - Built-in
+   * - ``numactl -H``
+     - Show NUMA configuration
+     - Built-in
 
 Note: For FPGA visibility, use ``lstopo --whole-io`` or
 ``lstopo-no-graphics --whole-io``
@@ -93,15 +117,15 @@ table <#ideal-vcpu-to-fpga-mapping-for-optimal-pcie-performance>`__ in
 this guide is important - it ensures your application uses the optimal
 CPU cores for each FPGA device.
 
-Identifying the CPU to FPGA NUMA Mapping
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Identifying the CPU <-> FPGA NUMA Mapping
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``bus:device:function`` (BDF) mapping of FPGA devices is in slot
 order. On an f2.48xlarge instance, the lowest BDF hex value will be slot
 0 and the highest BDF hex value will be slot 7. The
 ``fpga-describe-local-image`` command will display this:
 
-.. code:: bash
+.. code-block:: bash
 
    $ sudo fpga-describe-local-image -S 0 -H
    Type  FpgaImageSlot  FpgaImageId             StatusName    StatusCode   ErrorName    ErrorCode   ShVersion
@@ -118,7 +142,7 @@ order. On an f2.48xlarge instance, the lowest BDF hex value will be slot
 The vCPU NUMA node mappings can be found with ``numactl -H``. An
 ``f2.48xlarge`` instance would display the following:
 
-.. code:: bash
+.. code-block:: bash
 
    $ numactl -H
    available: 2 nodes (0-1)
@@ -137,60 +161,59 @@ Ideal vCPU to FPGA Mapping for Optimal PCIe Performance
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Processes can be pinned to particular vCPUs by using Linux tools such as
-``numactl``. The "Optimal vCPUs" below refer to the optimal 16 vCPUs
+``numactl``. The “Optimal vCPUs” below refer to the optimal 16 vCPUs
 (shared L3 cache) for that slot. Below is a table of the optimal vCPUs
 for each FPGA slot on an ``f2.48xlarge`` instance.
 
 .. list-table::
-  :header-rows: 1
-  :class: f2-numa-table
-  :widths: 20 20 20 20 20
+   :header-rows: 1
+   :widths: auto
 
-  * - FPGA Slot #
-    - NUMA Node
-    - Optimal vCPUs
-    - Example of ``numactl`` command
-    - Colocated vCPUs
-  * - 0
-    - 1
-    - 48-55, 144-151
-    - ``numactl --localalloc --physcpubind 48,55``
-    - 48-95, 144-191
-  * - 1
-    - 1
-    - 56-63, 152-159
-    - ``numactl --localalloc --physcpubind 56,63``
-    - 48-95, 144-191
-  * - 2
-    - 1
-    - 64-71, 160-167
-    - ``numactl --localalloc --physcpubind 64, 71``
-    - 48-95, 144-191
-  * - 3
-    - 1
-    - 72-79, 168-175
-    - ``numactl --localalloc --physcpubind 72, 79``
-    - 48-95, 144-191
-  * - 4
-    - 0
-    - 0-7, 96-103
-    - ``numactl --localalloc --physcpubind 0, 7``
-    - 0-47, 96-143
-  * - 5
-    - 0
-    - 8-15, 104-111
-    - ``numactl --localalloc --physcpubind 8, 15``
-    - 0-47, 96-143
-  * - 6
-    - 0
-    - 16-23, 112-119
-    - ``numactl --localalloc --physcpubind 16, 23``
-    - 0-47, 96-143
-  * - 7
-    - 0
-    - 24-31, 120-127
-    - ``numactl --localalloc --physcpubind 24, 31``
-    - 0-47, 96-143
+   * - FPGA Slot #
+     - NUMA Node
+     - Optimal vCPUs
+     - Example of `numactl` command
+     - Colocated vCPUs
+   * - 0
+     - 1
+     - 48-55, 144-151
+     - ``numactl --localalloc --physcpubind 48,55``
+     - 48-95, 144-191
+   * - 1
+     - 1
+     - 56-63, 152-159
+     - ``numactl --localalloc --physcpubind 56,63``
+     - 48-95, 144-191
+   * - 2
+     - 1
+     - 64-71, 160-167
+     - ``numactl --localalloc --physcpubind 64,71``
+     - 48-95, 144-191
+   * - 3
+     - 1
+     - 72-79, 168-175
+     - ``numactl --localalloc --physcpubind 72,79``
+     - 48-95, 144-191
+   * - 4
+     - 0
+     - 0-7, 96-103
+     - ``numactl --localalloc --physcpubind 0,7``
+     - 0-47, 96-143
+   * - 5
+     - 0
+     - 8-15, 104-111
+     - ``numactl --localalloc --physcpubind 8,15``
+     - 0-47, 96-143
+   * - 6
+     - 0
+     - 16-23, 112-119
+     - ``numactl --localalloc --physcpubind 16,23``
+     - 0-47, 96-143
+   * - 7
+     - 0
+     - 24-31, 120-127
+     - ``numactl --localalloc --physcpubind 24,31``
+     - 0-47, 96-143
 
 **NOTE:** in place of the ``--physcpubind <vCPU list>`` argument, users
 can also pass in ``--cpunodebind <NUMA node ID``
@@ -201,7 +224,7 @@ Script to Construct an FPGA to NUMA Node and vCPU Mapping
 Execute the following bash command to construct a table that maps the
 FPGA devices to their NUMA node and colocated vCPUs:
 
-.. code:: bash
+.. code-block:: bash
 
    (
        printf "%-8s %-11s %-11s %-13s %-10s %s\n" "SLOT" "VENDOR_ID" "DEVICE_ID" "BDF" "NUMA_NODE" "vCPUs_(Physical,Virtual)"
@@ -234,7 +257,7 @@ FPGA devices to their NUMA node and colocated vCPUs:
 
 Sample output from a ``f2.48xlarge`` instance:
 
-.. code:: bash
+.. code-block:: bash
 
    SLOT  VENDOR_ID  DEVICE_ID  BDF           NUMA_NODE  vCPUs_(Physical,Virtual)
    0     0x1d0f     0x9048     0000:9f:00.0  1          48-95,144-191
@@ -246,7 +269,7 @@ Sample output from a ``f2.48xlarge`` instance:
    6     0x1d0f     0x9048     0000:b2:00.0  0          0-47,96-143
    7     0x1d0f     0x9048     0000:b4:00.0  0          0-47,96-143
 
---------------
+
 
 Frequently Asked Questions (FAQ)
 --------------------------------
@@ -279,7 +302,7 @@ For any issues with the devkit documentation or code, please open a
 to reproduce.
 
 For questions about F2 instances, please open a `re:Post issue with the
-'FPGA Development'
+‘FPGA Development’
 tag <https://repost.aws/tags/TAc7ofO5tbQRO57aX1lBYbjA/fpga-development>`__.
 
-`Back to SDK README <../README.html>`__
+`Back to Home <../../index.html>`__

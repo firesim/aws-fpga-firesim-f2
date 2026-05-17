@@ -1,8 +1,8 @@
 Python Bindings
 ===============
 
-These bindings exist to provide Python interfaces to the FPGA on AWS F2 
-EC2 Instances, allowing developers to control and interact with FPGAs 
+These bindings exist to provide Python interfaces to the FPGA on AWS F2
+EC2 Instances, allowing developers to control and interact with FPGAs
 using Python instead of C code directly.
 
 Cython Overview
@@ -17,7 +17,7 @@ C functions, handling type conversions and memory management.
 When compiled, Cython transforms the ``.pyx`` file into C code, which is
 then built into a shared object (``.so``) file that Python can import
 directly as a module, allowing Python code to seamlessly call C
-functions while maintaining Python's ease of use but with C's
+functions while maintaining Python’s ease of use but with C’s
 performance benefits.
 
 Setup
@@ -26,7 +26,7 @@ Setup
 How to Build Bindings
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. code:: bash
+.. code-block:: bash
 
    git clone https://github.com/aws/aws-fpga.git
    cd aws-fpga
@@ -40,7 +40,7 @@ Instructions to run examples
 
 Navigate to the ``aws-fpga/sdk/userspace/cython_bindings`` directory
 
-.. code:: bash
+.. code-block:: bash
 
    sudo python3 fpga_mgmt_example.py
    sudo python3 fpga_clkgen_example.py
@@ -100,9 +100,8 @@ C, and HBM). These functions form the API layer between Python
 applications and the low-level clock management system, allowing
 developers to precisely control FPGA clock resources without directly
 manipulating hardware registers. More information on clock generation
-functions are available in the
-`Clock Recipes User Guide <../../../hdk/docs/Clock-Recipes-User-Guide.html>`__
-document.
+functions are available in the `Clock Recipes User
+Guide <./../../..//hdk/docs/Clock-Recipes-User-Guide.html>`__ document.
 
 - ``get_dynamic(self, slot_id: int) -> str``
 - ``set_recipe(self, slot_id: int, clk_a_recipe: uint32_t, clk_b_recipe: uint32_t, clk_c_recipe: uint32_t, clk_hbm_recipe: uint32_t, reset: uint32_t) -> None``
@@ -134,3 +133,5 @@ resources.
 - ``pci_rescan_slot_app_pfs(self, slot_id: int) -> None``
 - ``pci_get_address(self, handle: pci_bar_handle_t, offset: uint64_t, dword_len: uint64_t) -> uintptr_t``
 - ``pci_memset(self, handle: pci_bar_handle_t, offset: uint64_t, value: uint32_t, dword_len: uint64_t) -> None``
+
+`Back to Home <../../../index.html>`__

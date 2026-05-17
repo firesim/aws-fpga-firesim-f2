@@ -6,25 +6,41 @@ import logging
 from fpga_utils import check_return_code
 from typing import Dict, List, Any
 
+# Default parameter constants
+DEFAULT_DESCRIBE_FLAGS = 0x2  # FPGA_CMD_GET_HW_METRICS enabled
+DEFAULT_TIMEOUT_MS = 60000
+DEFAULT_DELAY_MS = 500
+
+
 class FpgaMgmt:
+    _instance = None
+    
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(FpgaMgmt, cls).__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
+    
     def __init__(self) -> None:
-        init_status = fpga_mgmt_init()
-        check_return_code(init_status, "initialize FPGA Management Library", -1)
+        if not self._initialized:
+            init_status = fpga_mgmt_init()
+            check_return_code(init_status, "initialize FPGA Management Library", -1)
+            self._initialized = True
 
     def __del__(self) -> None:
         logging.info("Closing FPGA Management Library")
         fpga_mgmt_close()
 
-    def load_local_image(self, slot_id : int, afi_id: str) -> Dict[str, Any]:
+    def load_local_image(self, slot_id: int, afi_id: str) -> Dict[str, Any]:
         cdef bytes afi_id_bytes = afi_id.encode('utf-8')
         ret = fpga_mgmt_load_local_image(slot_id, afi_id_bytes)
         check_return_code(ret, "load AFI", slot_id)
-        return FpgaMgmt.describe_local_image(self, slot_id, 1<<1)
+        return FpgaMgmt.describe_local_image(self, slot_id)
 
     def clear_local_image(self, slot_id: int) -> Dict[str, Any]:
         ret = fpga_mgmt_clear_local_image(slot_id)
         check_return_code(ret, "clear image on FPGA", slot_id)
-        return FpgaMgmt.describe_local_image(self, slot_id, 1<<1)
+        return FpgaMgmt.describe_local_image(self, slot_id)
 
     @staticmethod
     def process_cached_agfis(result: dict) -> List[str]:
@@ -36,7 +52,7 @@ class FpgaMgmt:
                 formatted_agfis.append('agfi-' + hex(agfi_value)[2:])
         return formatted_agfis
 
-    def describe_local_image(self, slot_id: int, flags: uint32_t) -> Dict[str, Any]:
+    def describe_local_image(self, slot_id: int, flags: uint32_t = DEFAULT_DESCRIBE_FLAGS) -> Dict[str, Any]:
         cdef fpga_mgmt_image_info info
 
         ret = fpga_mgmt_describe_local_image(slot_id, &info, flags)
@@ -98,22 +114,33 @@ class FpgaMgmt:
         check_return_code(ret, "get vDIP status", slot_id)
         return value
 
-    def clear_local_image_sync(self, slot_id: int, timeout: uint32_t, delay_msec: uint32_t) -> Dict[str, Any]:
+    def clear_local_image_sync(
+        self,
+        slot_id: int,
+        timeout: uint32_t = DEFAULT_TIMEOUT_MS,
+        delay_msec: uint32_t = DEFAULT_DELAY_MS,
+    ) -> Dict[str, Any]:
         cdef fpga_mgmt_image_info info
-        ret = fpga_mgmt_clear_local_image_sync(slot_id, timeout, delay_msec, &info);
+        ret = fpga_mgmt_clear_local_image_sync(slot_id, timeout, delay_msec, &info)
         check_return_code(ret, "clear local image sync", slot_id)
-        return FpgaMgmt.describe_local_image(self, slot_id, 1<<1)
+        return FpgaMgmt.describe_local_image(self, slot_id)
 
-    def load_local_image_flags(self, slot_id: int, afi_id: str, flags: uint32_t) -> Dict[str, Any]:
+    def load_local_image_flags(self, slot_id: int, afi_id: str, flags: uint32_t = DEFAULT_DESCRIBE_FLAGS) -> Dict[str, Any]:
         cdef bytes afi_id_bytes = afi_id.encode('utf-8')
-        ret = fpga_mgmt_load_local_image_flags( slot_id, afi_id_bytes,  flags);
+        ret = fpga_mgmt_load_local_image_flags(slot_id, afi_id_bytes, flags)
         check_return_code(ret, "load AFI flags", slot_id)
-        return FpgaMgmt.describe_local_image(self, slot_id, 1<<1)
+        return FpgaMgmt.describe_local_image(self, slot_id)
 
-    def load_local_image_sync_flags(self, slot_id: int, afi_id: str, flags: uint32_t, timeout: uint32_t, delay_msec: uint32_t) -> Dict[str, Any]:
+    def load_local_image_sync_flags(
+        self,
+        slot_id: int,
+        afi_id: str,
+        flags: uint32_t = DEFAULT_DESCRIBE_FLAGS,
+        timeout: uint32_t = DEFAULT_TIMEOUT_MS,
+        delay_msec: uint32_t = DEFAULT_DELAY_MS,
+    ) -> Dict[str, Any]:
         cdef fpga_mgmt_image_info info
         cdef bytes afi_id_bytes = afi_id.encode('utf-8')
         ret = fpga_mgmt_load_local_image_sync_flags(slot_id, afi_id_bytes, flags, timeout, delay_msec, &info)
         check_return_code(ret, "load AFI sync flags", slot_id)
-        return FpgaMgmt.describe_local_image(self, slot_id, 1<<1)
-
+        return FpgaMgmt.describe_local_image(self, slot_id)

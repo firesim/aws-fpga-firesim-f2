@@ -1,6 +1,7 @@
-from setuptools import setup, Extension
-from Cython.Build import cythonize
 import os
+
+from Cython.Build import cythonize
+from setuptools import Extension, setup
 
 fpga_mgmt_extension = Extension(
     name="fpga_mgmt_wrapper",
@@ -32,9 +33,7 @@ fpga_clkgen_extension = Extension(
     sources=["fpga_clkgen_wrapper.pyx"],
     libraries=["fpga_mgmt"],
     library_dirs=[os.path.join(os.environ["SDK_DIR"], "userspace/lib/so")],
-    extra_objects=[
-        os.path.join(os.environ["SDK_DIR"], "userspace/lib/libfpga_clkgen.a")
-    ],
+    extra_objects=[os.path.join(os.environ["SDK_DIR"], "userspace/lib/libfpga_clkgen.a")],
     include_dirs=[os.path.join(os.environ["SDK_DIR"], "userspace/include")],
     extra_compile_args=["-Wno-address-of-packed-member"],
 )

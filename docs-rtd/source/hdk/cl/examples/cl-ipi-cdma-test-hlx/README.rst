@@ -19,12 +19,16 @@ This example design exercises the following data interfaces:
 - AXIL_OCL: Polls the AXI GPIO to which the DDR and HBM calibration done
   signals are connected
 - AXI_PCIS: Writes 1K data pattern to DDR source buffer
-- AXIL_OCL: Configures AXI CDMA for 1K DMA transfer from DDR to HBM and polls
-  AXI CDMA status register to determine transfer completion
+- AXIL_OCL: Configures AXI CDMA for 1K DMA transfer from DDR to HBM and
+  polls AXI CDMA status register to determine transfer completion
 - AXI_PCIS: Reads 1K from HBM destination buffer and compares against
   original data pattern
 
-|block-diagram|
+.. figure::
+   ../../../../_static/cl_ipi_cdma_test_hlx_images/cl_ipi_cdma_test_hlx.png
+   :alt: block-diagram
+
+   block-diagram
 
 Building and Testing Example
 ----------------------------
@@ -33,4 +37,4 @@ Follow the common design steps specified in the `IPI example design flow
 document <./../../../docs/IPI-GUI-Flows.html>`__ to build and test this
 example on F2 instances.
 
-.. |block-diagram| image:: ../../../../_static/cl_ipi_cdma_test_hlx_images/cl_ipi_cdma_test_hlx.png
+`Back to Home <../../../../index.html>`__

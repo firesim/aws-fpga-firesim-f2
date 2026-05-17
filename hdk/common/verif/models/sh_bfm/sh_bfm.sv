@@ -96,17 +96,14 @@ module sh_bfm #(
 
    real MAIN_A0_DLY  = 4ns;
    real CORE_DLY     = 4ns;
-   real EXTRA_A1_DLY = 8ns;
    real HBM_DLY      = 5ns;
 
    real           main_rising_edge;
    real           core_rising_edge;
-   real           extra_a1_rising_edge;
    real		  hbm_rising_edge;
 
    real           main_clk_period;
    real           core_clk_period;
-   real           extra_a1_clk_period;
    real		  hbm_clk_period;
 
    logic [96:0]   pcis_pc_status;
@@ -501,11 +498,6 @@ module sh_bfm #(
    initial begin
       clk_main_a0 = 1'b0;
       forever #MAIN_A0_DLY clk_main_a0 = ~clk_main_a0;
-   end
-
-   initial begin
-      clk_extra_a1 = 1'b0;
-      forever #EXTRA_A1_DLY clk_extra_a1 = ~clk_extra_a1;
    end
 
    initial begin
@@ -1178,60 +1170,49 @@ module sh_bfm #(
       .axil_rready               (ocl_cl_rready));
 
    // Check core clock frequency when chk_clk_freq is set
-   always @(posedge clk_core)
-    begin
-       if (chk_clk_freq) begin
-         core_rising_edge = $time;
+   initial begin
+      forever begin
+         wait(chk_clk_freq == 1'b1);
+         @(posedge clk_core)
+            core_rising_edge = $time;
          @(posedge clk_core)
             core_clk_period = $time - core_rising_edge;
          if (core_clk_period != CORE_DLY * 2) begin
             clk_err_count++;
-            $display("Error - core clk frequency check failed. Expected %x Actual %x", core_clk_period, CORE_DLY);
+            $display("Error - core clk frequency check failed. Expected %x Actual %x", CORE_DLY * 2, core_clk_period);
          end
-       end
-    end
+      end
+   end
 
    // Check main clock frequency when chk_clk_freq is set
-   always @(posedge clk_main_a0)
-    begin
-       if (chk_clk_freq) begin
-          main_rising_edge = $time;
-          @(posedge clk_main_a0)
-             main_clk_period = $time - main_rising_edge;
-          if (main_clk_period != MAIN_A0_DLY * 2) begin
+   initial begin
+      forever begin
+         wait(chk_clk_freq == 1'b1);
+         @(posedge clk_main_a0)
+            main_rising_edge = $time;
+         @(posedge clk_main_a0)
+            main_clk_period = $time - main_rising_edge;
+         if (main_clk_period != MAIN_A0_DLY * 2) begin
             clk_err_count++;
-            $display("Error - main a0 clk frequency check failed. Expected %x Actual %x", main_clk_period, MAIN_A0_DLY);
+            $display("Error - main a0 clk frequency check failed. Expected %x Actual %x", MAIN_A0_DLY * 2, main_clk_period);
          end
-       end
-    end
-
-   // Check extra a1 clock frequency when chk_clk_freq is set
-   always @(posedge clk_extra_a1)
-   begin
-      if (chk_clk_freq) begin
-         extra_a1_rising_edge = $time;
-         @(posedge clk_extra_a1)
-            extra_a1_clk_period = $time - extra_a1_rising_edge;
-         if (extra_a1_clk_period != EXTRA_A1_DLY * 2) begin
-            clk_err_count++;
-            $display("Error - extra a1 clk frequency check failed. Expected %x Actual %x", extra_a1_clk_period, EXTRA_A1_DLY);
-         end
-       end
-    end
+      end
+   end
 
    // Check clk_hbm_ref clock frequency when chk_clk_freq is set
-   always @(posedge clk_hbm_ref)
-   begin
-      if (chk_clk_freq) begin
-         hbm_rising_edge = $time;
+   initial begin
+      forever begin
+         wait(chk_clk_freq == 1'b1);
+         @(posedge clk_hbm_ref)
+            hbm_rising_edge = $time;
          @(posedge clk_hbm_ref)
             hbm_clk_period = $time - hbm_rising_edge;
          if (hbm_clk_period != HBM_DLY * 2) begin
             clk_err_count++;
-            $display("Error - hbm clk frequency check failed. Expected %x Actual %x", hbm_clk_period, HBM_DLY);
+            $display("Error - hbm clk frequency check failed. Expected %x Actual %x", HBM_DLY * 2, hbm_clk_period);
          end
-       end
-    end
+      end
+   end
 
 
    //=================================================
@@ -1242,42 +1223,22 @@ module sh_bfm #(
    //   Outputs: None
    //
    //=================================================
-   task power_up(input ClockRecipe::A_RECIPE clk_recipe_a = ClockRecipe::A0,
-                       ClockRecipe::B_RECIPE clk_recipe_b = ClockRecipe::B0,
-                       ClockRecipe::C_RECIPE clk_recipe_c = ClockRecipe::C0);
+   task power_up(input ClockRecipe::A_RECIPE clk_recipe_a = ClockRecipe::A0);
       case (clk_recipe_a)
          ClockRecipe::A0: begin
-            MAIN_A0_DLY  = 4ns;
-            CORE_DLY     = 4ns;
-            EXTRA_A1_DLY = 8ns;
+            MAIN_A0_DLY  = 2ns;    // 250 MHz
+            CORE_DLY     = 2ns;    // 250 MHz
          end
          ClockRecipe::A1: begin
-            MAIN_A0_DLY  = 2ns;
-            CORE_DLY     = 2ns;
-            EXTRA_A1_DLY = 4ns;
+            MAIN_A0_DLY  = 2ns;    // 250 MHz
+            CORE_DLY     = 2ns;    // 250 MHz
          end
          ClockRecipe::A2: begin
-            MAIN_A0_DLY  = 32ns;
-            CORE_DLY     = 32ns;
-            EXTRA_A1_DLY = 32ns;
-         end
-         ClockRecipe::A3: begin
-            MAIN_A0_DLY  = 8ns;
-            CORE_DLY     = 8ns;
-            EXTRA_A1_DLY = 16ns;
-         end
-         ClockRecipe::A4: begin
-            MAIN_A0_DLY  = 2.22ns;
-            CORE_DLY     = 2.22ns;
-            EXTRA_A1_DLY = 4.44ns;
-         end
-         ClockRecipe::A5: begin
-            MAIN_A0_DLY  = 2.5ns;
-            CORE_DLY     = 2.5ns;
-            EXTRA_A1_DLY = 5ns;
+            MAIN_A0_DLY  = 2ns;    // 250 MHz
+            CORE_DLY     = 2ns;    // 250 MHz
          end
          default: begin
-            $display("Error - Invalid Clock Profile Selected.");
+            $display("Error - Invalid Clock Recipe Selected. Only A0, A1, A2 are supported.");
             $finish;
          end
       endcase

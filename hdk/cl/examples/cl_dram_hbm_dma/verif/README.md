@@ -2,38 +2,12 @@
 
 ## Table of Contents
 
-- [CL\_DRAM\_HBM\_DMA Example Simulation](#cl_dram_hbm_dma-example-simulation)
-  - [Table of Contents](#table-of-contents)
-  - [Overview](#overview)
-  - [Dump Waves](#dump-waves)
-  - [SystemVerliog Tests](#systemverliog-tests)
-    - [test\_clk\_recipe.sv](#test_clk_recipesv)
-    - [test\_ddr\_peek\_poke.sv](#test_ddr_peek_pokesv)
-    - [test\_ddr.sv](#test_ddrsv)
-    - [test\_hbm.sv](#test_hbmsv)
-    - [test\_dram\_dma.sv](#test_dram_dmasv)
-    - [test\_dram\_dma\_rnd.sv](#test_dram_dma_rndsv)
-    - [test\_dma\_pcim\_concurrent.sv](#test_dma_pcim_concurrentsv)
-    - [test\_dma\_pcis\_concurrent.sv](#test_dma_pcis_concurrentsv)
-    - [test\_dma\_sda\_concurrent.sv](#test_dma_sda_concurrentsv)
-    - [test\_dram\_dma\_4k\_crossing.sv](#test_dram_dma_4k_crossingsv)
-    - [test\_dram\_dma\_allgn\_addr\_4k.sv](#test_dram_dma_allgn_addr_4ksv)
-    - [test\_dram\_dma\_single\_beat\_4k.sv](#test_dram_dma_single_beat_4ksv)
-    - [test\_dram\_dma\_axi\_mstr.sv](#test_dram_dma_axi_mstrsv)
-    - [test\_int.sv](#test_intsv)
-    - [test\_peek\_poke.sv](#test_peek_pokesv)
-    - [test\_peek\_poke\_wc.sv](#test_peek_poke_wcsv)
-    - [test\_peek\_poke\_len.sv](#test_peek_poke_lensv)
-    - [test\_peek\_poke\_rnd\_lengths.sv](#test_peek_poke_rnd_lengthssv)
-    - [test\_peek\_poke\_pcis\_axsize.sv](#test_peek_poke_pcis_axsizesv)
-    - [test\_ddr\_peek\_bdr\_walking\_ones](#test_ddr_peek_bdr_walking_ones)
-    - [test\_sda.sv](#test_sdasv)
-    - [test\_null.sv](#test_nullsv)
-  - [AXI\_MEMORY\_MODEL Mode Simulations](#axi_memory_model-mode-simulations)
-    - [test\_dram\_dma\_mem\_model\_bdr\_wr](#test_dram_dma_mem_model_bdr_wr)
-    - [test\_dram\_dma\_mem\_model\_bdr\_rd](#test_dram_dma_mem_model_bdr_rd)
-  - [DDR Backdoor Loading](#ddr-backdoor-loading)
-  - [HW/SW Co-Simulation Test](#hwsw-co-simulation-test)
+- [Overview](#overview)
+- [Dump Waves](#dump-waves)
+- [SystemVerliog Tests](#systemverliog-tests)
+- [AXI Memory Model Mode Simulations](#axi-memory-model-mode-simulations)
+- [DDR Backdoor Loading](#ddr-backdoor-loading)
+- [HW and SW Co-Simulation Test](#hw-and-sw-co-simulation-test)
 
 ## Overview
 
@@ -95,7 +69,7 @@ Note that the appropriate simulators must be installed.
 
 ## Dump Waves
 
-For information about how to dump waves with XSIM or VCS, please refer to [debugging-custom-logic-using-the-aws-hdk](../../../../docs/RTL_Simulation_Guide_for_HDK_Design_Flow.md#)
+For information about how to dump waves with XSIM or VCS, please refer to [Debugging Custom Logic using the AWS HDK](../../../../docs/RTL_Simulation_Guide_for_HDK_Design_Flow.md#debugging-custom-logic-using-the-aws-hdk)
 
 ## SystemVerliog Tests
 
@@ -167,7 +141,7 @@ This test does transfers to different addresses on SDA AXIL interface.
 ### test_null.sv
 test_null is not an actual test. This is a base SV file needed for HW/SW co-simulation
 
-## AXI_MEMORY_MODEL Mode Simulations
+## AXI Memory Model Mode Simulations
 
 AXI_MEMORY_MODEL mode can be used for better simulation performance. AXI_MEMORY_MODEL mode enables a test to run with AXI memory models instead of DDR memory. The documentation can be found in AXI memory model section at [RTL simulation guide](../../../../docs/RTL_Simulation_Guide_for_HDK_Design_Flow.md). Any test that accesses DDR memory can be run in AXI_MEMORY_MODEL mode. Below are some example tests for ECC and backdoor loading support features of AXI memory model.
 
@@ -181,6 +155,6 @@ This test backdoor reads AXI memory model, writes through frontdoor and checks t
 
 The description of DDR backdoor loading can be found in DDR backdoor loading support section at [RTL simulation guide](../../../../docs/RTL_Simulation_Guide_for_HDK_Design_Flow.md).
 
-## HW/SW Co-Simulation Test
+## HW and SW Co-Simulation Test
 
 The software test with HW/SW co-simulation support [test_dram_dma_hwsw_cosim.c](../software/runtime/test_dram_dma_hwsw_cosim.c) can be found at `software/runtime/`. For Information about how HW/SW co-simulation support can be added to a software test please refer to "Code changes to enable HW/SW co-simulation" section in [RTL simulation guide](../../../../docs/RTL_Simulation_Guide_for_HDK_Design_Flow.md).

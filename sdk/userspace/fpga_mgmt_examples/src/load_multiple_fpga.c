@@ -70,9 +70,14 @@ int main(int argc, char ** argv) {
       struct fpga_mgmt_image_info info;
       int slot_id = slot_ids[i];
       ret = fpga_mgmt_describe_local_image(slot_id, &info, 0);
+      fail_on(ret != 0, err, "fpga_mgmt_describe_local_image failed for slot %d", slot_id);
 
-      uint8_t card_busy_state = (info.status == FPGA_STATUS_BUSY);
-      busy_state |= (card_busy_state << i);
+      if (info.status == FPGA_STATUS_BUSY) {
+        busy_state |= (1 << i);
+      } else if (info.status != FPGA_STATUS_LOADED) {
+        ret = info.status_q ? info.status_q : FPGA_ERR_FAIL;
+        fail_on(1, err, "Slot %d entered unexpected status: %s", slot_id, FPGA_STATUS2STR(info.status));
+      }
     }
   } while (busy_state);
 

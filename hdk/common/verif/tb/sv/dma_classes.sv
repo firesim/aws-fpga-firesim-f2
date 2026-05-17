@@ -27,7 +27,7 @@
 //************************************************************************************
 //------------------------------------------------------------------------------------
 // Access class, this provides access to the DUT and testing infrastructure.  We
-// use a class so that can move easily bewteen testbenches without changing the tests.
+// use a class so that can move easily between testbenches without changing the tests.
 // The access given here are:
 //
 //    - BAR4 peek/poke

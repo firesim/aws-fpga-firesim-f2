@@ -147,7 +147,7 @@ static const char *load_afi_usage[] = {
 	"          The ID of the FPGA image. agfi-<number>",
 	"      -A, --async",
 	"          The default mode of operation is synchronous FPGA image load",
-	"          with automatic rescan.  The --async option may be specfied",
+	"          with automatic rescan.  The --async option may be specified",
 	"          for asynchronous FPGA image load completion, which may be",
 	"          polled for completion using fpga-describe-local-image.",
 	"      -h, --help",
@@ -199,7 +199,7 @@ static const char *clear_afi_usage[] = {
 	"          Constraints: Positive integer from 0 to the total slots minus 1.",
 	"      -A, --async",
 	"          The default mode of operation is synchronous FPGA image clear",
-	"          with automatic rescan.  The --async option may be specfied",
+	"          with automatic rescan.  The --async option may be specified",
 	"          for asynchronous FPGA image clear completion, which may be",
 	"          polled for completion using fpga-describe-local-image.",
 	"      -h, --help",
@@ -344,7 +344,7 @@ static const char *load_clkgen_recipe_usage[] = {
 	"  DESCRIPTION",
 	"      Loads a clock recipe into the specified MMCMs.",
 	"      MMCMs that are not specified will be set to the default recipes.",
-	"      Frquencies are listed in MHz. * - default recipe",
+	"      Frequencies are listed in MHz. * - default recipe",
 	"      A Recipe Number      clk_extra_a1    clk_extra_a2    clk_extra_a3",
 	"      A0                   62.5            187.5           250",
 	"      A1 *                 125             375             500",
@@ -861,7 +861,7 @@ out_ver:
 }
 
 
-static  char default_tcp_port[5] = "10201";
+static  char default_tcp_port[] = "10201";
 /**
  * Parse fpga-start-virtual-jtag command line arguments.
  *

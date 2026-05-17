@@ -49,7 +49,7 @@
 `define CFG_ADDR_RX_DBG_RAM_DATA      8'hCC
 
 
-module cl_pkt_tst #(parameter DATA_WIDTH = 512,  // Should be atleast 32
+module cl_pkt_tst #(parameter DATA_WIDTH = 512,  // Should be at least 32
                     parameter TKEEP_WIDTH = DATA_WIDTH/8,
                     parameter TX_ONLY = 0,
                     parameter RX_ONLY = 0,

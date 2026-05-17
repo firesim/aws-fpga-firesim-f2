@@ -19,38 +19,39 @@
 
 
 if __name__ == "__main__":
-    import coverage
     import os
+
+    import coverage
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
     cov = coverage.Coverage(source=[current_dir], omit=["*test*.py"])
     cov.start()
 
-from pathlib import Path
-import shutil
 import os
-import sys
+import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from io import StringIO
-from unittest.mock import MagicMock, Mock, patch, mock_open, DEFAULT
-from typing import List, Tuple, Optional
+from pathlib import Path
+from unittest.mock import DEFAULT, MagicMock, Mock, mock_open, patch
+
 import boto3
-from moto import mock_s3
-from pydantic import ValidationError
 
 # Import the module under test
 from create_afi import (
     AFICreator,
+    AFIManager,
     AfiMetadata,
     DCPDiscovery,
     RegionManager,
     S3Manager,
     UserInterface,
-    AFIManager,
     main,
 )
+from moto import mock_aws
+from pydantic import ValidationError
 
 
 class TestAfiMetadata(unittest.TestCase):
@@ -87,13 +88,16 @@ class TestAfiMetadata(unittest.TestCase):
                     AfiMetadata(**data)
 
         for bucket in valid_buckets:
-            with self.subTest(bucket=bucket):
-                with patch("os.path.getsize", return_value=1024), patch("tarfile.open") as mock_tar:
-                    mock_tar.return_value.__enter__.return_value.getnames.return_value = ["test.dcp"]
-                    data = self.valid_data.copy()
-                    data["bucket"] = bucket
-                    metadata = AfiMetadata(**data)
-                    self.assertEqual(metadata.bucket, bucket)
+            with (
+                self.subTest(bucket=bucket),
+                patch("os.path.getsize", return_value=1024),
+                patch("tarfile.open") as mock_tar,
+            ):
+                mock_tar.return_value.__enter__.return_value.getnames.return_value = ["test.dcp"]
+                data = self.valid_data.copy()
+                data["bucket"] = bucket
+                metadata = AfiMetadata(**data)
+                self.assertEqual(metadata.bucket, bucket)
 
     @patch("os.path.getsize")
     @patch("tarfile.open")
@@ -119,7 +123,10 @@ class TestAfiMetadata(unittest.TestCase):
             AfiMetadata(**self.valid_data)
 
     def test_get_create_args(self):
-        with patch("os.path.getsize", return_value=1024), patch("tarfile.open") as mock_tar:
+        with (
+            patch("os.path.getsize", return_value=1024),
+            patch("tarfile.open") as mock_tar,
+        ):
             mock_tar.return_value.__enter__.return_value.getnames.return_value = ["test.dcp"]
             metadata = AfiMetadata(**self.valid_data)
             args = metadata.get_create_args()
@@ -160,10 +167,22 @@ class TestRegionManager(unittest.TestCase):
     @patch("time.time")
     def test_cache_operations(self, mock_time, mock_cache_file):
         """Test all cache-related scenarios."""
-        test_cases: List[Tuple[str, bool, Optional[str], List[str], bool]] = [
-            ("read valid", True, '{"regions": ["us-east-1"], "timestamp": 1000000}', ["us-east-1"], False),
+        test_cases: list[tuple[str, bool, str | None, list[str], bool]] = [
+            (
+                "read valid",
+                True,
+                '{"regions": ["us-east-1"], "timestamp": 1000000}',
+                ["us-east-1"],
+                False,
+            ),
             ("read invalid json", True, "invalid json", self.test_regions, False),
-            ("read missing regions", True, '{"timestamp": 1000000}', self.test_regions, False),
+            (
+                "read missing regions",
+                True,
+                '{"timestamp": 1000000}',
+                self.test_regions,
+                False,
+            ),
             ("write error", False, None, self.test_regions, False),
             ("json dump error", False, None, self.test_regions, True),
         ]
@@ -177,10 +196,16 @@ class TestRegionManager(unittest.TestCase):
 
                 with patch("boto3.Session") as mock_session:
                     mock_session.return_value.get_credentials.return_value = MagicMock()
-                    with patch.object(RegionManager, "_get_current_f2_region_list", return_value=self.test_regions):
+                    with patch.object(
+                        RegionManager,
+                        "_get_current_f2_region_list",
+                        return_value=self.test_regions,
+                    ):
                         if json_error:
-                            # Make json.dump raise an exception
-                            with patch("json.dump", side_effect=TypeError("JSON serialization error")):
+                            with patch(
+                                "json.dump",
+                                side_effect=TypeError("JSON serialization error"),
+                            ):
                                 regions = RegionManager.get_supported_regions()
                         else:
                             regions = RegionManager.get_supported_regions()
@@ -190,16 +215,15 @@ class TestRegionManager(unittest.TestCase):
     @patch("boto3.client")
     def test_region_discovery(self, mock_client, mock_session):
         """Test region discovery scenarios."""
-        mock_session.return_value.get_available_regions.return_value = ["us-east-1", "us-west-2", "eu-west-1"]
+        mock_session.return_value.get_available_regions.return_value = [
+            "us-east-1",
+            "us-west-2",
+            "eu-west-1",
+        ]
 
-        # Create mock EC2 clients with different behaviors
         mock_ec2_clients = {
             "us-east-1": MagicMock(
-                **{
-                    "describe_instance_type_offerings.return_value": {
-                        "InstanceTypeOfferings": [{"InstanceType": "f2.6xlarge"}]
-                    }
-                }
+                **{"describe_instance_type_offerings.return_value": {"InstanceTypeOfferings": [{"InstanceType": "f2.6xlarge"}]}}
             ),
             "us-west-2": MagicMock(**{"describe_instance_type_offerings.return_value": {"InstanceTypeOfferings": []}}),
             "eu-west-1": MagicMock(**{"describe_instance_type_offerings.side_effect": Exception("API Error")}),
@@ -215,15 +239,20 @@ class TestRegionManager(unittest.TestCase):
 
         # Verify each region was checked with correct parameters
         for region, mock_ec2 in mock_ec2_clients.items():
-            if region != "eu-west-1":  # Skip error case
+            if region != "eu-west-1":
                 mock_ec2.describe_instance_type_offerings.assert_called_once_with(
-                    Filters=[{"Name": "instance-type", "Values": RegionManager.F2_INSTANCE_TYPES}]
+                    Filters=[
+                        {
+                            "Name": "instance-type",
+                            "Values": RegionManager.F2_INSTANCE_TYPES,
+                        }
+                    ]
                 )
 
     def test_region_validation(self):
         """Test region validation."""
         with patch.object(RegionManager, "get_supported_regions", return_value=self.test_regions):
-            RegionManager.validate_region_supports_f2("us-east-1")  # Should not raise
+            RegionManager.validate_region_supports_f2("us-east-1")
             with self.assertRaisesRegex(ValueError, "does not support F2 instances"):
                 RegionManager.validate_region_supports_f2("invalid-region")
 
@@ -235,7 +264,10 @@ class TestUserInterface(unittest.TestCase):
 
     @patch("builtins.input", return_value="")
     def test_get_choice_default(self, mock_input):
-        self.assertEqual(UserInterface.get_choice_from_options(self.prompt, self.options, default=1), 1)
+        self.assertEqual(
+            UserInterface.get_choice_from_options(self.prompt, self.options, default=1),
+            1,
+        )
 
     @patch("builtins.input", return_value="2")
     def test_get_choice_valid(self, mock_input):
@@ -276,19 +308,24 @@ class TestDCPDiscovery(unittest.TestCase):
             self.assertEqual(DCPDiscovery.find_hdk_dir(), "/test/hdk")
 
         # From git
-        with patch.dict(os.environ, {}, clear=True):
-            with patch("subprocess.run") as mock_run:
-                with patch("os.path.isdir", return_value=True):
-                    mock_run.return_value.stdout = "/repo/root\n"
-                    self.assertEqual(DCPDiscovery.find_hdk_dir(), "/repo/root/hdk")
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("subprocess.run") as mock_run,
+            patch("os.path.isdir", return_value=True),
+        ):
+            mock_run.return_value.stdout = "/repo/root\n"
+            self.assertEqual(DCPDiscovery.find_hdk_dir(), "/repo/root/hdk")
 
-        # Fallback case
-        with patch.dict(os.environ, {}, clear=True):
-            with patch("subprocess.run", side_effect=subprocess.CalledProcessError(1, "git")):
-                with patch.object(
-                    DCPDiscovery, "search_for_repo_root_from_current_script_dir", return_value="/fallback/hdk"
-                ):
-                    self.assertEqual(DCPDiscovery.find_hdk_dir(), "/fallback/hdk")
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("subprocess.run", side_effect=subprocess.CalledProcessError(1, "git")),
+            patch.object(
+                DCPDiscovery,
+                "search_for_repo_root_from_current_script_dir",
+                return_value="/fallback/hdk",
+            ),
+        ):
+            self.assertEqual(DCPDiscovery.find_hdk_dir(), "/fallback/hdk")
 
     @patch("create_afi.Path")
     def test_search_for_repo_root(self, mock_path):
@@ -306,14 +343,17 @@ class TestDCPDiscovery(unittest.TestCase):
         mock_hdk_setup.is_file.return_value = True
         mock_hdk_dir.is_dir.return_value = True
         mock_hdk_dir.__str__.return_value = "/test/repo/hdk"
-        mock_parent.__truediv__ = MagicMock(
-            side_effect=lambda p: mock_hdk_setup if p == "hdk_setup.sh" else mock_hdk_dir
+        mock_parent.__truediv__ = MagicMock(side_effect=lambda p: (mock_hdk_setup if p == "hdk_setup.sh" else mock_hdk_dir))
+        self.assertEqual(
+            DCPDiscovery.search_for_repo_root_from_current_script_dir(),
+            "/test/repo/hdk",
         )
-        self.assertEqual(DCPDiscovery.search_for_repo_root_from_current_script_dir(), "/test/repo/hdk")
 
     def test_dcp_operations(self):
-        # Test find_dcp_files scenarios
-        with patch.object(DCPDiscovery, "find_hdk_dir") as mock_find_hdk, patch("glob.glob") as mock_glob:
+        with (
+            patch.object(DCPDiscovery, "find_hdk_dir") as mock_find_hdk,
+            patch("glob.glob") as mock_glob,
+        ):
             mock_find_hdk.return_value = None
             self.assertEqual(self.dcp_discovery.find_dcp_files_in_hdk_workspace(), [])
 
@@ -322,39 +362,43 @@ class TestDCPDiscovery(unittest.TestCase):
             results = self.dcp_discovery.find_dcp_files_in_hdk_workspace()
             self.assertEqual(len(results), 1)
 
-        # Test display name creation
         self.assertEqual(
-            self.dcp_discovery._create_display_name("/test/file_2024_13_99-999999.tar"), "file_2024_13_99-999999.tar"
+            self.dcp_discovery._create_display_name("/test/file_2024_13_99-999999.tar"),
+            "file_2024_13_99-999999.tar",
         )
 
-        with patch("os.path.exists", return_value=True), patch("os.path.getsize", return_value=2 * 1024 * 1024):
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.path.getsize", return_value=2 * 1024 * 1024),
+        ):
             self.assertIn(
                 "Built: Jan 01, 2024 at 12:00",
                 self.dcp_discovery._create_display_name("/test/file_2024_01_01-120000.tar"),
             )
 
     def test_interactive_path_selection(self):
-        with patch.object(DCPDiscovery, "find_dcp_files_in_hdk_workspace") as mock_find:
-            with patch.object(UserInterface, "get_choice_from_options") as mock_choice:
-                with patch.object(UserInterface, "get_input") as mock_input:
-                    # Manual path
-                    mock_choice.return_value = 1
-                    mock_input.return_value = "/test/path.tar"
-                    self.assertEqual(self.dcp_discovery.get_dcp_path_interactive(), "/test/path.tar")
+        with (
+            patch.object(DCPDiscovery, "find_dcp_files_in_hdk_workspace") as mock_find,
+            patch.object(UserInterface, "get_choice_from_options") as mock_choice,
+            patch.object(UserInterface, "get_input") as mock_input,
+        ):
+            mock_choice.return_value = 1
+            mock_input.return_value = "/test/path.tar"
+            self.assertEqual(self.dcp_discovery.get_dcp_path_interactive(), "/test/path.tar")
 
-                    # Empty list
-                    mock_choice.return_value = 0
-                    mock_find.return_value = []
-                    self.assertEqual(self.dcp_discovery.get_dcp_path_interactive(), "/test/path.tar")
+            mock_choice.return_value = 0
+            mock_find.return_value = []
+            self.assertEqual(self.dcp_discovery.get_dcp_path_interactive(), "/test/path.tar")
 
-                    # Choose from list
-                    mock_find.return_value = [("/path1.tar", "d1"), ("/path2.tar", "d2")]
-                    mock_choice.side_effect = [0, 1]
-                    self.assertEqual(self.dcp_discovery.get_dcp_path_interactive(), "/path2.tar")
+            mock_find.return_value = [
+                ("/path1.tar", "d1"),
+                ("/path2.tar", "d2"),
+            ]
+            mock_choice.side_effect = [0, 1]
+            self.assertEqual(self.dcp_discovery.get_dcp_path_interactive(), "/path2.tar")
 
-                    # Choose other path
-                    mock_choice.side_effect = [0, 2]
-                    self.assertEqual(self.dcp_discovery.get_dcp_path_interactive(), "/test/path.tar")
+            mock_choice.side_effect = [0, 2]
+            self.assertEqual(self.dcp_discovery.get_dcp_path_interactive(), "/test/path.tar")
 
 
 class TestS3Manager(unittest.TestCase):
@@ -368,7 +412,7 @@ class TestS3Manager(unittest.TestCase):
         S3Manager(self.region).create_bucket(self.bucket_name)
         return S3Manager(self.region)
 
-    @mock_s3
+    @mock_aws
     def test_bucket_operations(self):
         self.s3_client = boto3.client("s3", region_name=self.region)
         s3_manager = S3Manager(self.region)
@@ -378,7 +422,7 @@ class TestS3Manager(unittest.TestCase):
 
         # Test non-default region bucket creation
         west_manager = S3Manager("us-west-2")
-        west_manager.create_bucket("west-bucket")  # This will use LocationConstraint
+        west_manager.create_bucket("west-bucket")
 
         location = self.s3_client.get_bucket_location(Bucket="west-bucket")["LocationConstraint"]
         self.assertEqual(location, "us-west-2")
@@ -389,7 +433,8 @@ class TestS3Manager(unittest.TestCase):
         def mock_get_location(**kwargs):
             if kwargs["Bucket"] == "error-bucket":
                 raise boto3.exceptions.ClientError(
-                    {"Error": {"Code": "AccessDenied", "Message": "Access Denied"}}, "GetBucketLocation"
+                    {"Error": {"Code": "AccessDenied", "Message": "Access Denied"}},
+                    "GetBucketLocation",
                 )
             return original_get_location(**kwargs)
 
@@ -401,14 +446,17 @@ class TestS3Manager(unittest.TestCase):
         self.assertNotIn("west-bucket", buckets)
         self.assertNotIn("error-bucket", buckets)
 
-    @mock_s3
+    @mock_aws
     def test_folder_and_file_operations(self):
         s3_manager = self.setup_mock_bucket()
         folder_path = "test/folder"
 
-        # Test folder operations
         s3_manager.ensure_folder_exists(self.bucket_name, folder_path)
-        self.s3_client.put_object(Bucket=self.bucket_name, Key=f"{folder_path}/existing.txt", Body=b"test")
+        self.s3_client.put_object(
+            Bucket=self.bucket_name,
+            Key=f"{folder_path}/existing.txt",
+            Body=b"test",
+        )
         s3_manager.ensure_folder_exists(self.bucket_name, folder_path)
         objects = self.s3_client.list_objects_v2(Bucket=self.bucket_name, Prefix=f"{folder_path}/")
         self.assertEqual(len(objects.get("Contents", [])), 2)
@@ -424,7 +472,7 @@ class TestS3Manager(unittest.TestCase):
         finally:
             os.unlink(temp_file)
 
-    @mock_s3
+    @mock_aws
     @patch.object(UserInterface, "get_choice_from_options")
     @patch.object(UserInterface, "get_input")
     def test_interactive_operations(self, mock_input, mock_choice):
@@ -448,7 +496,11 @@ class TestS3Manager(unittest.TestCase):
         # Test path selection - separate directories
         mock_choice.reset_mock()
         mock_input.reset_mock()
-        mock_choice.side_effect = [1, 0, 2]  # Separate dirs, existing folder, custom path
+        mock_choice.side_effect = [
+            1,
+            0,
+            2,
+        ]
         mock_input.return_value = "custom/path"
         dcp_path, logs_path = s3_manager.get_s3_paths_interactive(self.bucket_name)
         self.assertEqual(dcp_path, "existing_folder1")
@@ -484,16 +536,29 @@ class TestAFICreator(unittest.TestCase):
         self.assertIsInstance(creator.s3_manager, S3Manager)
         self.assertIsInstance(creator.dcp_discovery, DCPDiscovery)
 
-    @patch.multiple("create_afi.AFICreator", _complete_afi_data=DEFAULT, _poll_afi_status=DEFAULT)
+    @patch.multiple("create_afi.AFICreator", _complete_afi_data=DEFAULT)
+    @patch("create_afi.wait_for_afi")
     @patch.multiple("os.path", getsize=DEFAULT)
     @patch("boto3.client")
     @patch("tarfile.open")
     @patch("create_afi.UserInterface.confirm")
-    def test_create_afi_workflow(self, mock_confirm, mock_tarfile, mock_client, **mocks):
-        # Setup basic mocks
+    @patch("create_afi.UserInterface.get_input")
+    def test_create_afi_workflow(
+        self,
+        mock_get_input,
+        mock_confirm,
+        mock_tarfile,
+        mock_client,
+        mock_wait_for_afi,
+        **mocks,
+    ):
         mock_tarfile.return_value.__enter__.return_value.getnames.return_value = ["test.dcp"]
         mocks["getsize"].return_value = 1024 * 1024
-        mocks["_complete_afi_data"].return_value = {**self.mock_afi_data, "region": self.region}
+        mocks["_complete_afi_data"].return_value = {
+            **self.mock_afi_data,
+            "region": self.region,
+        }
+        mock_wait_for_afi.return_value = 0
 
         self.afi_creator.ec2_client = MagicMock()
         self.afi_creator.ec2_client.create_fpga_image.return_value = {
@@ -503,69 +568,48 @@ class TestAFICreator(unittest.TestCase):
         self.afi_creator.s3_manager = MagicMock()
         self.afi_creator.interactive = True
 
-        # Test create_bucket and polling
-        mock_confirm.side_effect = [True, True]  # First call
-        result = self.afi_creator.create_afi({"name": "test"}, create_bucket=True, poll_interval=300)
+        mock_confirm.side_effect = [True, True, True]
+        mock_get_input.return_value = "test@example.com"
+        self.afi_creator.create_afi(
+            afi_data={
+                "name": "test",
+                "create_bucket": True,
+                "poll_interval": 300,
+            }
+        )
         self.afi_creator.s3_manager.create_bucket.assert_called_once()
-        mocks["_poll_afi_status"].assert_called_once_with("afi-12345", 300)
+        mock_wait_for_afi.assert_called_once()
 
         # Reset mocks and set up for cancellation test
         mock_confirm.reset_mock()
         mock_confirm.side_effect = None  # Clear side_effect
         mock_confirm.return_value = False  # Second call
         with self.assertRaises(KeyboardInterrupt) as cm:
-            self.afi_creator.create_afi({"name": "test"})
+            self.afi_creator.create_afi(afi_data={"name": "test"})
         self.assertEqual(str(cm.exception), "Operation cancelled by user")
 
     def test_afi_data_completion(self):
         result = self.afi_creator._complete_afi_data(self.mock_afi_data.copy())
         self.assertEqual(result, {**self.mock_afi_data, "region": self.region})
 
-        with patch.multiple(
-            "create_afi.UserInterface", get_input=MagicMock(side_effect=["New AFI", "New Description"])
-        ):
-            with patch.multiple(
+        with (
+            patch.multiple(
+                "create_afi.UserInterface",
+                get_input=MagicMock(side_effect=["New AFI", "New Description"]),
+            ),
+            patch.multiple(
                 "create_afi.S3Manager",
                 get_s3_paths_interactive=MagicMock(return_value=("dcp/path", "logs/path")),
                 get_bucket_interactive=MagicMock(return_value="test-bucket"),
-            ):
-                with patch.multiple(
-                    "create_afi.DCPDiscovery", get_dcp_path_interactive=MagicMock(return_value="/path/to/dcp")
-                ):
-                    result = AFICreator(self.region, interactive=True)._complete_afi_data({})
-                    self.assertEqual(result["name"], "New AFI")
-                    self.assertEqual(result["description"], "New Description")
-
-    @patch("time.sleep")
-    def test_polling_scenarios(self, mock_sleep):
-        self.afi_creator.ec2_client = MagicMock()
-
-        test_cases = [
-            ({"Code": "available"}, "🎉 AFI creation completed successfully!"),
-            ({"Code": "failed"}, "❌ AFI creation failed: failed"),
-            ({"Code": "unavailable", "Message": "Error message"}, "Error: Error message"),
-        ]
-
-        # Capture all output
-        for state, expected_output in test_cases:
-            self.afi_creator.ec2_client.describe_fpga_images.return_value = {"FpgaImages": [{"State": state}]}
-            self.afi_creator._poll_afi_status("afi-12345", 60)
-            self.assertIn(expected_output, self.output.getvalue())
-            self.output.truncate(0)
-            self.output.seek(0)
-
-        # Test interrupts
-        mock_sleep.side_effect = KeyboardInterrupt()
-        self.afi_creator.ec2_client.describe_fpga_images.return_value = {"FpgaImages": [{"State": {"Code": "pending"}}]}
-        self.afi_creator._poll_afi_status("afi-12345", 60)
-        self.assertIn("Polling stopped", self.output.getvalue())
-        self.output.truncate(0)
-        self.output.seek(0)
-
-        # Test generic exception
-        self.afi_creator.ec2_client.describe_fpga_images.side_effect = Exception("Test error")
-        self.afi_creator._poll_afi_status("afi-12345", 60)
-        self.assertIn("Error polling AFI status: Test error", self.output.getvalue())
+            ),
+            patch.multiple(
+                "create_afi.DCPDiscovery",
+                get_dcp_path_interactive=MagicMock(return_value="/path/to/dcp"),
+            ),
+        ):
+            result = AFICreator(self.region, interactive=True)._complete_afi_data({})
+            self.assertEqual(result["name"], "New AFI")
+            self.assertEqual(result["description"], "New Description")
 
     @patch.object(DCPDiscovery, "find_hdk_dir")
     def test_provide_next_steps(self, mock_find_hdk):
@@ -573,12 +617,44 @@ class TestAFICreator(unittest.TestCase):
             mock_find_hdk.return_value = hdk_dir
             self.afi_creator.provide_next_steps("agfi-12345")
 
+    @patch("os.path.getsize")
+    @patch("tarfile.open")
+    @patch("create_afi.UserInterface.confirm")
+    def test_create_afi_with_keyword_argument(self, mock_confirm, mock_tarfile, mock_getsize):
+        """Test create_afi() with keyword argument 'afi_data='."""
+        mock_getsize.return_value = 1024 * 1024
+        mock_tarfile.return_value.__enter__.return_value.getnames.return_value = ["test.dcp"]
+        mock_confirm.return_value = True
+
+        self.afi_creator.ec2_client = MagicMock()
+        self.afi_creator.ec2_client.create_fpga_image.return_value = {
+            "FpgaImageId": "afi-12345",
+            "FpgaImageGlobalId": "agfi-67890",
+        }
+        self.afi_creator.s3_manager = MagicMock()
+
+        # Call with keyword argument as done in AFIManager.create_afi_request()
+        result = self.afi_creator.create_afi(afi_data=self.mock_afi_data.copy())
+
+        # Verify the call succeeded
+        self.assertEqual(result["FpgaImageId"], "afi-12345")
+        self.assertEqual(result["FpgaImageGlobalId"], "agfi-67890")
+        self.afi_creator.ec2_client.create_fpga_image.assert_called_once()
+
 
 class TestAFIManager(unittest.TestCase):
     def setUp(self):
         self.afi_manager = AFIManager()
-        self.mock_args = Mock(interactive=False, region="us-east-1", create_bucket=False, poll_interval=30)
-        self.mock_result = {"FpgaImageId": "afi-12345", "FpgaImageGlobalId": "agfi-67890"}
+        self.mock_args = Mock(
+            interactive=False,
+            region="us-east-1",
+            create_bucket=False,
+            poll_interval=30,
+        )
+        self.mock_result = {
+            "FpgaImageId": "afi-12345",
+            "FpgaImageGlobalId": "agfi-67890",
+        }
 
     @patch.object(UserInterface, "get_choice_from_options")
     def test_handle_interactive_mode(self, mock_get_choice):
@@ -607,11 +683,7 @@ class TestAFIManager(unittest.TestCase):
             result = self.afi_manager.create_afi_request(self.mock_args, "us-east-1")
 
         self.assertEqual(result, self.mock_result)
-        mock_create_afi.assert_called_once_with(
-            afi_data=vars(self.mock_args),
-            create_bucket=self.mock_args.create_bucket,
-            poll_interval=self.mock_args.poll_interval,
-        )
+        mock_create_afi.assert_called_once_with(afi_data=vars(self.mock_args))
         mock_provide_steps.assert_called_once_with("agfi-67890")
         mock_print_success.assert_called_once_with(self.mock_result, "us-east-1", False)
 
@@ -622,20 +694,22 @@ class TestAFIManager(unittest.TestCase):
         ]
 
         for interactive, expected_prints in test_cases:
-            with self.subTest(interactive=interactive):
-                with patch("builtins.print") as mock_print:
-                    AFIManager.print_success(self.mock_result, "us-east-1", interactive)
-                    self.assertEqual(mock_print.call_count, expected_prints)
+            with (
+                self.subTest(interactive=interactive),
+                patch("builtins.print") as mock_print,
+            ):
+                AFIManager.print_success(self.mock_result, "us-east-1", interactive)
+                self.assertEqual(mock_print.call_count, expected_prints)
 
-                    # Verify the content of print calls
-                    calls = [str(call) for call in mock_print.call_args_list]
-                    self.assertIn("AFI creation request submitted successfully", calls[0])
-                    self.assertIn("afi-12345", calls[1])
-                    self.assertIn("agfi-67890", calls[2])
+                # Verify the content of print calls
+                calls = [str(call) for call in mock_print.call_args_list]
+                self.assertIn("AFI creation request submitted successfully", calls[0])
+                self.assertIn("afi-12345", calls[1])
+                self.assertIn("agfi-67890", calls[2])
 
-                    if not interactive:
-                        self.assertIn("Monitor progress with", calls[3])
-                        self.assertIn("describe-fpga-images", calls[4])
+                if not interactive:
+                    self.assertIn("Monitor progress with", calls[3])
+                    self.assertIn("describe-fpga-images", calls[4])
 
 
 class TestMain(unittest.TestCase):
@@ -671,7 +745,6 @@ class TestMain(unittest.TestCase):
 
         with patch("builtins.print") as mock_print:
             self.assertEqual(main(), 1)
-            # Verify error message was printed
             mock_print.assert_any_call("\n⚠️  Operation cancelled by user", file=sys.stderr)
 
     @patch("create_afi.parser.parse_args")
@@ -690,7 +763,9 @@ class TestMain(unittest.TestCase):
 
 if __name__ == "__main__":
     try:
-        unittest.main(exit=False, buffer=True)
+        test_runner = unittest.TextTestRunner(buffer=True, verbosity=2)
+        test_suite = unittest.TestLoader().loadTestsFromModule(__import__(__name__))
+        result = test_runner.run(test_suite)
     except SystemExit:
         pass
     cov.stop()
@@ -702,3 +777,7 @@ if __name__ == "__main__":
     )
     # Optional: Generate HTML report
     # cov.html_report()
+
+    if not result.wasSuccessful():
+        print("Unit tests failed!")
+        sys.exit(1)

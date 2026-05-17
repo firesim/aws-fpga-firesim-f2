@@ -22,6 +22,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <libgen.h>
+#include <limits.h>
 
 #include <sys/types.h>
 #include <dirent.h>
@@ -89,7 +90,7 @@ int fpga_dma_device_id(enum fpga_dma_driver which_driver, int slot_id,
     int rc = 0;
     int device_num;
     char read_or_write[16];
-    
+
     const struct dma_opts_s* dma_opts = fpga_dma_get_dma_opts(which_driver);
     rc = (dma_opts == NULL) * -EINVAL;
     fail_on(rc, out, "invalid DMA driver selected");
@@ -183,21 +184,21 @@ int fpga_pci_get_dma_device_num(enum fpga_dma_driver which_driver,
     char path[64];
     int _device_num;
     struct dirent *entry;
-    char real_path[MAX_FD_LEN];
+    char real_path[PATH_MAX];
     char *possible_dbdf = NULL;
     struct fpga_pci_resource_map resource;
     char sysfs_path_instance[MAX_FD_LEN + sizeof(entry->d_name) + sizeof(path)];
 
     const struct dma_opts_s *dma_opts = fpga_dma_get_dma_opts(which_driver);
     fail_on_with_code(!dma_opts, err, rc, -EINVAL, "invalid DMA driver");
-    
+
     rc = snprintf(path, sizeof(path), "/sys/class/%s", dma_opts->drv_name);
     fail_on_with_code(rc < 1, err, rc, FPGA_ERR_SOFTWARE_PROBLEM, "snprintf failed");
 
     /* This call must be before the lock, because the call holds the lock. */
     rc = fpga_pci_get_resource_map(slot_id, FPGA_APP_PF, &resource);
     fail_on(rc, err, "Could not get resource map");
-    
+
     rc = snprintf(dbdf,
                   sizeof(dbdf),
                   PCI_DEV_FMT,

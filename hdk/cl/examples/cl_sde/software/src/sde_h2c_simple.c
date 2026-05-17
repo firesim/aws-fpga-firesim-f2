@@ -58,6 +58,7 @@ int main(int argc, char **argv) {
   struct sde_parameters params;
   double start_time, end_time;
   int ret = 0;
+  uint8_t* data_ptr = NULL;
 
   ret = sde_parse_args(argc, argv, &params, "sde_h2c_simple");
   fail_on(ret, err, "Unable to parse arguments");
@@ -65,13 +66,13 @@ int main(int argc, char **argv) {
   fail_on_with_code(params.slot_id >= FPGA_SLOT_MAX, err, ret, FPGA_ERR_SOFTWARE_PROBLEM, "Invalid slot_id %d", params.slot_id);
 
   ret = sde_mgmt_init_and_cfg(params.slot_id, SDE_EXAMPLE_DIR_H2C, params.pkt_size);
-  fail_on(ret, err, "Unable to initialize SDE");
+  fail_on(ret, cleanup, "Unable to initialize SDE");
 
   size_t num_descriptors = params.pkt_cnt < H2C_DESC_COALESCE_CNT ? params.pkt_cnt : H2C_DESC_COALESCE_CNT;
   size_t num_packets = 0;
 
   // Allocate one large buffer to store all of the data to be DMA-ed to the SDE (max 32 packets of data).
-  uint8_t* data_ptr = malloc(params.pkt_size * num_descriptors);
+  data_ptr = malloc(params.pkt_size * num_descriptors);
   fail_on_with_code(!data_ptr, cleanup, ret, FPGA_ERR_SOFTWARE_PROBLEM, "Unable to allocate memory");
 
   // Fill the user buffer with patterned data.

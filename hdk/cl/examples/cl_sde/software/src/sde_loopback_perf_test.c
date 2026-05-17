@@ -62,7 +62,7 @@ int main(int argc, char **argv) {
   fail_on_with_code(params.slot_id >= FPGA_SLOT_MAX, err, ret, FPGA_ERR_SOFTWARE_PROBLEM, "Invalid slot_id %d", params.slot_id);
 
   ret = sde_mgmt_init_and_cfg(params.slot_id, SDE_EXAMPLE_DIR_LOOPBACK, params.pkt_size);
-  fail_on(ret, err, "Unable to initialize SDE");
+  fail_on(ret, cleanup, "Unable to initialize SDE");
 
   size_t num_descriptors = 64;
   // Wait for the ability to post 64 buffer descriptors to the SDE.

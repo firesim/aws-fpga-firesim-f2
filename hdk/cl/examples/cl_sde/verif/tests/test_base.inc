@@ -83,7 +83,7 @@ int cfg_pkt_dly_max;          //Max delay between packets
 int cfg_desc_dly_min;         //Min delay between descriptor posts
 int cfg_desc_dly_max;         //Max delay between descriptor posts
 
-int cfg_max_num_desc;         //Max number of outstanding descritpors
+int cfg_max_num_desc;         //Max number of outstanding descriptors
 
 int cfg_desc_before_db_min;   //Min number of descriptors before hit the doorbell
 int cfg_desc_before_db_max;   //Max number of descriptors before hit the doorbell
@@ -474,7 +474,7 @@ begin
             //$display($time,,,"DBG: cons=%0d, limit=%0d, diff=%0d, max=%0d, calc=%0d", desc_cons, desc_limit, credit_diff, cfg_max_num_desc, ((32'h64 - credit_diff) >= cfg_max_num_desc));
          end
 
-         //Randomize descritpor paramters (offset/length)
+         //Randomize descriptor parameters (offset/length)
          rd.randomize();
          if (verbose)
             rd.display();

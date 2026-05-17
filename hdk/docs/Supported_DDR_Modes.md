@@ -1,13 +1,11 @@
-# Supported DDR configurations in [sh_ddr.sv](./../common/shell_stable/design/sh_ddr/sh_ddr.stub.sv)
+# Supported DDR Configurations in [sh_ddr.sv](./../common/shell_stable/design/sh_ddr/sh_ddr.stub.sv)
 
 ## Table of Contents
 
-- [Supported DDR configurations in sh\_ddr.sv](#supported-ddr-configurations-in-sh_ddrsv)
-  - [Table of Contents](#table-of-contents)
-  - [Overview](#overview)
-  - [Required RTL Modifications](#required-rtl-modifications)
-  - [Required Verification Modifications](#required-verification-modifications)
-  - [Required Build Script Modifications](#required-build-script-modifications)
+- [Overview](#overview)
+- [Required RTL Modifications](#required-rtl-modifications)
+- [Required Verification Modifications](#required-verification-modifications)
+- [Required Build Script Modifications](#required-build-script-modifications)
 
 ## Overview
 
@@ -40,7 +38,7 @@ make TEST=${TEST_NAME} USE_64GB_DDR_DIMM=1
 make TEST=${TEST_NAME} USE_AP_64GB_DDR_DIMM=1
 ```
 
-:warning: The macros passed during sims must match with what is defined in the top level CL RTL file. Otherwise, users may risk running sims on unintended DIMM models, yielding inconsistent results.
+⚠️ The macros passed during sims must match with what is defined in the top level CL RTL file. Otherwise, users may risk running sims on unintended DIMM models, yielding inconsistent results.
 
 ## Required Build Script Modifications
 

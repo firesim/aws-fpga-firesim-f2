@@ -26,10 +26,18 @@
 
 
 /** Synchronous API (load/clear) default timeout and delay msecs */
+#ifndef FPGA_MGMT_SYNC_TIMEOUT
 #define FPGA_MGMT_SYNC_TIMEOUT		90000
+#endif
+#ifndef FPGA_MGMT_RL_RELOAD_DELAY
 #define FPGA_MGMT_RL_RELOAD_DELAY       1000
+#endif
+#ifndef FPGA_MGMT_RL_RELOAD_RETRIES
 #define FPGA_MGMT_RL_RELOAD_RETRIES     30
+#endif
+#ifndef FPGA_MGMT_SYNC_DELAY_MSEC
 #define FPGA_MGMT_SYNC_DELAY_MSEC	2
+#endif
 
 struct fgpa_mgmt_state_s fpga_mgmt_state = {
 	.timeout = FPGA_MGMT_TIMEOUT_DFLT,
@@ -281,7 +289,7 @@ static const char * long_help_FPGA_ERR_SOFTWARE_PROBLEM =
 	"the customer is using the library directly.\n";
 
 static const char * long_help_FPGA_ERR_UNRESPONSIVE =
-	"The FPGA or PCI subsytem is not responding. This can happen if the FPGA\n"
+	"The FPGA or PCI subsystem is not responding. This can happen if the FPGA\n"
 	"stopped behaving correctly and the instance will need to be stopped and\n"
 	"restarted.\n";
 

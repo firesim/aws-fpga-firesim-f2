@@ -30,7 +30,7 @@ extern "C" {
 //============================================================================================================
 //
 // fpga_dma_mem_map() : Map size_bytes memory buffer using the provided file descriptor.
-// arguements:
+// arguments:
 // -----------
 // int fd                      : The file descriptor to use for mapping the memory.
 // size_t size_bytes           : The number of bytes that will be mapped for the memory buffer.
@@ -43,7 +43,7 @@ int fpga_dma_mem_map(int fd, size_t size_bytes, uint64_t* virtual_address, uint6
 //============================================================================================================
 //
 // fpga_dma_mem_map_anon() : Map size_bytes memory buffer anonymously.
-// arguements:
+// arguments:
 // -----------
 // size_t size_bytes           : The number of bytes that will be mapped for the memory buffer.
 // uint64_t* virtual_address   : The virtual address that the application can use for accessing the mapped memory.
@@ -56,7 +56,7 @@ int fpga_dma_mem_map_anon(size_t size_bytes, uint64_t* virtual_address, uint64_t
 //
 // fpga_dma_mem_map_huge() : Map size_bytes memory buffer using a hugepage. Huge pages should be allocated prior
 // to making this call. Your system will default to 2MB or 1GB sized huge pages.
-// arguements:
+// arguments:
 // -----------
 // uint64_t* virtual_address   : The virtual address that the application can use for accessing the mapped memory.
 // uint64_t* physical_address  : The physical address that can be programmed into a custom dma engine on a card.
@@ -67,7 +67,7 @@ int fpga_dma_mem_map_huge(uint64_t* virtual_address, uint64_t* physical_address)
 //============================================================================================================
 //
 // fpga_dma_mem_dealloc() : Deallocate memory using the provided virtual address.
-// arguements:
+// arguments:
 // -----------
 // uint64_t* virtual_address  : The virtual address that was returned from fpga_dma_mem_alloc().
 // size_t size_bytes          : The number of bytes that were allocated for the memory buffer.

@@ -33,9 +33,7 @@ module test_ddr_peek_bdr_walking_ones();
       `define BYTE_COUNT 64
       `define BACKDOOR_DATA 512'h77777777777777776666666666666666555555555555555544444444444444443333333333333333222222222222222211111111111111110000000000000000
 
-      tb.power_up(.clk_recipe_a(ClockRecipe::A1),
-          .clk_recipe_b(ClockRecipe::B0),
-          .clk_recipe_c(ClockRecipe::C0));
+      tb.power_up(.clk_recipe_a(ClockRecipe::A1));
       initialize_ddr();
 
       //Disable ECC

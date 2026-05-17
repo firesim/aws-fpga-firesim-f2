@@ -32,9 +32,7 @@ module test_sda();
 
    initial begin
 
-      tb.power_up(.clk_recipe_a(ClockRecipe::A0),
-                  .clk_recipe_b(ClockRecipe::B0),
-                  .clk_recipe_c(ClockRecipe::C0));
+      tb.power_up(.clk_recipe_a(ClockRecipe::A0));
       initialize_ddr();
 
       sda_addr  = 'h0;

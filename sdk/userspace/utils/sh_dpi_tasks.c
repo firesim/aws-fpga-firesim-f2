@@ -31,11 +31,11 @@ void cosim_printf(const char *format, ...)
   va_list args;                          
 
   va_start(args, format);                
-  vsprintf(sv_msg_buffer, format, args); 
+  vsnprintf(sv_msg_buffer, sizeof(sv_msg_buffer), format, args); 
 #ifdef SV_TEST
   sv_printf(sv_msg_buffer);                
 #else
-  printf(sv_msg_buffer); 
+  printf("%s", sv_msg_buffer); 
 #endif
 
   va_end(args);                          

@@ -380,7 +380,7 @@ FAQ
     access the sysfs PCI subsystem and ``/dev/kmsg`` for ``dmesg``
     logging.
 
-- **Q: Can the AFI Management Tools work concurently on multiple FPGA
+- **Q: Can the AFI Management Tools work concurrently on multiple FPGA
   image slots?**
 
   - The tools can be executed on multiple FPGAs concurrently. This may

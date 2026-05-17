@@ -9,37 +9,36 @@
     - [Conventions](#conventions)
   - [Shell Interfaces](#shell-interfaces)
   - [External FPGA Interfaces](#external-fpga-interfaces)
-    - [FPGA PCIe Representation to EC2 Instance](#fpga-pcie-representation-to-ec2-instance)
-      - [Management PF (MgmtPF)](#management-pf-mgmtpf)
-      - [Application PF (AppPF)](#application-pf-apppf)
+    - [Management PF (MgmtPF)](#management-pf-mgmtpf)
+    - [Application PF (AppPF)](#application-pf-apppf)
     - [DDR4 DRAM](#ddr4-dram)
     - [DDR4 AXI](#ddr4-axi)
     - [DMA](#dma)
   - [Interfaces between Shell and CL](#interfaces-between-shell-and-cl)
-    - [CL/Shell AXI Interfaces](#clshell-axi-interfaces)
+    - [CL and Shell AXI Interfaces](#cl-and-shell-axi-interfaces)
     - [Clocks and Reset](#clocks-and-reset)
       - [Clocks](#clocks)
-      - [Reset](#reset)
+      - [Reset](#cl-reset)
     - [PCIS Interface](#pcis-interface)
       - [PCIS Interface Timeout Details](#pcis-interface-timeout-details)
     - [PCIM interface](#pcim-interface)
     - [Outbound PCIe AXI-4 Interface Restrictions](#outbound-pcie-axi-4-interface-restrictions)
     - [Byte Enable Rules](#byte-enable-rules)
     - [AXI4 Error Handling for CL outbound Transactions](#axi4-error-handling-for-cl-outbound-transactions)
-    - [SDA/OCL AXI-Lite Interfaces for Register Access](#sdaocl-axi-lite-interfaces-for-register-access)
+    - [SDA and OCL AXI-Lite Interfaces for Register Access](#sda-and-ocl-axi-lite-interfaces-for-register-access)
       - [CL AXI Completer Error Reporting](#cl-axi-completer-error-reporting)
-    - [Accessing Aligned/Unaligned Addresses from PCIe](#accessing-alignedunaligned-addresses-from-pcie)
+    - [Accessing Aligned or Unaligned Addresses from PCIe](#accessing-aligned-or-unaligned-addresses-from-pcie)
     - [Interrupts](#interrupts)
     - [HBM Monitor Interface](#hbm-monitor-interface)
     - [Miscellaneous Signals](#miscellaneous-signals)
       - [Integrity Check](#integrity-check)
-      - [General Control/Status](#general-controlstatus)
-      - [Virtual LED/DIP](#virtual-leddip)
+      - [General Control and Status](#general-control-and-status)
+      - [Virtual LED/DIP](#virtual-leds-and-dip-switches)
       - [Global Counters](#global-counters)
   - [Implementation Tips](#implementation-tips)
     - [Multi-SLR FPGA](#multi-slr-fpga)
     - [Logic Levels](#logic-levels)
-    - [Reset](#reset-1)
+    - [Reset](#logic-reset)
     - [Pipeline Registers](#pipeline-registers)
     - [Vivado Analysis](#vivado-analysis)
 
@@ -78,16 +77,16 @@ The Shell is reconfigurable, allowing developers to select which Shell version t
 
 The following diagram and table summarize the various interfaces between the Shell and CL as defined in [cl_ports.vh](../common/shell_stable/design/interfaces/cl_ports.vh).
 
-![alt tag](./images/F2_Shell_interface.png)
+![F2 Shell Interface](../../docs-rtd/source/_static/F2_Shell_interface.png)
 
 | Interface       | Description      |
 |:-------------|:-----------|
 | Clocks and Resets  | There are multiple clocks and resets provided by the Shell to the CL. Refer to the [Clocks and Resets](#clocks-and-reset) section for more information. |
-| PCIM | The PCIe Requester (PCIM) Interface is an AXI-4 interface used for Outbound PCIe transactions. Refer to the [PCIM Interface](#pcim-interface----axi-4-for-outbound-pcie-transactions-cl-is-requester-shell-is-completer-512-bit) section for more information.     |
-| PCIS  | The PCIe Completer (PCIS) Interface is an AXI-4 interface used for Inbound PCIe transactions. Refer to the [PCIS Interface](#pcis-interface----axi-4-for-inbound-pcie-transactions-shell-is-requester-cl-is-completer-512-bit) section for more information. |
-| OCL | The OCL Interface is an AXI-Lite interface associated with AppPF and BAR0. Please refer to the [AXI-Lite Interfaces](#axi-lite-interfaces-for-register-access----sda-ocl) for more information. |
+| PCIM | The PCIe Requester (PCIM) Interface is an AXI-4 interface used for Outbound PCIe transactions. Refer to the [PCIM Interface](#pcim-interface) section for more information.     |
+| PCIS  | The PCIe Completer (PCIS) Interface is an AXI-4 interface used for Inbound PCIe transactions. Refer to the [PCIS Interface](#pcis-interface) section for more information. |
+| OCL | The OCL Interface is an AXI-Lite interface associated with AppPF and BAR0. Please refer to the [AXI-Lite Interfaces](#sda-and-ocl-axi-lite-interfaces-for-register-access) for more information. |
 | Miscellaneous | There are various generic signals, such as ID's, status, counters, etc., between the Shell and CL that are described in the [Miscellaneous Signals](#miscellaneous-signals) section.     |
-| SDA |  The SDA Interface is an AXI-Lite interface associated with MgmtPF and BAR4. Please refer to the [AXI-Lite Interfaces](#axi-lite-interfaces-for-register-access----sda-ocl) for more information. |
+| SDA |  The SDA Interface is an AXI-Lite interface associated with MgmtPF and BAR4. Please refer to the [AXI-Lite Interfaces](#sda-and-ocl-axi-lite-interfaces-for-register-access) for more information. |
 | HBM MON APB | The HBM monitor interfaces. Customers using HBM IP are required to connect these interfaces to the HBM IP. Refer to the [HBM monitor interface](#hbm-monitor-interface) for more information.|
 | DDR4 Stats  | This is the control interface from the Shell to the DDR4 Controller in the CL. Shell uses this interface to calibrate the DDR core. Refer to the [DDR4 DRAM](#ddr4-dram) section for more information.|
 | Interrupts | There are 16 user interrupts available. Refer to the [Interrupts](#interrupts) section for more information. |
@@ -100,17 +99,7 @@ The FPGA platform includes the following external interfaces:
 
 - One DDR4 DIMM interfaces, 72-bit wide (including ECC).
 
-### FPGA PCIe Representation to EC2 Instance
-
-There are two PCIe Physical Functions (PFs) presented to the instance:
-
-- Management PF – This PF is used for management of the FPGA. The Management PF provides access to various control functions like Virtual-LED, Virtual-DIPSwitch.
-
-- Application PF (AppPF)– The AppPF is used for CL specific functionality.
-
-Please refer to [PCI Address map](./AWS_Fpga_Pcie_Memory_Map.md) for a more detailed view of the address map.
-
-#### Management PF (MgmtPF)
+### Management PF (MgmtPF)
 
 The Management PF details are provided for reference to help understanding the PCIe mapping from an F2 instance. This interface is strictly used by the AWS FPGA Management Tools.
 
@@ -128,7 +117,7 @@ c)  A range of 32-bit addressable registers.
 
 The Management PF is persistent throughout the lifetime of the instance, and it will not be reset or cleared (even during the AFI Load/Clear process).
 
-#### Application PF (AppPF)
+### Application PF (AppPF)
 
 The Application PF exposes:
 
@@ -179,7 +168,7 @@ There is an integrated DMA controller inside the XDMA Shell (Xilinx DMA, not sup
 
 ## Interfaces between Shell and CL
 
-### CL/Shell AXI Interfaces
+### CL and Shell AXI Interfaces
 
 All AXI interfaces use the AXI-4 or AXI-Lite protocol.  The AXI-L buses are for register access use cases, and can access lower speed control interfaces that use the AXI-Lite protocol.
 
@@ -216,7 +205,7 @@ Please refer to the [Clock_Recipes_User_Guide.md](./Clock_Recipes_User_Guide.md)
 Similar to F1, the `clk_main_a0` in F2 also supports multiple clock recipes and the frequency can be scaled using SW APIs at the time of AFI loads (this feature is currently not available and will be added in a future
 release).
 
-#### Reset
+#### CL Reset
 
 The shell provides an active-low reset signal synchronous to clk_main_a0: rst_main_n.  This is an active low reset signal, and combines the board reset and PCIe link-level reset conditions.
 
@@ -239,7 +228,8 @@ The AXI ID can be used to determine the source of the transaction:
 
 #### PCIS Interface Timeout Details
 
-The PCIS interface multiplexes the XDMA requests and PCIS requests.  Each type of request has a different timeout time:
+Timeouts can be detected by using [fpga-describe-local-image](./How_To_Detect_Shell_Timeout.md).
+The PCIS interface multiplexes the XDMA requests and PCIS requests. Each type of request has a different timeout time:
 
 - XDMA (DMA transactions) : 5 seconds
 - PCIS (PCIe transactions initiated from the instance) : 8 us
@@ -250,14 +240,14 @@ Once a transaction is issued, it must fully be completed within the timeout time
 
 If a timeout occurs, the Shell will timeout all further transactions in 16ns for a moderation time (4ms).
 
-**WARNING**: If a timeout happens, the DMA/PCIS interface may no longer be functional and the AFI/Shell must be re-loaded.  This can be done by adding the "-F" option to `fpga-load-local-image`.
+⚠️ Once a timeout happens, the DMA/PCIS interface may no longer be functional and the AFI/Shell must be re-loaded with [fpga-load-local-image](../../sdk/userspace/fpga_mgmt_tools/README.md).
 
 ### PCIM interface
 
 This is an 512-bit wide AXI-4 interface for Outbound PCIe Transactions (CL is
 Requester, Shell is Completer). It is used by the CL to initiate cycles to the PCIe bus, for example, to push data from the CL to instance memory, or read from the instance memory.
 
-:warning: **The CL must use physical addresses, and developers must be careful not to use userspace/virtual addresses.**
+⚠️ **The CL must use physical addresses, and developers must be careful not to use userspace/virtual addresses.**
 
 The following PCIe interface configuration parameters are provided from the Shell to the CL as informational:
 
@@ -311,9 +301,9 @@ Transactions on AXI4 interface will be terminated and reported as SLVERR on the 
       2. Once RVALID is asserted, RREADY must be asserted, and all data transferred within 8us
       3. Once BVALID is asserted, BREADY must be asserted within 8us
 
-:warning: **If a timeout occurs, the PCIM bus will no longer be functional. This can be cleared by clearing/re-loading the AFI.**
+⚠️ **If a timeout occurs, the PCIM bus will no longer be functional. This can be checked with the [metrics API](./How_To_Detect_Shell_Timeout.md) and cleared by clearing/re-loading the AFI.**
 
-### SDA/OCL AXI-Lite Interfaces for Register Access
+### SDA and OCL AXI-Lite Interfaces for Register Access
 
 There are two AXI-L requester interfaces (Shell is Requester) that can be used for register access interfaces.  Each interface is sourced from a different PCIe PF/BAR.  Breaking this into multiple interfaces allows for different software entities to have a control interface into the CL:
 
@@ -327,7 +317,7 @@ Please refer to [PCI Address Map](./AWS_Fpga_Pcie_Memory_Map.md) for a more deta
 
 Each AXI (AXI-4/AXI-L) transaction is terminated with a response (BRESP/RRESP).  The AXI responses may signal an error such as Completer Error, or Decode Error.  PCIe also has error reporting for non-posted requests (Unsupported Requests/Completer Abort).  The shell does not propagate the AXI-4 error responses to the PCIe bus.  All PCIe cycles are terminated with non-error responses.  The AXI-4 errors are reported through the Management PF and can be retrieved by the AFI Management Tools metric reporting APIs.
 
-### Accessing Aligned/Unaligned Addresses from PCIe
+### Accessing Aligned or Unaligned Addresses from PCIe
 
 The Shell (Requester) supports DW aligned and unaligned transfers from PCIe (address is aligned/unaligned to DW-4byte boundary)
 
@@ -448,7 +438,7 @@ These steps must be followed to properly connect the monitor interfaces to HBM:
 
 4. The `hbm_apb_preset_n_<1/0>` signals, treated as asynchronous resets by the HBM IP, must be directly connected to the IP's `MON_APB_<1/0>_PRESET_N` inputs. Other APB interfaces can be pipelined using APB register slices for timing closure purposes.
 
-:warning: **Failing to connect these HBM monitor interfaces between the shell and the HBM IP will result in an AFI creation error.**
+⚠️ **Failing to connect these HBM monitor interfaces between the shell and the HBM IP will result in an AFI creation error.**
 
 ### Miscellaneous Signals
 
@@ -458,7 +448,7 @@ There are some miscellaneous generic signals between the Shell and CL.
 
 The 64-bit ch_sh_id0/id1 are used by AWS to validate the signature of the DCP while being loaded into an FPGA in AWS.
 
-Initial versions of the HDK and Shell used the 4-tuple: PCIe VendorID, DeviceID, SubsystemVendorID and SubsystemID (which are used during AFI registration via `aws ec2 create-fpga-image` API) as the Integrity check mechanism, following the next mapping
+Initial versions of the HDK and Shell used the 4-tuple: PCIe VendorID, DeviceID, SubsystemVendorID and SubsystemID (which are used during AFI registration via `aws ec2 create-fpga-image` API consuming the [AWS AFI manifest](./AFI_Manifest.md)) as the integrity check mechanism, following the next mapping
 
 - cl_sh_id0
   - \[15:0\] – Vendor ID
@@ -469,7 +459,7 @@ Initial versions of the HDK and Shell used the 4-tuple: PCIe VendorID, DeviceID,
 
 See the [HDK development guide](./../README.md#afi-pcie-ids) for defining and adding these IDs to a CL design.
 
-#### General Control/Status
+#### General Control and Status
 
 The functionality of these signals is TBD.
 
@@ -483,7 +473,7 @@ The functionality of these signals is TBD.
   - 0x2 – Power level 2
   - 0x3 – Power is critical and FPGA may be shutting off clocks or powering down
 
-#### Virtual LED/DIP
+#### Virtual LEDs and DIP Switches
 
 There are virtual LED/DIP switches that can be used to control/monitor CL logic.  There are 16 LEDs and 16 DIP Switches.  Registers exposed to the Management PF are used to control/monitor the LED/DIP Switches.
 
@@ -524,7 +514,13 @@ Here are some implementation tips.
 
 ### Multi-SLR FPGA
 
-The VU47P FPGA is a stacked FPGA that has 3-die stacked together.  Each Die is called a “Super Logic Region” (SLR).  Crossing an SLR boundary is expensive from a timing perspective.  It is good practice to pipeline interfaces between major blocks to allow the tool freedom to have SLR crossings between the major blocks.  Even with pipelined interfaces it is possible the tool has sub-optimal logic to SLR mapping (i.e. a major block is spread out over multiple SLR's).  In this case you may want to at map major blocks to specific SLRs (define the logic that should be constrained to each SLR).  Any crossing of SLR’s should have flops on either side (or register slices for AXI).
+The VU47P FPGA is a stacked FPGA that has 3-die stacked together.
+Each Die is called a “Super Logic Region” (SLR).
+Crossing an SLR boundary is expensive from a timing perspective.
+It is good practice to pipeline interfaces between major blocks to allow the tool freedom to have SLR crossings between the major blocks.
+Even with pipelined interfaces it is possible the tool has sub-optimal logic to SLR mapping (i.e. a major block is spread out over multiple SLR's).
+In this case, developers may want to at map major blocks to specific SLRs (define the logic that should be constrained to each SLR).
+Any crossing of SLR’s should have flops on either side (or register slices for AXI).
 
 It is ideal to place logic that interfaces to the shell in the same SLR as the Shell logic for that interface.  If this is not possible, the first flop/register slice should be placed in the same SLR:
 
@@ -541,14 +537,18 @@ It is ideal to place logic that interfaces to the shell in the same SLR as the S
 
 Please see the [Shell Floorplan](./shell_floorplan.md) for additional details on Shell-CL interface placements in SMALL_SHELL.
 
-For the interfaces that are in both the MID/BOTTOM the recommendation is to use flops for pipelining, but don’t constrain to an SLR.  You can constrain logic to a particular SLR by creating PBLOCKs (one per SLR), and assigning logic to the PBLOCKs (refer to cl_dram_hbm_dma example [small_shell_cl_pnr_user.xdc](../cl/examples/cl_dram_hbm_dma/build/constraints/small_shell_cl_pnr_user.xdc)).
+For the interfaces that are in both the MID/BOTTOM the recommendation is to use flops for pipelining, but don’t constrain to an SLR.
+Constrain logic to a particular SLR by creating PBLOCKs (one per SLR), and assigning logic to the PBLOCKs (refer to cl_dram_hbm_dma example [small_shell_cl_pnr_user.xdc](../cl/examples/cl_dram_hbm_dma/build/constraints/small_shell_cl_pnr_user.xdc)).
 Dataflow should be mapped so that SLR crossing is minimized (for example a pipeline should be organized such that successive stages are mostly in the same SLR).
 
 There are some good timing closure tips in this [UltraFast Design Methodology Guide](https://docs.amd.com/r/2024.1-English/ug949-vivado-design-methodology/Introduction)
 
 ### Logic Levels
 
-You can report all paths that are greater than a certain number of logic levels.  This can be used to iterate on timing in synthesis rather than waiting for place and route.  For example at 250MHz a general rule of thumb is try to keep logic levels to around 10.  The following commands report on all paths that have more than 10 logic levels:
+All paths greater than a certain number of logic levels can be reported.
+This can be used to iterate on timing in synthesis rather than waiting for place and route.
+For example at 250MHz a general rule of thumb is try to keep logic levels to around 10.
+The following commands report on all paths that have more than 10 logic levels:
 
 ``` Tcl
 report_design_analysis -logic_level_distribution -of [get_timing_paths -max_paths 10000 -filter {LOGIC_LEVELS > **10**}]
@@ -559,7 +559,7 @@ foreach gtp [get_timing_paths -max_paths 5000 ?nworst 100 -filter {LOGIC_LEVELS 
     [get_propert LOGIC_LEVELS $gtp]"
 ```
 
-### Reset
+### Logic Reset
 
 Reset fanout can be minimized in an FPGA. This helps with routing congestion. Flops can be initialized in their declaration and generally do not require resets:
 
@@ -581,7 +581,9 @@ If there is still significant fanout of reset, it should be replicated and pipel
 
 ### Pipeline Registers
 
-You have to be careful that pipeline registers do not infer a shift register component.  The shift register is placed in a single area and does not accomplish any distance pipelining.  Here is a snippet to force the tools to not infer a shift register (shreg_extract="no" directive):
+Developers must be careful that pipeline registers do not infer a shift register component.
+The shift register is placed in a single area and does not accomplish any distance pipelining.
+Here is a snippet to force the tools to not infer a shift register (shreg_extract="no" directive):
 
 ```verilog
 (*shreg_extract="no"*) logic [WIDTH-1:0] pipe[STAGES-1:0] = '{default:'0};

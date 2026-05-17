@@ -32,6 +32,7 @@ static int get_pagemap(uint64_t page_frame_number, uint64_t* pagemap) {
   lseek64(fd, page_frame_number * 8, SEEK_SET);
   size_t bytes_read = read(fd, pagemap, sizeof(*pagemap));
   fail_on_with_code( bytes_read != sizeof(*pagemap), cleanup, ret, FPGA_ERR_SOFTWARE_PROBLEM, "read(%s) failed: %m", pagemap_file_path);
+  close(fd);
   return FPGA_ERR_OK;
 
 cleanup:

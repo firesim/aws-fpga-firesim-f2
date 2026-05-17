@@ -45,8 +45,8 @@ fpga_pci_bar_get(pci_bar_handle_t handle)
 {
 	log_debug("handle=%d", handle);
 
-	fail_on(handle >= FPGA_PCI_BARS_MAX, err, "Invalid handle=%d", 
-			handle);
+	fail_on(handle < 0 || handle >= FPGA_PCI_BARS_MAX, err,
+			"Invalid handle=%d", handle);
 
 	return &bars[handle];
 err:
@@ -228,7 +228,7 @@ fpga_pci_bar_attach(struct fpga_slot_spec *spec, int pf_id, int bar_id,
 	 * Open and memory map the resource.
 	 *  -"_wc" is added if the memory bar is burstable.
 	 */
-	snprintf(sysfs_name, sizeof(sysfs_name), 
+	ret = snprintf(sysfs_name, sizeof(sysfs_name),
 			"/sys/bus/pci/devices/" PCI_DEV_FMT "/resource%u%s", 
 			map->domain, map->bus, map->dev, map->func, bar_id, wc_suffix);
 
