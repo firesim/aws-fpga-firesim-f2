@@ -183,12 +183,9 @@ generate_target {all} [get_ips axi_clock_converter_512_wide]
 synth_ip [get_ips axi_clock_converter_512_wide]
 
 # Regenerate axi_dwidth_converter_0 for F2 (64-bit to 512-bit width conversion)
-# CRITICAL: Disable FIFO_MODE to prevent MDRV-1 (Multiple Driver Nets) DRC errors
-# on xcvu47p. The packet FIFO mode creates BRAM instances that drive constant nets
-# with multiple drivers, which fails DRC on F2's device architecture.
 upgrade_ip [get_ips axi_dwidth_converter_0]
 reset_target {all} [get_ips axi_dwidth_converter_0]
-set_property CONFIG.FIFO_MODE {0} [get_ips axi_dwidth_converter_0]
+set_property CONFIG.ACLK_RATIO {1:1} [get_ips axi_dwidth_converter_0]
 generate_target {all} [get_ips axi_dwidth_converter_0]
 synth_ip [get_ips axi_dwidth_converter_0]
 

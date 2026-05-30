@@ -160,3 +160,6 @@ hdk/cl/developer_designs/cl_firesim/design/xsim.dir/
 hdk/cl/developer_designs/cl_firesim/design/xvlog.log
 hdk/cl/developer_designs/cl_firesim/xsim.dir/
 hdk/cl/developer_designs/cl_firesim/xvlog.log
+hdk/cl/examples/xsim.dir/
+xsim.dir/
+xvlog.log
