@@ -33,6 +33,7 @@ If you are new to AWS EC2 FPGA-accelerated instances, we recommend you read this
      - Developers with Block Design experience
      - Vivado IP Integrator
 
+
 Table of Contents
 -----------------
 
@@ -45,8 +46,10 @@ Table of Contents
   sdk/README
   vitis/README
 
-  developer-resources/Amazon-DCV-Setup-Guide.rst
   hdk/docs/IPI-GUI-Vivado-Setup
+  developer-resources/runtime-ami-builder/README
+
+  developer-resources/Amazon-DCV-Setup-Guide
 
   ERRATA
 

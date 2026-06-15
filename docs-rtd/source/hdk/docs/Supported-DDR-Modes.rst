@@ -1,21 +1,15 @@
-.. _supported-ddr-configurations-in-sh-ddrsv:
-
-Supported DDR configurations in `sh_ddr.sv <https://github.com/aws/aws-fpga/tree/f2/hdk/common/shell_stable/design/sh_ddr/sh_ddr.stub.sv>`__
+Supported DDR Configurations in `sh_ddr.sv <https://github.com/aws/aws-fpga/tree/f2/hdk/common/shell_stable/design/sh_ddr/sh_ddr.stub.sv>`__
 ============================================================================================================================================
 
 Table of Contents
 -----------------
 
-- `Supported DDR configurations in
-  sh_ddr.sv <#supported-ddr-configurations-in-sh-ddrsv>`__
-
-  - `Table of Contents <#table-of-contents>`__
-  - `Overview <#overview>`__
-  - `Required RTL Modifications <#required-rtl-modifications>`__
-  - `Required Verification
-    Modifications <#required-verification-modifications>`__
-  - `Required Build Script
-    Modifications <#required-build-script-modifications>`__
+- `Overview <#overview>`__
+- `Required RTL Modifications <#required-rtl-modifications>`__
+- `Required Verification
+  Modifications <#required-verification-modifications>`__
+- `Required Build Script
+  Modifications <#required-build-script-modifications>`__
 
 Overview
 --------
@@ -48,13 +42,13 @@ one of the following macros in the top level of CL where ``sh_ddr.sv``
 is instantiated. This will automatically pick up the desired DDR
 controller inside ``sh_ddr.sv``. Supported macros are shown below:
 
-- :literal:`\`define USE_64GB_DDR_DIMM` : This is 64GB DDR controller
-- :literal:`\`define USE_AP_64GB_DDR_DIMM` : This is 64GB DDR controller
+- ``\`define USE_64GB_DDR_DIMM`` : This is 64GB DDR controller
+- ``\`define USE_AP_64GB_DDR_DIMM`` : This is 64GB DDR controller
   with user-controlled Auto Precharge
 
 For example, please refer to
 `cl_mem_perf <https://github.com/aws/aws-fpga/tree/f2/hdk/cl/examples/cl_mem_perf/design/cl_mem_perf.sv>`__
-which has :literal:`\`define USE_AP_64GB_DDR_DIMM` macro to override
+which has ``\`define USE_AP_64GB_DDR_DIMM`` macro to override
 sh_ddr.sv to use 64GB DDR core with user controlled Auto-Precharge mode.
 
 Required Verification Modifications
@@ -63,7 +57,7 @@ Required Verification Modifications
 Users must pass the **same** macro as they defined in top level CL to
 simulate with a corresponding DIMM model.
 
-.. code:: bash
+.. code-block:: bash
 
    export TEST_NAME=test_ddr
 
@@ -81,31 +75,31 @@ Required Build Script Modifications
 -----------------------------------
 
 AWS provides following DDR Core IPs as part of Vivado
-`cl_ip.xpr <https://github.com/aws/aws-fpga-resources/blob/-/cl_ip/cl_ip.xpr>`__ project. Users are
-required to enlist one of the following XCI files in the synthesis
-scripts, depending on the desired DDR configuration and macros defined:
+`cl_ip.xpr <https://github.com/aws/aws-fpga-resources/blob/-/cl_ip/cl_ip.xpr>`__
+project. Users are required to enlist one of the following XCI files in
+the synthesis scripts, depending on the desired DDR configuration and
+macros defined:
 
-+----------------------+----------------------+----------------------+
-| Macro definition in  | Description          | DDR XCI file to read |
-| top level CL         |                      | in synthesis script  |
-+======================+======================+======================+
-| \`define             | 64 GB DDR core       | ``cl_ddr4.xci``      |
-| USE_64GB_DDR_DIMM    | without              |                      |
-|                      | user-controlled      |                      |
-|                      | Auto-Precharge mode. |                      |
-+----------------------+----------------------+----------------------+
-| \`define             | 64 GB DDR core with  | ``                   |
-| USE_AP_64GB_DDR_DIMM | user-controlled      | cl_ddr4_64g_ap.xci`` |
-|                      | Auto-Precharge mode. |                      |
-+----------------------+----------------------+----------------------+
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Macro definition in top level CL
+     - Description
+     - DDR XCI file to read in synthesis script
+   * - ```define USE_64GB_DDR_DIMM``
+     - 64 GB DDR core without user-controlled Auto-Precharge mode.
+     - ``cl_ddr4.xci``
+   * - ```define USE_AP_64GB_DDR_DIMM``
+     - 64 GB DDR core with user-controlled Auto-Precharge mode.
+     - ``cl_ddr4_64g_ap.xci``
 
 Alternately, users may choose to enlist all four DDR XCI files in their
 synthesis script. The Vivado tool automatically elaborates the correct
 DDR core based on the macro defined in top level CL file. For example,
-`CL_MEM_PERF synthesis
-script <https://github.com/aws/aws-fpga/tree/f2/hdk/cl/examples/cl_mem_perf/build/scripts/synth_cl_mem_perf.tcl>`__
+`CL_MEM_PERF synthesis script <https://github.com/aws/aws-fpga/tree/f2/hdk/cl/examples/cl_mem_perf/build/scripts/synth_cl_mem_perf.tcl>`__
 reads in all four XCI files but elaborates the desired DDR core at the
 time of synthesis based on macro defined in
 `cl_mem_perf.sv <https://github.com/aws/aws-fpga/tree/f2/hdk/cl/examples/cl_mem_perf/design/cl_mem_perf.sv>`__
 
-`Back to HDK README <../README.html>`__
+`Back to Home <../../index.html>`__

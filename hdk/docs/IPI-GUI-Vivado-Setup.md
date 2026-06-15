@@ -29,7 +29,7 @@
 
 ## Overview
 
-This document assumes you have cloned the developer kit and sourced the [`hdk_setup.sh`](./../../hdk_setup.sh). It is highly recommended that you get familiar with the HDK development flow by following the [step-by-step quick start guide for customer hardware development](./../README.md) prior to using the Vivado IP Integrator (IPI).
+This document assumes you have cloned the developer kit and sourced the [hdk_setup.sh](./../../hdk_setup.sh). It is highly recommended that you get familiar with the HDK development flow by following the [step-by-step quick start guide for customer hardware development](./../README.md) prior to using the Vivado IP Integrator (IPI).
 
 After you become familiar with building an example AFI and running it on F2 instances, refer to [IP Integrator Quick Start Examples](./IPI-GUI-Examples.md) documentation for help with example designs, new designs, and additional tutorials.
 
@@ -47,7 +47,7 @@ To get the absolute path of `$HDK_SHELL_DIR` , use this command:
 echo $HDK_SHELL_DIR
 ```
 
-**NOTE**: If your `$HDK_SHELL_DIR` is empty or does not display when echoed, you need to source the [hdk_setup.sh](../../../../../hdk_setup.sh).
+**NOTE**: If your `$HDK_SHELL_DIR` is empty or does not display when echoed, you need to source the [hdk_setup.sh](./../../hdk_setup.sh).
 
 In `init.tcl` or `Vivado_init.tcl`, append the following lines based upon the `$HDK_SHELL_DIR` path to the end of the file.
 
@@ -83,7 +83,7 @@ The IP Integrator (IPI) is a design entry tool in the Vivado HLx Design Suite. I
 For detailed information and design methodology guidelines, refer to the following documentation:
 
 - [Vivado Design Suite User Guide (UG892)](https://docs.amd.com/r/en-US/ug892-vivado-design-flows-overview)
-- [Designing IP Sybsystems UsingIP Integrator (UG994)](https://docs.amd.com/r/en-US/ug994-vivado-ip-subsystems)
+- [Designing IP Subsystems UsingIP Integrator (UG994)](https://docs.amd.com/r/en-US/ug994-vivado-ip-subsystems)
 - [UltraFast Design Methodology Guide for FPGAs and SoCs (UG949)](https://docs.amd.com/r/en-US/ug949-vivado-design-methodology)
 
 To open the GUI, run command `vivado`. After Vivado loads, create an empty project by selecting `Create New Project` and following the prompts until you see a blank canvas. The sections below describe the tabs and menus, refer to the screenshot below. Exploring these tabs and menus in your blank project is encouraged.
@@ -166,7 +166,7 @@ The Vivado HLx environment supports IP Integrator (IPI) flow. This section provi
 
 ### IP Integration flow
 
-You can easily create a full design by adding Vivado IP to the block diagram. Use RTL module referencing to add custom RTL as IP to the block diagram. This flow supports both RTL and IP additions as IP blocks. Find examples in the [IP Integrator Quick Start Examples](./IPI-GUI-Examples.md#hlx-ipi-examples-using-ip-integration-flow).
+You can easily create a full design by adding Vivado IP to the block diagram. Use RTL module referencing to add custom RTL as IP to the block diagram. This flow supports both RTL and IP additions as IP blocks. Find examples in the [IP Integrator Quick Start Examples](./IPI-GUI-Examples.md#hlx-examples-using-ip-integrator-flow).
 
 ![Diagram](./../../docs-rtd/source/_static/hlx_images/ipi_mod_ref.png)
 

@@ -2,10 +2,8 @@
 
 ⚠️ **Features using XDMA engine are currently unsupported on F2 instances**
 
-## Table of Content
+## Table of Contents
 
-- [CL\_MEM\_PERF Custom Logic Example](#cl_mem_perf-custom-logic-example)
-  - [Table of Content](#table-of-content)
 - [Introduction](#introduction)
 - [Architecture Overview](#architecture-overview)
   - [Clocks and Reset](#clocks-and-reset)
@@ -25,18 +23,13 @@
   - [SDA Memory Address Space](#sda-memory-address-space)
 - [Simulations](#simulations)
 - [Software](#software)
-      - [test\_hbm\_perf32.c](#test_hbm_perf32c)
-      - [test\_dram\_hbm\_dma.c](#test_dram_hbm_dmac)
-      - [test\_hbm\_perf32.c](#test_hbm_perf32c-1)
-      - [test\_aws\_clk\_gen.c](#test_aws_clk_genc)
-      - [test\_clk\_freq.c](#test_clk_freqc)
-    - [Compile and run instructions](#compile-and-run-instructions)
-      - [test\_dram\_hbm\_dma\_hwsw\_cosim.c](#test_dram_hbm_dma_hwsw_cosimc)
-    - [Compile and run instructions](#compile-and-run-instructions-1)
+  - [Software Tests](#software-tests)
+  - [Compile and run instructions](#compile-and-run-instructions)
+  - [Cosim Compile and run instructions](#cosim-compile-and-run-instructions)
 - [HBM Performance Tests](#hbm-performance-tests)
   - [Instructions to run HBM Performance Test](#instructions-to-run-hbm-performance-test)
 
-# Introduction
+## Introduction
 
 The CL_MEM_PERF is a customer reference design for F2 where the objective is to demonstrate fine tuned data paths to HBM and DDR to achieve maximum throughput to the memories. The example also demonstrates datapath connectivity between Host, AWS Shell, Custom Logic (CL) region in the FPGA, HBM and DDR DIMM on the FPGA card. Following are the major highlights of CL_MEM_PERF design:
 
@@ -53,10 +46,10 @@ The CL_MEM_PERF is a customer reference design for F2 where the objective is to 
 
 Overall, CL_MEM_PERF enables customers to quickly integrate their CL accelerator designs to interface with various memories on the FPGA and to use as reference to fine tune their CL performance.
 
-# Architecture Overview
+## Architecture Overview
 
 Figure below shows an architectural overview of CL_MEM_PERF design:
-![Diagram](design/cl_mem_perf.png)
+![Diagram](../../../../docs-rtd/source/_static/cl_mem_perf_images/cl_mem_perf.png)
 
 All interfaces in this CL example are accessible from the Host on the PF/BARs as stated in the table below. Please See [PCIe Memory Map](../../../docs/AWS_Fpga_Pcie_Memory_Map.md) for more details on bar sizes, and [AWS Shell Interface Specification](../../../docs/AWS_Shell_Interface_Specification.md) for available interfaces between the Shell and the CL.
 
@@ -69,7 +62,7 @@ All interfaces in this CL example are accessible from the Host on the PF/BARs as
 | Virtual JTAG                                 |  1 |   2 |
 | SDA                                          |  1 |   4 |
 
-## Clocks and Reset
+### Clocks and Reset
 
 - clk_main_a0 (250 MHz) from Shell for majority of the design except for HBM.
 - rst_main_n from Shell sync’d to clk_main_a0.
@@ -78,17 +71,17 @@ All interfaces in this CL example are accessible from the Host on the PF/BARs as
   The AWS_CLK_GEN block also generates several other clocks to match with the clock recipes supported in F1. Please refer to [AWS_CLK_GEN spec](./../../../docs/AWS_CLK_GEN_spec.md) for details on this block. The [Clock Recipes User Guide](./../../../docs/Clock_Recipes_User_Guide.md) describes various clock recipes available for F2 developers and options on configuring clocks dynamically. The user guide also describes porting of CL designs based on F1 clock recipes into F2.
 - NOTE: There is a SW control register at [OCL offset 0x300](#hbm-memory-address-space) to reset only the HBM IP core. This reset register does not reset the whole CL_HBM_AXI4 block.
 
-## OCL
+### OCL
 
-The [CL_MEM_OCL_DEC](design/cl_mem_ocl_dec.sv) module converts OCL 32-bit AXI-L Interface to simple config bus interface. It consists of an address decoder to access register space of various blocks. See [OCL Address Space](#ocl-address-space) for available ranges.
+The [CL_MEM_OCL_DEC](./design/cl_mem_ocl_dec.sv) module converts OCL 32-bit AXI-L Interface to simple config bus interface. It consists of an address decoder to access register space of various blocks. See [OCL Address Space](#ocl-address-space) for available ranges.
 
-## PCIM
+### PCIM
 
 The [CL_PCIM_MSTR](../cl_dram_hbm_dma/design/cl_pcim_mstr.sv) module is connected to the 512-bit AXI4 PCIM interface. It consists of AXI4 Traffic Generator capable of issuing Read/Write requests to the Host over the PCIe link. This block can also be used to test the peak PCIe transfer rates across the PCIe link.
 
 While this block is essentially a traffic generator, CL designers could potentially swap this block with their custom Kernel that acts as a PCIe Requester to the Host Memory.
 
-## PCIS
+### PCIS
 
 The PCIS is a 512-bit AXI4 interface from the Shell which can be accessed either by Host over PF0-BAR4, or by the XDMA engine in the AWS Shell. The PCIS interface is used in CL_MEM_PERF example to provide datapaths to the DDR and HBM memories in the FPGA. The address range to access DDR and HBM memories is described in [PCIS Memory Address Space](#pcis-memory-address-space).
 
@@ -96,16 +89,16 @@ The [CL_AXI_MSTR](../cl_dram_hbm_dma/design/cl_dram_dma_axi_mstr.sv) module is a
 
 There are two MUXes - one along the datapath to DDR, and another MUX along datapath to HBM. These MUXes default to connecting CL_AXI_INTERCONNECT’s path to the target memories. However, setting these MUXes enables traffic from the ATGs to the target memories. PCIS path to the target memories is disabled when the MUXes are enabled.
 
-## DDR
+### DDR
 
 AWS provides [SH_DDR](../../../common/shell_stable/design/sh_ddr/synth/sh_ddr.sv) that houses the DDR4 Controller specifically configured to the DDR DIMM on the FPGA Card.  The SH_DDR is also connected to the Shell's sh_cl_ddr_stat_* ports to enable Shell to manage DDR calibration upon CL AFI loads. The SH_DDR exposes an AXI4 512-bit interface for the CL logic to perform Read/Write data transfers into DDR. Please refer to the [Supported DDR Modes](./../../../docs/Supported_DDR_Modes.md) for details on supported DDR configurations in `sh_ddr.sv`.
 
-## HBM
+### HBM
 
 F2 FPGA has on-chip HBM with a maximum capacity of 16GiB, accessible through 32 AXI3 Channels running at a maximum clock speed of up to 450MHz. CL designs should leverage all the available channels and aim for achieving timing closure of the interface at 450MHz to get the best possible performance out of HBM. HBM offers theoretical max bandwidth of 460GB/s when traffic is active across all the 32 Channels with 450MHz clock.
 
-The [CL_HBM_AXI4](design/cl_mem_hbm_axi4.sv) module demonstrates an use case for HBM traffic as shown in the block diagram below:
-![Diagram](design/cl_hbm_kernel.png)
+The [CL_HBM_AXI4](./design/cl_mem_hbm_axi4.sv) module demonstrates an use case for HBM traffic as shown in the block diagram below:
+![Diagram](../../../../docs-rtd/source/_static/cl_mem_perf_images/cl_hbm_kernel.png)
 
 CL_HBM_AXI4 exposes an AXI4 512-bit interface and two configuration interfaces clocked using the 250MHz clk_main_a0. The Host (PCIS) can access HBM through this AXI4 Interface. The AXI4 interface then connects to 512-to-256 bit width converter, clock crossing converters between clk_main_a0 and HBM's AXI3 clock, and AXI4-to-AXI3 protocol converter to ultimately connect to HBM AXI Channel#0
 
@@ -130,24 +123,26 @@ CL_HBM_WRAPPER:
 
 Please refer to [CL_HBM_AXI4 Register Address Space](#cl_hbm_axi4-register-address-space) for details on register address space and HBM memory address space.
 
-## SDA
+### SDA
 
 The SDA interface is shared between two modules:
-1. The [CL_SDA_SLV](../cl_dram_hbm_dma/design/cl_sda_slv.sv) module provides access to a 1KB BRAM through SDA 32-bit AXI-L Interface.
-2. The [AWS_CLK_GEN](./../../../common/lib/aws_clk_gen.sv) module generates all the required clocks for the design. Please refer to the [AWS_CLK_GEN specifiction](./../../../docs/AWS_CLK_GEN_spec.md) for details on this block. The [Clock Recipes User Guide](./../../../docs/Clock_Recipes_User_Guide.md) describes various clock recipes available for F2 developers and options on configuring clocks dynamically. The user guide also describes porting of CL designs based on F1 clock recipes into F2.
 
-## Interrupts
+1. The [CL_SDA_SLV](../cl_dram_hbm_dma/design/cl_sda_slv.sv) module provides access to a 1KB BRAM through SDA 32-bit AXI-L Interface.
+2. The [AWS_CLK_GEN](./../../../common/lib/aws_clk_gen.sv) module generates all the required clocks for the design. Please refer to the [AWS_CLK_GEN specification](./../../../docs/AWS_CLK_GEN_spec.md) for details on this block. The [Clock Recipes User Guide](./../../../docs/Clock_Recipes_User_Guide.md) describes various clock recipes available for F2 developers and options on configuring clocks dynamically. The user guide also describes porting of CL designs based on F1 clock recipes into F2.
+
+### Interrupts
 
 The [CL_INT_SLV](../cl_dram_hbm_dma/design/cl_int_tst.sv) module implements simple mechanism to trigger MSIX interrupts to the host over sh_cl_apppf_irq_req/ack interface. SW can check the status of the interrupt triggers and also configure the interrupt masks.
 The `interrupt_example()` routine in [test_dram_hbm_dma.c](./software/runtime/test_dram_hbm_dma.c) demonstrates interrupts functionality.
 
-## Virtual JTAG
+### Virtual JTAG
 
 The [CL_ILA](../cl_dram_hbm_dma/design/cl_ila.sv) instantiates the Debug Bridge IP required to support Virtual JTAG and the two example ILAs. One ILA snoops the PCIS bus, whereas second ILA snoops DDR-AXI4 bus.
 
-# Address Space
+## Address Space
 
-## OCL Address Space
+### OCL Address Space
+
 The OCL AXI-L is decoded into following address ranges for various design blocks:
 
 | Module                     | OCL Start Address | OCL End Address | Description                         |
@@ -161,7 +156,7 @@ The OCL AXI-L is decoded into following address ranges for various design blocks
 | Clock Frequency Measurement| 0x0600            | 0x06FF          | CL_CLK_FREQ Block                   |
 | Interrupt Generator        | 0x0D00            | 0x0DFF          | CL_INT_SLV Block                    |
 
-## PCIS Memory Address Space
+### PCIS Memory Address Space
 
 | Target Memory | Start Address  | End Address    | Range |
 |---------------|----------------|----------------|-------|
@@ -170,13 +165,14 @@ The OCL AXI-L is decoded into following address ranges for various design blocks
 
 **NOTE**: Accessing memory beyond DDR and HBM’s range can potentially corrupt the data in either of the memories.
 
-## HBM Memory Address Space
+### HBM Memory Address Space
+
 HBM Memory Address Space is as shown in the [HBM User Guide](https://docs.xilinx.com/r/en-US/pg276-axi-hbm/Port-Descriptions) for 16GB capacity. Each CL_AXI_CTL instantiated in CL_HBM_PERG_KERNEL is mapped to serve the address range defined for each channel in the HBM user guide. For example:
 
-* Channel#0 | Start Address = 0x0000_0000 | End Address = 0x1FFF_FFFF
-* Channel#1 | Start Address = 0x2000_0000 | End Address = 0x3FFF_FFFF and so on...
+- Channel#0 | Start Address = 0x0000_0000 | End Address = 0x1FFF_FFFF
+- Channel#1 | Start Address = 0x2000_0000 | End Address = 0x3FFF_FFFF and so on...
 
-## CL_HBM_AXI4 Register Address Space
+### CL_HBM_AXI4 Register Address Space
 
 The table below describes the registers available in CL_HBM_AXI4 block. This includes registers inside CL_HBM_WRAPPER and CL_KERNEL_REGS:
 
@@ -215,22 +211,21 @@ The table below describes the registers available in CL_HBM_AXI4 block. This inc
 | Target        | Start Address | End Address   | Notes                                |
 |---------------|---------------|---------------|--------------------------------------|
 | SDA_SLV (BRAM)| 0x0000_0000   | 0x0004_FFFF   | 1KB BRAM. Upper address rolls over. |
-| AWS_CLK_GEN   | 0x0050_0000   | 0xFFFF_FFFF   | [AWS_CLK_GEN specifiction](./../../../docs/AWS_CLK_GEN_spec.md)|
+| AWS_CLK_GEN   | 0x0050_0000   | 0xFFFF_FFFF   | [AWS_CLK_GEN specification](./../../../docs/AWS_CLK_GEN_spec.md)|
 
-# Simulations
+## Simulations
 
 Please see more details on running simulations in this [README](verif/README.md)
 
-# Software
+## Software
+
 DMA accesses rely on the [XDMA driver](../../../docs/XDMA_Install.md)
 
-The CL_MEM_PERF example includes runtime software to demonstrate working DMA accesses. The runtime example is located [in the runtime directory](software/runtime/test_dram_hbm_dma.c)
+The CL_MEM_PERF example includes runtime software to demonstrate working DMA accesses. The runtime example is located [in the runtime directory](./software/runtime/test_dram_hbm_dma.c)
 
 Following runtime tests are provided in the cl_mem_perf example:
 
-#### test_hbm_perf32.c
-
-This test runs traffic and measure HBM performance aggregated across all 32 HBM Channels.
+### Software Tests
 
 #### test_dram_hbm_dma.c
 
@@ -242,7 +237,7 @@ This test exercises all 32 HBM Channels using data transfers from HBM_PERF_KERNE
 
 #### test_aws_clk_gen.c
 
-This test uses [CL_CLK_FREQ](design/cl_clk_freq.sv) to measure the clock frequencies from [AWS_CLK_GEN](./../../../common/lib/aws_clk_gen.sv) block
+This test uses [CL_CLK_FREQ](./design/cl_clk_freq.sv) to measure the clock frequencies from [AWS_CLK_GEN](./../../../common/lib/aws_clk_gen.sv) block
 
 #### test_clk_freq.c
 
@@ -260,7 +255,7 @@ sudo ./test_dram_hbm_dma
 
 This test runs a software test with HW/SW co-simulation enabled with both DDR and HBM enabled.
 
-### Compile and run instructions
+### Cosim Compile and run instructions
 
 ```bash
 cd $CL_DIR/software/runtime
@@ -275,11 +270,11 @@ cd $CL_DIR/verif/scripts
 make C_TEST=test_dram_hbm_dma_hwsw_cosim
 ```
 
-# HBM Performance Tests
+## HBM Performance Tests
 
-A runtime test is provided to measure HBM performance aggregated across all 32 HBM Channels. The runtime test should be run on a real machine consisting of F2 FPGA loaded with CL_MEM_PERF bitstreams. The runtime test [test_hbm_perf32.c](software/runtime/test_hbm_perf32.c) exercises [CL_HBM_PERF_KERNEL](design/cl_hbm_perf_kernel.sv) module to generate data across all 32 channels of the HBM running at 450MHz speeds. The test configures to run traffic across all 32 channels. There are config registers in CL_HBM_PERF_KERNEL that keep track of the number of write/read requests that were serviced and timers during which the CL_HBM_PERF_KERNEL was busy servicing the AXI3 Channels of HBM. The runtime test reads these transaction counters to compute the aggregate HBM performance across all the channels.
+A runtime test is provided to measure HBM performance aggregated across all 32 HBM Channels. The runtime test should be run on a real machine consisting of F2 FPGA loaded with CL_MEM_PERF bitstreams. The runtime test [test_hbm_perf32.c](./software/runtime/test_hbm_perf32.c) exercises [CL_HBM_PERF_KERNEL](./design/cl_hbm_perf_kernel.sv) module to generate data across all 32 channels of the HBM running at 450MHz speeds. The test configures to run traffic across all 32 channels. There are config registers in CL_HBM_PERF_KERNEL that keep track of the number of write/read requests that were serviced and timers during which the CL_HBM_PERF_KERNEL was busy servicing the AXI3 Channels of HBM. The runtime test reads these transaction counters to compute the aggregate HBM performance across all the channels.
 
-## Instructions to run HBM Performance Test
+### Instructions to run HBM Performance Test
 
 Run the following commands to start the runtime test
 

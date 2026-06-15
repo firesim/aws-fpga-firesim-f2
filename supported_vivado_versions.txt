@@ -1,3 +1,4 @@
 vivado v2024.1 (64-bit)
 vivado v2024.2 (64-bit)
 vivado v2025.1 (64-bit)
+vivado v2025.2 (64-bit)

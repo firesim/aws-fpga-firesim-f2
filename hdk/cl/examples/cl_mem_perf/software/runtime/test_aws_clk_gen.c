@@ -176,7 +176,7 @@ int measure_clk_freq(int slot_id) {
     loop_count = 0;
     addr = CTL_REG;
     do {
-      sleep(1); // CL_CLK_FREQ block needs atleast 1s of time to measure frequency
+      sleep(1); // CL_CLK_FREQ block needs at least 1s of time to measure frequency
       rc = fpga_pci_peek(pci_bar_handle, addr, &read_data);
       fail_on(rc, out, "Failed to read from register @0x%08lx", addr);
       loop_count++;

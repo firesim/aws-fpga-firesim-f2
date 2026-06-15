@@ -11,7 +11,7 @@
     - [Configure the Block Diagram](#configure-the-block-diagram)
       - [Configure AWS IP](#configure-aws-ip)
       - [Add and Configure AXI GPIO](#add-and-configure-axi-gpio)
-      - [Add/and Configure AXI BRAM](#addand-configure-axi-bram)
+      - [Add/and Configure AXI BRAM](#add-and-configure-axi-bram)
       - [Connect the Design](#connect-the-design)
       - [Address Editor Tab](#address-editor-tab)
       - [Save and Validate the Design](#save-and-validate-the-design)
@@ -69,7 +69,7 @@ Enter the following Tcl command to configure AWS project settings and create a b
 aws::make_ipi
 ```
 
-***NOTE***: The AWS IP instance name may incorrectly display as `f1_inst` due to a known Vivado issue. To manually change it to f2_inst, click the instance box to highlight it and change the name field in 'Block Propertie' window.
+***NOTE***: The AWS IP instance name may incorrectly display as `f1_inst` due to a known Vivado issue. To manually change it to f2_inst, click the instance box to highlight it and change the name field in 'Block Properties' window.
 
 ### Configure the Block Diagram
 
@@ -81,7 +81,7 @@ Configure the AWS IP block by double-clicking it and selecting three interfaces 
 
 Right-click in the canvas and select 'Add IP...', then search for and double-click 'AXI GPIO'. Once added, double-click the axi_gpio_0 block in the canvas. In the 'Re-customize IP' dialog box, select 'All Outputs' under the GPIO section and set GPIO Width to 16, then click 'OK'.
 
-#### Add/and Configure AXI BRAM
+#### Add and Configure AXI BRAM
 
 Right-click in the canvas and select 'Add IP...', then search for and double-click 'AXI BRAM Controller'. Once added, double-click the `axi_bram_ctrl_0` block in the canvas and set the Data Width to 512 to match the PCIS AXI4 Master Interface's data width, then click 'OK'.
 

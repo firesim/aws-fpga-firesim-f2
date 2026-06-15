@@ -1,5 +1,48 @@
 # F2 Developer Kit Release Notes
 
+## v2.3.2
+
+* Introducing a new beginner-friendly CL example called [cl_axil_reg_access](./hdk/cl/examples/cl_demo/cl_axil_reg_access/README.md) that demonstrates OCL AXI-Lite interface usage for CL register access
+  * [Interactive Jupyter Notebooks](./sdk/notebooks/README.md) provide step-by-step instructions for the software runtime example, guiding developers through loading an AFI and performing register reads and writes on a live F2 instance
+* Added IP warning suppression for Vitis builds with compatible XSAs
+* General bug fixes
+
+## v2.3.1
+
+* Released FPGA Developer AMIs - 1.19.1: Ubuntu and Rocky Linux with AMD patch [AR000039913](https://adaptivesupport.amd.com/s/article/000039913) pre-installed. This fixes the XSIM compilation bug in Vivado 2025.2, and the double compilation workaround has been removed from `Makefile.common.inc`
+* Updated verbiage in [Amazon DCV Setup Guide](./developer_resources/Amazon_DCV_Setup_Guide.md) to improve clarity
+* Updated all NPM packages in [package-lock.json](./developer_resources/runtime_ami_builder/package-lock.json) to address security advisories
+* Added information about EC2 instance placement groups to maximize throughput and minimize latency when networking between instances in the [Virtual Ethernet Application Guide](./sdk/apps/virtual-ethernet/doc/Virtual_Ethernet_Application_Guide.md)
+* Formatted all Python files for style, consistency, and compliance with PEP 8
+
+## v2.3.0
+
+* Vivado/Vitis 2025.2 Support
+  * Both the [FPGA Developer AMI (Ubuntu) - 1.19.0](https://aws.amazon.com/marketplace/pp/prodview-tcl7sjgreh6bq) and [FPGA Developer AMI (Rocky Linux) - 1.19.0](http://aws.amazon.com/marketplace/pp/prodview-7mukkbz7l2uvu) are available with 2025.2 tools installed and ready to use
+  * [See what's new in Vivado 2025.2 here](https://www.amd.com/en/products/software/adaptive-socs-and-fpgas/vivado/vivado-whats-new.html#tabs-de9b056824-item-d69fba5dd6-tab)
+  * [See what's new in Vitis 2025.2 here](https://www.amd.com/en/products/software/adaptive-socs-and-fpgas/vitis/vitis-whats-new.html)
+* AWS EC2 F2 Runtime AMI Builder (RAB) Update
+    * Added support for [Vivado Lab Edition 2025.2](https://docs.amd.com/r/en-US/ug908-vivado-programming-debugging/Vivado-Lab-Edition)
+* Virtual Ethernet Driver
+  * Updated to use natively-available kernel modules instead of DPDK ones
+* HDK Devkit Updates
+  * Cleaned up the legacy code in the [`power_up()` simulation task](./hdk/common/verif/models/sh_bfm/sh_bfm.sv#L1218-L1253) to align with the correct shell clock scheme.
+  * Due to a XSIM bug in Vivado 2025.2, a double compilation workaround is added in `Makefile.common.inc` (see [ERRATA](./ERRATA.md#hdk) for more details)
+* AFI and AMI Creation Permission Requirements
+  * Added [Setting Up IAM Roles for DevKit Use](./developer_resources/Setting_up_IAM_roles_for_devkit_use.md) doc that shows how to set up an IAM role and the minimum permission configurations needed to create each of these artifacts
+
+## v2.2.2
+
+* Introducing the AWS EC2 F2 Runtime AMI Builder (RAB)
+  * The RAB is a customizable and extensible tool based on [the AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/home.html) that easily automates building production-ready AMIs tailored to each accelerator application's needs
+  * [To get started building a runtime AMI, see the README here](./developer_resources/runtime_ami_builder/README.md)
+  * Default components are provided to modularly install specific features such as Vivado Lab Edition, the AWS CLI, the AWS FPGA SDK, and more
+  * [To learn how to integrate the RAB into existing AWS CDK flows, see the code example here](./developer_resources/runtime_ami_builder/lib/exampleLibraryUsage.ts)
+* [Updated Rocky FPGA Developer AMI](https://aws.amazon.com/marketplace/pp/prodview-7mukkbz7l2uvu) name and description to match Marketplace info
+* Added F2 [AFI Manifest specification](./hdk/docs/AFI_Manifest.md) for the version number, ID, and clock parameters
+* Added new "--no-encrypt" build option to the HDK flow to facilitate source code debugging
+* Updated [fpga_clkgen_util](./sdk/userspace/fpga_libs/fpga_clkgen/fpga_clkgen_utils.c) and [sde_examples](./hdk/cl/examples/cl_sde/software/src/README.md) with better error handling procedures, addressing stability issues found on Rocky Linux.
+
 ## v2.2.1
 
 * [Release of FPGA Developer AMI 1.18.0 (Rocky Linux 8.10)](http://aws.amazon.com/marketplace/pp/prodview-7mukkbz7l2uvu) with Vivado/Vitis 2025.1 tools pre-installed
@@ -29,10 +72,10 @@
 ## v2.1.1
 
 * Added global register offset for the SDE IP. See [CL_SDE software examples](./hdk/cl/examples/cl_sde/software/src/README.md).
-* Added [CL_SDE software exmaple](./hdk/cl/examples/cl_sde/software/src/sde_c2h_user_buffers.c) for a user allocated DMA buffer.
+* Added [CL_SDE software example](./hdk/cl/examples/cl_sde/software/src/sde_c2h_user_buffers.c) for a user allocated DMA buffer.
 * [Documentation](./hdk/docs/List_AFI_on_Marketplace.md) to assist F2 customers with releasing AFIs and AMIs on the AWS Marketplace.
 * [Documentation](./developer_resources/Amazon_DCV_Setup_Guide.md) to assist in creating a virtual desktop based on the FPGA Developer AMI running graphics-intensive applications remotely on Amazon EC2 instances.
-* Fixed the BW calculation and tolerance calculation in the test_hbm_perf_random in the [cl_mem_perf](./hdk/cl/examples/cl_mem_perf/verif/README.md#test_hbm_perf_randomsv).
+* Fixed the BW calculation and tolerance calculation in the test_hbm_perf_random in the [cl_mem_perf](./hdk/cl/examples/cl_mem_perf/verif/README.md#system-verilog-tests).
 
 ## v2.1.0
 

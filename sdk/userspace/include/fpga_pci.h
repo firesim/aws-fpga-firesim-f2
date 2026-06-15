@@ -230,7 +230,7 @@ int fpga_pci_get_address(pci_bar_handle_t handle, uint64_t offset,
 	uint64_t dword_len, void **ptr);
 
 /**
- * Initialze a segment of memory to an initial value. This has the best
+ * Initialize a segment of memory to an initial value. This has the best
  * performance when the BAR is attached with write combining enabled.
  *
  * @param[in]  handle  handle provided by fpga_pci_attach

@@ -27,9 +27,7 @@ module test_hbm_perf32();
     automatic logic [31:0] selected_channels = 32'hFFFF_FFFF;
     automatic logic [3:0]  axlen = 4'hF;
 
-    tb.power_up(.clk_recipe_a(ClockRecipe::A1),
-                .clk_recipe_b(ClockRecipe::B0),
-                .clk_recipe_c(ClockRecipe::C0));
+    tb.power_up(.clk_recipe_a(ClockRecipe::A1));
 
     aws_clkgen_dsrt_rst();
 

@@ -23,14 +23,13 @@ terminated.
 Prefetching an upcoming AFI
 ---------------------------
 
-If multiple AFIs are needed for an AFI pipeline, customers will need
-to prefetch AFIs into the cache to maximize performance. Prefetching an
-AFI doesn't affect currently running FPGA images, so it is safe to
-prefetch an AFI while the currently running AFI is processing data.
-Prefetching just returns 0 without printing if the prefetch was
-successful, since it doesn't change the FPGA state. If the cache is
-full, prefetching an AFI will remove the least recently used AFI from
-the cache.
+If multiple AFIs are needed for an AFI pipeline, customers will need to
+prefetch AFIs into the cache to maximize performance. Prefetching an AFI
+doesn’t affect currently running FPGA images, so it is safe to prefetch
+an AFI while the currently running AFI is processing data. Prefetching
+just returns 0 without printing if the prefetch was successful, since it
+doesn’t change the FPGA state. If the cache is full, prefetching an AFI
+will remove the least recently used AFI from the cache.
 
 To prefetch an AFI into the cache, use fpga-load-local-image with the -P
 flag, for example:
@@ -54,3 +53,5 @@ fpga-describe-local-image with the -M flag:
    Cached agfis:
       agfi-0fcf87119b8e97bf3
       agfi-01dc2520aaf357e86
+
+`Back to Home <../../index.html>`__

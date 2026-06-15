@@ -28,44 +28,39 @@
 * 6. Verifies clock settings after modifications
 """
 
+import json
+from typing import Any
+
 from fpga_clkgen_wrapper import FpgaClkgen
-from typing import Dict, Any
 from fpga_mgmt_wrapper import FpgaMgmt
 from utils import setup_logger
-import json
 
 
 def main() -> None:
     setup_logger()
 
-    GET_HW_METRICS = 1 << 1
+    get_hw_metrics = 1 << 1
 
     fpga_mgmt_wrapper = FpgaMgmt()
     fpga_clkgen_wrapper = FpgaClkgen()
 
     slot = 0
-    status: str = fpga_mgmt_wrapper.describe_local_image(slot, GET_HW_METRICS)["status"]
+    status: str = fpga_mgmt_wrapper.describe_local_image(slot, get_hw_metrics)["status"]
     print(f"FPGA Status {status}")
 
     public_cl_mem_perf_afi_id = "agfi-080817d089f3cd2ed"
     print(f"Loading AFI: {public_cl_mem_perf_afi_id}\n")
-    image_info: Dict[str, Any] = fpga_mgmt_wrapper.load_local_image(
-        slot, public_cl_mem_perf_afi_id
-    )
+    image_info: dict[str, Any] = fpga_mgmt_wrapper.load_local_image(slot, public_cl_mem_perf_afi_id)
 
     status: str = image_info["status"]
     while status == "busy":
-        status = fpga_mgmt_wrapper.describe_local_image(slot, GET_HW_METRICS)[
-            "status"
-        ]
+        status = fpga_mgmt_wrapper.describe_local_image(slot, get_hw_metrics)["status"]
 
-    info: Dict[str, Any] = json.dumps(fpga_clkgen_wrapper.get_dynamic(slot), indent=2)
+    info: str = json.dumps(fpga_clkgen_wrapper.get_dynamic(slot), indent=2)
     print(f"Clock Information\n {info}")
 
     print("Setting dynamic clock\n")
-    fpga_clkgen_wrapper.set_dynamic(
-        slot, clk_a_freq=125, clk_b_freq=125, clk_c_freq=150, clk_hbm_freq=125, reset=0
-    )
+    fpga_clkgen_wrapper.set_dynamic(slot, clk_a_freq=125, clk_b_freq=125, clk_c_freq=150, clk_hbm_freq=125, reset=0)
 
     info = json.dumps(fpga_clkgen_wrapper.get_dynamic(slot), indent=2)
     print(f"New Clock Information\n {info}\n")

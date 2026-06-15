@@ -4,7 +4,8 @@ Vitis Errata
 General
 -------
 
-Simultaneous builds of more than one Vitis example at a time is not supported by AMD.
+Simultaneous builds of more than one Vitis example at a time is not
+supported by AMD.
 
 Examples
 --------
@@ -25,7 +26,9 @@ The following examples are not currently supported by AMD:
 
 The following examples are currently under development by AMD:
 
-- ``performance/axi_burst_performance``
+- ``host_py/hello_world_py``
+- ``host_xrt/mailbox_auto_restart_xrt``
+- ``rtl_kernels/rtl_vadd_mixed_c``
 
 Hardware Emulation
 ------------------
@@ -36,10 +39,11 @@ The following examples do not support Hardware Emulation.
 - ``host_xrt/kernel_chain``
 - ``sys_opt/multiple_processes``
 
-Vitis 2025.1 and 2024.2
------------------------
+Vitis 2025.2
+------------
 
-Vitis currently only supports Hardware Emulation. Hardware builds and AFI creation are not supported at this time.
+Vitis currently only supports Hardware Emulation. Hardware builds and
+AFI creation are not supported at this time.
 
 Vitis 2024.1
 ------------
@@ -56,3 +60,5 @@ reduced HBM clock speeds:
 
   - Actual: 437MHz
   - Expected: 450MHz
+
+`Back to Home <../index.html>`__

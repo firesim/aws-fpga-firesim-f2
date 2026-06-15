@@ -1,26 +1,26 @@
 Virtual Ethernet Application Guide
 ==================================
 
-Table of Contents:
-------------------
+Table of Contents
+-----------------
 
 - `Overview <#overview>`__
-
 - `Example Workflows <#example-workflows>`__
 
-  - `Simple Loopback <#simple-loopback>`__
-  - `PacketGen Dual Instance Loopback <#packetgen-dual-instance-loopback>`__
+  - `Simple
+    Loopback <#dpdk-testpmd-simple-loopback-mode-with-auto-start>`__
+  - `PacketGen Dual Instance
+    Loopback <#packetgen-dual-instance-loopback>`__
 
 - `FAQ <#faq>`__
 
 Overview
 --------
 
-The Virtual Ethernet architecture (`here <../README.html>`__) supports
-your development phases with sample applications that include loopback
-paths for bringup and debug of the Virtual Ethernet application and
-custom CL, all the way to end-to-end application integration with live
-traffic.
+The `Virtual Ethernet architecture <../README.html>`__ supports your
+development phases with sample applications that include loopback paths
+for bringup and debug of the Virtual Ethernet application and custom CL,
+all the way to end-to-end application integration with live traffic.
 
 Virtual Ethernet Application Setup and Use
 ------------------------------------------
@@ -28,7 +28,7 @@ Virtual Ethernet Application Setup and Use
 The distinct phases of Virtual Ethernet Application setup and use are:
 
 - Software installation and build
-- System setup and device binding (e.g. FPGA and ENI)
+- System setup and device binding (e.g. FPGA and ENI)
 - Application setup and start
 
 The next sections walk through the setup and usage phases including
@@ -37,8 +37,8 @@ example workflows.
 Example Workflows
 -----------------
 
-Simple Loopback
-~~~~~~~~~~~~~~~
+DPDK testpmd simple loopback mode with auto-start
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This example maximizes PPS for 64B packets with a single vCPU using the
 DPDK testpmd application to drive the DPDK SPP PMD and the FPGA SDE IP.
@@ -50,14 +50,14 @@ example, use ``ctrl-c``.
 
 Software installation and build phase
 
-::
+.. code-block:: bash
 
    cd $(SDK_DIR)/apps/virtual-ethernet/scripts
    ./virtual_ethernet_install.py <install_dir>
 
-System setup and device bind phase, e.g. on instance boot
+System setup and device bind phase, e.g. on instance boot
 
-::
+.. code-block:: bash
 
    sudo fpga-load-local-image -S <fpga-slot> -I <SDE loopback CL AGFI>
    cd $(SDK_DIR)/apps/virtual-ethernet/scripts
@@ -65,7 +65,7 @@ System setup and device bind phase, e.g. on instance boot
 
 Testpmd application setup and start phase
 
-::
+.. code-block:: bash
 
    cd <install_dir>/dpdk
    sudo ./build/app/dpdk-testpmd -l 0-1  -- --port-topology=loop --auto-start --tx-first --stats-period=3
@@ -75,7 +75,7 @@ sent to/from the SDE. Everything three seconds, the number of TX-packets
 and RX-packets will be updated to show the new packet total. In
 addition, the packets per second throughput is calculated and updated.
 
-::
+.. code-block:: bash
 
      ######################## NIC statistics for port 0  ########################
      RX-packets: 28791397   RX-missed: 0          RX-bytes:  1842650496
@@ -88,9 +88,10 @@ addition, the packets per second throughput is calculated and updated.
      Tx-pps:      4798711          Tx-bps:   2456940424
      ############################################################################
 
-Please refer to `Q: Where can I find DPDK testpmd feature documentation?`_ for a quick reference guide
-on the supported testpmd features and the link to the full testpmd
-documentation.
+Please refer to `DPDK
+testpmd <#q-where-can-i-find-dpdk-testpmd-feature-documentation>`__ for
+a quick reference guide on the supported testpmd features and the link
+to the full testpmd documentation.
 
 PacketGen Dual Instance Loopback
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -98,20 +99,31 @@ PacketGen Dual Instance Loopback
 This example maximizes PPS for 64B packets with a single vCPU using two
 instances to test end-to-end traffic flows.
 
-In the below diagram, the ``red`` line shows the Ethernet frame path
+In the diagram below, the ``red`` line shows the Ethernet frame path
 from the **Packet Generator Instance** into the CL streaming application
 in the **Virtual Ethernet Instance**. The ``blue`` line shows the
 Ethernet frame path from the CL streaming application in the **Virtual
-Ethernet Instance** to the **Packet Generator Instance**. For best
-performance, the **Virtual Ethernet Instance** and the **Packet
-Generator Instance** should be created in the same VPC and placement
-group. Please refer to `Q: Why can't I launch instance type X in a placement group with an F2?`_ if you are unable to launch other instances with the F2 instance. It should also be an instance type
-which supports the Elastic Network Adapter (driver)
-type of Enhanced Networking. Please refer to `Q: What instance types support Enhanced Networking?`_ for more information. This example was tested using an
-``f2.48xlarge`` and an ``m5.2xlarge`` as the **Packet Generator
-Instance**.
+Ethernet Instance** to the **Packet Generator Instance**.
 
-.. image:: ./../../../../_static/sdk/apps/virtual-ethernet/Virtual_Ethernet_Pktgen.jpg
+**⚠️ For optimal performance and lowest network latency**, the **Virtual
+Ethernet Instance** and the **Packet Generator Instance** should be: -
+Created in the same VPC - Launched in the same `cluster placement
+group <#q-why-cant-i-launch-instance-type-x-in-a-placement-group-with-an-f2>`__
+- Using instance types which `support the Elastic Network
+Adapter <#q-what-instance-types-support-enhanced-networking>`__ (ENA
+driver) type of Enhanced Networking
+
+Launching instances in a cluster placement group ensures they are placed
+on hardware with shared, high-capacity networking infrastructure,
+providing the lowest possible network latency and highest throughput.
+This example was tested using an ``f2.48xlarge`` and an ``m5.2xlarge``
+as the **Packet Generator Instance**.
+
+.. figure::
+   ../../../../_static/sdk/apps/virtual-ethernet/Virtual_Ethernet_Pktgen.jpg
+   :alt: Virtual Ethernet Pktgen
+
+   Virtual Ethernet Pktgen
 
 - **Virtual Ethernet Instance**
 
@@ -131,26 +143,28 @@ Instance**.
   - This example workflow places the PacketGen traffic on ``eth1``, and
     reserves ``eth0`` for your SSH sessions and other control plane
     traffic.
-  - An additional network interface can be attached via the EC2 "Attach
-    Network Interface" workflow. Your new ``eth1`` network interface is
+  - An additional network interface can be attached via the EC2 “Attach
+    Network Interface” workflow. Your new ``eth1`` network interface is
     automatically initialized if you are using Amazon Linux. If you are
-    using Ubuntu, please refer to `Q: How do I setup the additional ENI/eth1 interface for the PacketGen Dual Instance Loopback example?`_.
-    Refer to `Q: How do I retrieve the ENI DBDF for the additional ENI/eth1 interface that is used in the PacketGen Dual Instance Loopback example?`_ to retrieve the ENI ``DBDF`` (e.g. the PCI
-    Domain:Bus:Device.Function) for your new ENI interface.
+    using Ubuntu, please refer to these additional steps to `attach the
+    network interface <#ec2-attach-network-interface-workflow>`__. The
+    ENI ``DBDF`` (e.g. the PCI Domain:Bus:Device.Function) for your new
+    ENI interface is retrieved using this
+    `command <#command-to-retrieve-eni-dbdf>`__.
 
 Virtual Ethernet instance
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Software installation and build phase
 
-::
+.. code-block:: bash
 
    cd $(SDK_DIR)/apps/virtual-ethernet/scripts
    ./virtual_ethernet_install.py <install_dir>
 
-System setup and device bind phase, e.g. on instance boot
+System setup and device bind phase, e.g. on instance boot
 
-::
+.. code-block:: bash
 
    sudo fpga-load-local-image -S <fpga-slot> -I <SDE loopback CL AGFI>
    cd $(SDK_DIR)/apps/virtual-ethernet/scripts
@@ -158,7 +172,7 @@ System setup and device bind phase, e.g. on instance boot
 
 Testpmd application setup and start phase
 
-::
+.. code-block:: bash
 
    cd <install_dir>/dpdk
    sudo ./build/app/dpdk-testpmd -l 0-1  -- --port-topology=chained --auto-start --stats-period=3 --forward-mode=spp-eni-addr-swap
@@ -167,31 +181,31 @@ The ``spp-eni-addr-swap`` testpmd forwarding mode swaps the Ethernet MAC
 and IP addresses so the Packet Generator instance can receive the
 loopback Ethernet frames.
 
-Please refer to `Q: Where can I find DPDK testpmd feature documentation?`_ for a quick reference guide
-on the supported testpmd features and the link to the full testpmd
-documentation.
+Please refer to `DPDK
+testpmd <#q-where-can-i-find-dpdk-testpmd-feature-documentation>`__ for
+a quick reference guide on the supported testpmd features and the link
+to the full testpmd documentation.
 
 Packet Generator Instance
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Software installation and build phase
 
-::
+.. code-block:: bash
 
    cd $(SDK_DIR)/apps/virtual-ethernet/scripts
    ./virtual_ethernet_pktgen_install.py <install_dir>
 
 During installation, dpdk, pktgen-dpdk, dpdk-kmods, and numactl are
-cloned, built, and installed in the <install_dir>. The <install_dir>
-will have
+cloned, built, and installed in the . The will have
 
-::
+.. code-block:: bash
 
    dpdk  dpdk-kmods  numactl  pktgen-dpdk
 
-System setup and device bind phase, e.g. on instance boot
+System setup and device bind phase, e.g. on instance boot
 
-::
+.. code-block:: bash
 
    cd $(SDK_DIR)/apps/virtual-ethernet/scripts
    sudo ./virtual_ethernet_pktgen_setup.py <install_dir> --eni_dbdf <eth1 DBDF> --eni_ethdev <eth1 ENI ethdev>
@@ -201,7 +215,7 @@ Packet Generator setup and start phase:
 A sample Packet Generator ``pktgen-ena.pkt`` script is provided. You
 will need to modify it to work with your F2 instances.
 
-::
+.. code-block:: bash
 
    cat $(SDK_DIR)/apps/virtual-ethernet/scripts/pktgen-ena.pkt
    set 0 dst mac 12:DD:AB:C2:D3:B8  # set this to Virtual Ethernet instance eth1 mac address
@@ -218,7 +232,7 @@ Similarly a ``pktgen-ena-range.pkt`` script is provided for multiflow
 run with a range of parameters. This needs to be modified with
 corresponding dest mac address, src and dest ip addresses.
 
-::
+.. code-block:: bash
 
    cat $(SDK_DIR)/apps/virtual-ethernet/scripts/pktgen-ena-range.pkt
    set 0 type ipv4
@@ -253,7 +267,7 @@ corresponding dest mac address, src and dest ip addresses.
 When running the below command, with -j option, the packet size can be
 set to jumbo frames and try the example run with pkt size 4096
 
-::
+.. code-block:: bash
 
    cd <install_dir>/pktgen-dpdk
    sudo LD_LIBRARY_PATH=/usr/local/lib/x86_64-linux-gnu ./build/app/pktgen -l 0,1 -n 16 --proc-type auto --log-level 7 --socket-mem 4096 --file-prefix pg -- -T -j -P -m [1].0 -f $(SDK_DIR)/apps/virtual-ethernet/scripts/pktgen-ena.pkt
@@ -272,12 +286,12 @@ The AGFI ID for the SDE loopback CL is found in the
 Q: Where can I find DPDK testpmd feature documentation?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The full documentation for DPDK testpmd features is found
-`here <http://dpdk.org/doc/guides/testpmd_app_ug/index.html>`__.
+The full documentation for DPDK testpmd features is found `the DPDK User
+Guide <http://dpdk.org/doc/guides/testpmd_app_ug/index.html>`__.
 
 Note that not all of the DPDK testpmd features are supported by the SPP
 and ENI PMDs. SPP supports a limited subset of the DPDK Ethernet upper
-API (e.g. DPDK eth_dev_ops) to the DPDK application(s) (e.g. testpmd)
+API (e.g. DPDK eth_dev_ops) to the DPDK application(s) (e.g. testpmd)
 for purposes of passing through streaming packets to/from the SDE.
 
 The application examples use testpmd auto-start mode. testpmd also
@@ -290,17 +304,19 @@ the application examples.
 Q: Can I map multiple ENIs to a SPP?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The `PacketGen Dual Instance Loopback <#packetgen-dual-instance-loopback>`__ example
-uses a one-to-one mapping between SPP and ENI as configured via testpmd.
-Your custom applications(s) may map multiple ENIs to a SPP as long as
-your application follows the DPDK threading model (e.g. ‘lockless’) and
-the CL supports Ethernet frames from multiple ENIs.
+The simple `PacketGen Dual Instance
+Loopback <#packetgen-dual-instance-loopback>`__ example uses a
+one-to-one mapping between SPP and ENI as configured via testpmd. Your
+custom applications(s) may map multiple ENIs to a SPP as long as your
+application follows the DPDK threading model (e.g. ‘lockless’) and the
+CL supports Ethernet frames from multiple ENIs.
 
 Q: Can I map different ENIs to different SPP queues?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The simple `PacketGen Dual Instance Loopback <#packetgen-dual-instance-loopback>`__ example
-uses a one-to-one mapping between SPP and ENI as configured via testpmd.
+The simple `PacketGen Dual Instance
+Loopback <#packetgen-dual-instance-loopback>`__ example uses a
+one-to-one mapping between SPP and ENI as configured via testpmd.
 Multiple SPP queues are not yet supported.
 
 Q: What performance should I expect?
@@ -326,7 +342,7 @@ the application may stop calling the SPP RX packet burst API. At this
 point, SPP will stop processing RX descriptors, the C2H buffer in the
 SDE will become full (see the SDE HW Guide
 `here <./SDE-HW-Guide.html>`__), and this will backpressure the AXI-Stream
-interface (e.g. the SDE will de-assert the ‘ready’ signal on the C2H
+interface (e.g. the SDE will de-assert the ‘ready’ signal on the C2H
 AXI-Stream interface). This may then backpressure the SPP TX side, which
 is again under application control. If the SPP TX side backpressure
 condition persists, the application may stop processing ENI RX packets
@@ -347,21 +363,22 @@ non-zero, the SPP PMD takes the following steps:
 - Log-info the descriptor ring entries
 - Increments the TX/RX sde_error stat
 - Log-error and return from the TX/RX status checking method.
-- Return 0 packets processed from the SPP TX/RX packet burst APIs (e.g.
-  the DPDK TX/RX packet burst APIs return a uint16_t that indicates the
-  number of packets that were processed in the current call).
+- Return 0 packets processed from the SPP TX/RX packet burst APIs
+  (e.g. the DPDK TX/RX packet burst APIs return a uint16_t that
+  indicates the number of packets that were processed in the current
+  call).
 
 Your application should periodically check to see if the TX/RX sde_error
-stat is non-zero (e.g. by calling the eth_dev_ops xstats_get API for
+stat is non-zero (e.g. by calling the eth_dev_ops xstats_get API for
 error checking in the ``slow-path``). If the TX/RX sde_error stat is
 non-zero, your application should take the following error recovery
 steps:
 
-- Quiesce all calls to TX/RX packet burst (e.g. discontinue calling
+- Quiesce all calls to TX/RX packet burst (e.g. discontinue calling
   ``rte_eth_dev tx/rx_pkt_burst``)
-- Release all of the SPP queues (e.g. call
+- Release all of the SPP queues (e.g. call
   ``eth_dev_ops tx/rx_queue_release``)
-- Remove the SPP PCI device (e.g. call ``rte_pci_driver remove``)
+- Remove the SPP PCI device (e.g. call ``rte_pci_driver remove``)
 - Reload the AGFI using ``fpga-load-local-image`` to ensure the CL is
   fully reset
 
@@ -397,9 +414,9 @@ if needed using the testpmd ‘mac_addr set’ command when using the
 testpmd application, or by your custom application using the DPDK APIs.
 
 Note that the SPP and SDE do not perform any modifications to the TX
-packets (e.g. from the application to the CL), or the RX packets (e.g.
-from the CL to the application). The SDE does not perform any packet
-filtering (e.g. based on the packet destination MAC address).
+packets (e.g. from the application to the CL), or the RX packets
+(e.g. from the CL to the application). The SDE does not perform any
+packet filtering (e.g. based on the packet destination MAC address).
 
 Q: How many TX and RX descriptors are supported?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -427,14 +444,14 @@ SPP driver will log an error similar to the following:
 Mismatched build options: SDE descriptor type is ``regular``, SPP PMD
 descriptor type is ``compact``.
 
-::
+.. code-block:: bash
 
    PMD: spp_dev_cap_get(): SDE C2H Desc Info(0x00400000), type=regular, is not supported
 
 Mismatched build options: SDE descriptor type is ``compact``, SPP PMD
 descriptor type is ``regular``.
 
-::
+.. code-block:: bash
 
    PMD: spp_dev_cap_get(): SDE C2H Desc Info(0x00800001), type=compact, is not supported
 
@@ -444,11 +461,14 @@ Q: What operating systems are supported?
 The Virtual Ethernet application is tested and supported for Linux
 operating systems (Amazon Linux and Ubuntu).
 
-Q: How do I setup the additional ENI/eth1 interface for the PacketGen Dual Instance Loopback example?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Q: I am using the Ubuntu AMI. How do I setup the additional ENI/eth1 interface for the `PacketGen Dual Instance Loopback <#packetgen-dual-instance-loopback>`__ example?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-An additional network interface can be attached via the EC2 "Attach
-Network Interface" workflow. Your new ``eth1`` network interface is
+EC2 Attach Network Interface Workflow
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+An additional network interface can be attached via the EC2 “Attach
+Network Interface” workflow. Your new ``eth1`` network interface is
 automatically initialized if you are using Amazon Linux. If you are
 using Ubuntu, please execute the following steps:
 
@@ -459,9 +479,9 @@ IP Address ``172.1.1.22`` are used for illustration purposes.
 Create an ``eth1`` specific configuration using the existing ethernet
 adapter as a template.
 
-::
+.. code-block:: bash
 
-   sudo vi /ect/netplan/50-cloud-init.yaml
+   sudo vi /etc/netplan/50-cloud-init.yaml
    eth1:
          dhcp4: false
          dhcp6: false
@@ -474,7 +494,7 @@ adapter as a template.
 Initialize the ``eth1`` interface using ``sudo netplan --debug apply``
 and then show the ``eth1`` configuration using ``ifconfig``.
 
-::
+.. code-block:: bash
 
    ifup eth1
    Determining IP information for eth1... done.
@@ -489,15 +509,19 @@ and then show the ``eth1`` configuration using ``ifconfig``.
            TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 
 At this point, the ``eth1`` interface is ready for the setup script(s)
-that are described in the `PacketGen Dual Instance Loopback <#packetgen-dual-instance-loopback>`__ example.
+that are described in the `PacketGen Dual Instance
+Loopback <#packetgen-dual-instance-loopback>`__ example.
 
-Q: How do I retrieve the ENI DBDF for the additional ENI/eth1 interface that is used in the PacketGen Dual Instance Loopback example?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Q: How do I retrieve the ENI DBDF for the additional ENI/eth1 interface that is used in the `PacketGen Dual Instance Loopback <#packetgen-dual-instance-loopback>`__ example?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Command to retrieve ENI DBDF
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The ENI DBDF for the ``eth1`` interface can be retrieved as follows
 using a grep for ``1d0f:ec20`` through the ``lspci`` command output.
 
-::
+.. code-block:: bash
 
    lspci -D | grep "1d0f:ec20"
    0000:00:03.0 Ethernet controller: Device 1d0f:ec20    # this is eth0
@@ -510,7 +534,7 @@ Within ``<install_dir>/dpdk/drivers/net/spp`` there is a file called
 ``spp_ethdev.c``. Your Vendor and Device ID should be added to the
 following table in ``spp_ethdev.c`` and then DPDK should be recompiled.
 
-.. code:: C
+.. code-block:: c
 
    static const struct rte_pci_id pci_id_spp_map[] = {
            { RTE_PCI_DEVICE(PCI_VENDOR_ID_AMAZON, PCI_DEVICE_ID_SDE_LOOPBACK_CL) },
@@ -520,7 +544,7 @@ following table in ``spp_ethdev.c`` and then DPDK should be recompiled.
 
 Rebuild DPDK as follows:
 
-::
+.. code-block:: bash
 
    cd <install dir>/dpdk
    ninja -C build
@@ -529,7 +553,7 @@ Within ``<install dir>/dpdk/usertools`` there is a file called
 ``dpdk-devbind.py``. Your Vendor and Device ID should be added to the
 following table in ``dpdk-devbind.py``.
 
-.. code:: python
+.. code-block:: python
 
    aws_fpga_sde = {'Class': '05', 'Vendor': '1d0f', 'Device': 'f002',
                  'SVendor': None, 'SDevice': None}
@@ -552,7 +576,7 @@ P3, P3dn, R4. For more information, see the documentation on `Enhanced
 Networking on
 Linux <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/enhanced-networking.html>`__.
 
-Q: Why can't I launch instance type X in a placement group with an F2?
+Q: Why can’t I launch instance type X in a placement group with an F2?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When you launch instances in a cluster placement group, AWS attempts to
@@ -565,4 +589,4 @@ using another F2 instance as the packet generator instance. For more
 information, see the `documentation on placement
 groups <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/placement-groups.html>`__.
 
-.. |alt tag| image:: ../../../../_static/sdk/apps/virtual-ethernet/Virtual_Ethernet_Pktgen.jpg
+`Back to Home <../../../../index.html>`__

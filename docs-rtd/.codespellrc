@@ -1,0 +1,17 @@
+[codespell]
+# Codespell configuration for AWS FPGA documentation
+# Skip generated RST files, build artifacts, and binary files
+skip = .git,*.png,*.jpg,*.svg,*.pdf,build,*.pyc,__pycache__,*.spelling,docs-rtd/source/*.rst,docs-rtd/source,.codespellrc,*venv*,*.sv,*.svh,*.patch,*.pl,*.v,*.vh,*xdma_mod.c,*rtd-env*,*hdk/LICENSE.txt,*shared/.tests
+
+# Ignore words file (converted from spelling_wordlist.txt)
+ignore-words = docs-rtd/.codespell-ignore.txt
+
+# Check file types
+check-filenames =
+check-hidden =
+
+# Ignore specific patterns (AMI IDs, hex values, URLs, ordinals)
+ignore-regex = (ami-[0-9a-fA-F]+|0x[0-9a-fA-F]+|[0-9a-fA-F]{8,}|https?://\S+|\b\d+(st|nd|rd|th)\b)
+
+# Quiet mode - only show errors
+quiet-level = 2

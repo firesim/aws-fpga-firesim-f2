@@ -12,7 +12,7 @@ cdef extern from "fpga_mgmt.h":
     struct fpga_slot_spec:
         fpga_pci_resource_map[2] map
 
-    struct metrics:
+    union metrics:
         f1_metrics_common f1_metrics
         f2_metrics_common f2_metrics
 
@@ -27,7 +27,7 @@ cdef extern from "fpga_mgmt.h":
 
     struct options:
         int slot_id
-        char[64] afi_id
+        char* afi_id
         uint32_t flags
         uint32_t[3] clock_mains
 

@@ -18,8 +18,12 @@ botocore>=1.33.13
 botocore-stubs>=1.34.4
 mypy-boto3-ec2>=1.34.4
 mypy-boto3-s3>=1.34.0
+mypy-boto3-sns>=1.34.0
+moto[all]
 pydantic==2.5.3
 pydantic-core==2.14.6
+coverage>=7.13.2
+moto>=5.1.20
 EOF
 
 echo "Creating and activating virtual environment in the script directory"

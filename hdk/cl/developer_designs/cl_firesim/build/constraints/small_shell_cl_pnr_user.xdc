@@ -35,11 +35,8 @@ set_property parent pblock_CL [get_pblocks pblock_CL_SLR2]
 # Module Mapping
 ########################################
 add_cells_to_pblock pblock_CL_SLR2 [get_cells [list WRAPPER/CL/SH_DDR \
-                                                    WRAPPER/CL/PIPE_DDR_STAT* \
-                                                    WRAPPER/CL/CL_DMA_PCIS_SLV/CDC_ASYNC_RST_N_SLR2 \
-                                                    WRAPPER/CL/CL_DMA_PCIS_SLV/SLR2_PIPE_RST_N \
-                                                    WRAPPER/CL/CL_DMA_PCIS_SLV/AXI4_REG_SLC_DDRA_SLR2 \
-                                                    WRAPPER/CL/CL_DMA_PCIS_SLV/CL_TST_DDRA ]]
+                                                    WRAPPER/CL/clock_convert_dramslim_0 \
+                                                    WRAPPER/CL/dwidth_adapt_64bits_512bits_0 ]]
 
 
 ###############################################################################
@@ -72,16 +69,9 @@ set_property parent pblock_CL [get_pblocks pblock_CL_SLR1]
 ########################################
 # Module Mapping
 ########################################
-add_cells_to_pblock pblock_CL_SLR1 [get_cells [list WRAPPER/CL/CL_OCL_SLV \
-                                                    WRAPPER/CL/CL_SDA_SLV \
-                                                    WRAPPER/CL/CL_PCIM_MSTR \
-                                                    WRAPPER/CL/CL_DRAM_DMA_AXI_MSTR \
-                                                    WRAPPER/CL/CL_DMA_PCIS_SLV/CDC_ASYNC_RST_N_SLR1 \
-                                                    WRAPPER/CL/CL_DMA_PCIS_SLV/SLR1_PIPE_RST_N \
-                                                    WRAPPER/CL/CL_DMA_PCIS_SLV/AXI4_REG_SLC_PCIS_SLR1 \
-                                                    WRAPPER/CL/CL_DMA_PCIS_SLV/AXI4_REG_SLC_DDRA_SLR1 \
-                                                    WRAPPER/CL/CL_DMA_PCIS_SLV/AXI4_REG_SLC_DDRB_SLR1 \
-                                                    WRAPPER/CL/CL_DMA_PCIS_SLV/AXI4_CROSSBAR]]
+add_cells_to_pblock pblock_CL_SLR1 [get_cells [list WRAPPER/CL/firesim_clocking \
+                                                    WRAPPER/CL/ocl_clock_convert \
+                                                    WRAPPER/CL/wide_pcis_clock_convert ]]
 
 
 ###############################################################################
@@ -148,8 +138,30 @@ set_property parent pblock_CL [get_pblocks pblock_CL_SLR0]
 ########################################
 # Module Mapping
 ########################################
-add_cells_to_pblock pblock_CL_SLR0 [get_cells [list WRAPPER/CL/CL_DMA_PCIS_SLV/CDC_ASYNC_RST_N_SLR0 \
-                                                    WRAPPER/CL/CL_DMA_PCIS_SLV/SLR0_PIPE_RST_N \
-                                                    WRAPPER/CL/CL_DMA_PCIS_SLV/AXI4_REG_SLC_DDRB_SLR0 \
-                                                    WRAPPER/CL/CL_DMA_PCIS_SLV/CL_TST_DDR_B \
-                                                    WRAPPER/CL/CL_HBM ]]
+set_false_path -from [get_clocks clk_main_a0] \
+               -to   [get_cells {WRAPPER/CL/pre_sync_rst_n_firesim_reg* \
+                                 WRAPPER/CL/rst_firesim_n_sync_reg* }]
+
+set firesim_host_clock [get_clocks -of_objects \
+    [get_pins WRAPPER/CL/firesim_clocking/inst/mmcme4_adv_inst/CLKOUT0]]
+
+set cl_clk_main_a0 [get_clocks -of_objects \
+    [get_pins -hierarchical -regexp {.*WRAPPER/CL/clk_main_a0}]]
+
+set ddr_a_ui_clk [get_clocks -of_objects \
+    [get_pins WRAPPER/CL/SH_DDR/genblk1.IS_DDR_PRESENT.DDR4_0/inst/u_ddr4_infrastructure/gen_mmcme4.u_mmcme_adv_inst/CLKOUT0]]
+
+set_clock_groups -asynchronous \
+    -group [get_clocks clk_main_a0] \
+    -group $cl_clk_main_a0 \
+    -group $firesim_host_clock \
+    -group $ddr_a_ui_clk
+
+set_false_path \
+    -from [get_pins -of_objects \
+              [get_cells -hierarchical -filter \
+                  {NAME =~ WRAPPER/CL/SH_DDR/*ram_reg*}] \
+              -filter {REF_PIN_NAME == CLK}] \
+    -to   [get_cells -hierarchical -filter \
+              {NAME =~ WRAPPER/CL/SH_DDR/*rd_do_reg[*]}]
+

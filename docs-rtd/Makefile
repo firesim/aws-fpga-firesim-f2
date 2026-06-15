@@ -42,7 +42,7 @@ clean:
 	-rm -rf $(BUILDDIR)/*
 
 html:
-	$(SPHINXBUILD) -a -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
+	$(SPHINXBUILD) -W -a -j 4 -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 	cp source/google28e4accdfd74ffc3.html build/html
@@ -154,16 +154,10 @@ doctest:
 	      "results in $(BUILDDIR)/doctest/output.txt."
 
 spelling:
-	$(SPHINXBUILD) -b spelling source/ build/ && \
-	echo "Spelling check complete" >&2 && \
-	if [ -n "$$(find build -name "*.spelling" 2>/dev/null)" ]; then \
-		find build -name "*.spelling" -exec cat {} \; | \
-			sed 's/^\(.*\.rst\):\([0-9]*\): (\([^)]*\)).*/- \3 (in \1, line \2)/' | \
-			sort | uniq >&2 && \
-			echo "Spelling errors found. Total misspelled words: $$(find build -name "*.spelling" -exec cat {} \; | wc -l)" >&2; \
-	else \
-		echo "No spelling errors found." >&2; \
-	fi
+	@echo "Running codespell on Markdown documentation..."
+	@cd .. && codespell --config docs-rtd/.codespellrc -I docs-rtd/.codespell-ignore.txt . && \
+		echo "NO ISSUES DETECTED!" || \
+		(echo "Spelling errors found!")
 
 links:
 	make clean && make html && python3 ../shared/bin/check_doc_links.py

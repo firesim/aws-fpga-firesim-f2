@@ -26,7 +26,7 @@ module sh_ddr
     // When set to 1, they will ensure that DDR_A/D IO buffers are correctly instanced
     parameter DDR_IO = 1,
 
-    // Following paramters are specific to AXI4 interface. CL developers should NOT change these values. Please use these default values.
+    // Following parameters are specific to AXI4 interface. CL developers should NOT change these values. Please use these default values.
     parameter DATA_WIDTH   = 512,
     parameter ADDR_WIDTH   = 64,
     parameter ID_WIDTH     = 16,

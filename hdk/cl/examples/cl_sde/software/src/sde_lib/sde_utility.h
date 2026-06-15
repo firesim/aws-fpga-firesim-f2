@@ -28,11 +28,11 @@
 //============================================================================================================
 //
 // sde_fill_pkt_data() : Fill a buffer of uint8_t with patterned data for the entire size of the buffer.
-// arguements:
+// arguments:
 // -----------
 // uint8_t* data_ptr           : The pointer of the buffer.
 // size_t size                 : The number of bytes in the buffer.
-// uint32_t start_dw           : The start of the pattern ot write to the buffer.
+// uint32_t start_dw           : The start of the pattern to write to the buffer.
 //
 //=============================================================================================================
 SDE_PUBLIC int sde_fill_pkt_data (uint8_t* data_ptr, size_t size, uint32_t start_dw);
@@ -40,7 +40,7 @@ SDE_PUBLIC int sde_fill_pkt_data (uint8_t* data_ptr, size_t size, uint32_t start
 //============================================================================================================
 //
 // sde_aligned_size() : Return the size of the buffer that is aligned to the bit_alignment.
-// arguements:
+// arguments:
 // -----------
 // size_t size                 : The number of bytes in the buffer.
 // size_t bit_alignment        : The bit alignment of the buffer.
@@ -51,7 +51,7 @@ SDE_PUBLIC size_t sde_aligned_size(size_t size, size_t bit_alignment);
 //============================================================================================================
 //
 // sde_mgmt_strerror() : Return the string representation for the sde_mgmt error.
-// arguements:
+// arguments:
 // -----------
 // int err                     : Error returned from an sde function.
 //
@@ -61,7 +61,7 @@ SDE_PUBLIC const char *sde_mgmt_strerror(int err);
 //============================================================================================================
 //
 // sde_mgmt_strerror_long() : Return the long string representatino for the sde_mgmt error.
-// arguements:
+// arguments:
 // -----------
 // int err                     : Error returned from an sde function.
 //
@@ -71,7 +71,7 @@ SDE_PUBLIC const char *sde_mgmt_strerror_long(int err);
 //============================================================================================================
 //
 // sde_print_payload() : Print the contents of the uint8_t buffer.
-// arguements:
+// arguments:
 // -----------
 // uint8_t* payload            : The uint8_t buffer to print the contents of.
 // int pkt_size                : The number of bytes from the buffer that will be printed.
@@ -93,12 +93,12 @@ struct sde_parameters {
 // argv[1] : number of packets
 // argv[2] : packet size in bytes
 // argv[3] : slot id of the FPGA card
-// arguements:
+// arguments:
 // -----------
 // int argc                    : The argc as it was passed to main.
 // char **argv                 : The argv as it was passed to main.
 // struct sde_parameters* params : struct that contains the detected commandline parameters.
-// const char* example         : The name of the exmaple.
+// const char* example         : The name of the example.
 //
 //=============================================================================================================
 SDE_PUBLIC int sde_parse_args(int argc, char **argv, struct sde_parameters* params, const char* example);

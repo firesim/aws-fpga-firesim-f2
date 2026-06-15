@@ -241,3 +241,40 @@ function extract_vivado_version() {
 function allow_non_root {
        [ ! -z ${AWS_FPGA_ALLOW_NON_ROOT} ]
 }
+
+function get_pkg_manager {
+    os=$(cat /etc/os-release)
+    install_command=""
+    if [[ "${os}" == *"Ubuntu"* ]]; then
+        install_command="apt"
+    elif [[ "${os}" == *"Rocky Linux"* ]]; then
+        install_command="dnf"
+    else
+        err_msg "Couldn't find a package list for this distro!"
+        return 1
+    fi
+    echo "${install_command}"
+}
+
+function get_install_command {
+    local pkg_manager=$(get_pkg_manager)
+    [[ -z "$pkg_manager" ]] && return 1
+    echo "sudo ${pkg_manager} install -y"
+}
+
+function is_rocky_linux {
+    [[ $(cat /etc/os-release) == *"Rocky Linux"* ]]
+}
+
+function is_ubuntu {
+    [[ $(cat /etc/os-release) == *"Ubuntu"* ]]
+}
+
+function check_for_empty_var {
+    local var_name="$1"
+    local var_value="$2"
+    local error_msg="${3:-Variable ${var_name} is not defined or empty!}"
+
+    [[ -z "$var_value" ]] && err_msg "$error_msg" && return 1
+    return 0
+}

@@ -21,22 +21,22 @@
 import os
 import shutil
 import subprocess
-from glob import glob
 from argparse import ArgumentParser
+from glob import glob
 
 
 def run_cmd(cmd: list, working_directory: str = os.getcwd(), do_print: bool = False) -> str:
     if working_directory is None:
         working_directory = os.getcwd()
     result = subprocess.run(cmd, stdout=subprocess.PIPE, cwd=working_directory)
-    stdout = result.stdout.decode('utf-8').strip()
+    stdout = result.stdout.decode("utf-8").strip()
     if do_print:
         print(stdout)
     return stdout
 
 
 def get_git_root() -> str:
-    git_root_cmd: list[str] = ['git', 'rev-parse', '--show-toplevel']
+    git_root_cmd: list[str] = ["git", "rev-parse", "--show-toplevel"]
     return run_cmd(git_root_cmd)
 
 
@@ -62,10 +62,10 @@ def create_new_cl_example(new_cl_name):
 
 
 parser = ArgumentParser(prog="Generate a new CL example", description="Create a new CL example with all the basic files")
-parser.add_argument('--new_cl_name', dest='new_cl_name', required=True)
+parser.add_argument("--new_cl_name", dest="new_cl_name", required=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = parser.parse_args()
 
     create_new_cl_example(args.new_cl_name)

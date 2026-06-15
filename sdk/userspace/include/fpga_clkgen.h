@@ -78,7 +78,7 @@ struct clkgen_recipe {
 //============================================================================================================
 //
 // aws_clkgen_get_dynamic() : Dynamically change clock frequency for all MMCMs in AWS_CLK_GEN
-// arguements:
+// arguments:
 // -----------
 // int slot_id                    : PCIe slot id value for FPGA card
 // struct fpga_clkgen_info* info  : struct with clkgen group frequencies
@@ -89,7 +89,7 @@ int aws_clkgen_get_dynamic(int slot_id, struct fpga_clkgen_info* info);
 //============================================================================================================
 //
 // aws_clkgen_recipe() : Set a clock frequency recipe for all MMCMs in AWS_CLK_GEN
-// arguements:
+// arguments:
 // -----------
 // int slot_id            : PCIe slot id value for FPGA card
 // uint32_t recipe_a      : Recipe for frequencies to set to all clks on MMCM_A in AWS_CLK_GEN
@@ -104,7 +104,7 @@ int aws_clkgen_set_recipe(int slot_id, uint32_t clk_a_recipe, uint32_t clk_b_rec
 //============================================================================================================
 //
 // aws_clkgen_recipe() : Dynamically set clock frequency for all MMCMs in AWS_CLK_GEN
-// arguements:
+// arguments:
 // -----------
 // int slot_id            : PCIe slot id value for FPGA card
 // uint32_t freq_clk_a    : Frequency of clk_extra_a1 from MMCM_A in AWS_CLK_GEN

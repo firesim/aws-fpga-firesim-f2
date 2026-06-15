@@ -1,11 +1,8 @@
-[submodule "vitis/examples/Vitis_Accel_Examples"]
-    path = vitis/examples/Vitis_Accel_Examples
-    url = https://github.com/Xilinx/Vitis_Accel_Examples.git
-    branch = 2024.1
 [submodule "hdk/common/ip"]
     path = hdk/common/ip
     url = https://github.com/aws/aws-fpga-resources.git
     ignore = dirty
+	branch = Vivado_2025.2-hdk/common/ip
 [submodule "hdk/common/shell_stable/hlx"]
     path = hdk/common/shell_stable/hlx
     url = https://github.com/aws/aws-fpga-resources.git

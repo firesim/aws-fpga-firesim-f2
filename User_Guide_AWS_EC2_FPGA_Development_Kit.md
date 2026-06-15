@@ -2,20 +2,19 @@
 
 The development kit includes example designs to get you familiar with developing for AWS EC2 FPGA Instances.
 
-- [AWS EC2 FPGA Development Kit](#aws-ec2-fpga-development-kit)
-  - [AWS EC2 F2 Instance Overview](#aws-ec2-f2-instance-overview)
-    - [Instance Types](#instance-types)
-    - [2nd Generation On-Cloud FPGA Accelerator Card](#2nd-generation-on-cloud-fpga-accelerator-card)
-    - [Comparison to F1](#comparison-to-f1)
-  - [AWS EC2 F2 FPGA Development Kit](#aws-ec2-f2-fpga-development-kit)
-    - [Development Environments](#development-environments)
-    - [Quick Start Links](#quick-start-links)
-    - [AWS Shells](#aws-shells)
-    - [Hardware Development Kit (HDK)](#hardware-development-kit-hdk)
-    - [Software-Defined Development Environment](#software-defined-development-environment)
-    - [FPGA Developer AMI](#fpga-developer-ami)
-    - [Getting Familiar with AWS](#getting-familiar-with-aws)
-  - [Next Steps](#next-steps)
+- [AWS EC2 F2 Instance Overview](#aws-ec2-f2-instance-overview)
+  - [Instance Types](#instance-types)
+  - [2nd Generation On-Cloud FPGA Accelerator Card](#f2-2nd-generation-on-cloud-fpga-accelerator-card)
+  - [Comparison to F1](#comparison-to-f1)
+- [AWS EC2 F2 FPGA Development Kit](#aws-ec2-f2-fpga-development-kit)
+  - [Development Environments](#development-environments)
+  - [Quick Start Links](#quick-start-links)
+  - [AWS Shells](#aws-shells)
+  - [Hardware Development Kit (HDK)](#hardware-development-kit-hdk)
+  - [Software-Defined Development Environment](#software-defined-development-environment)
+  - [FPGA Developer AMI](#fpga-developer-ami)
+  - [Getting Familiar with AWS](#getting-familiar-with-aws)
+- [Next Steps](#next-steps)
 
 ## AWS EC2 F2 Instance Overview
 
@@ -27,7 +26,7 @@ This documentation is relevant to F2 only. Therefore, it applies to all branches
 
 ![f2_instances](./docs-rtd/source/_static/instance_sizes.png)
 
-### 2nd Generation On-Cloud FPGA Accelerator Card
+### F2 2nd Generation On-Cloud FPGA Accelerator Card
 
 ![accel_card_specs](./docs-rtd/source/_static/accel_card_specs.png)
 
@@ -43,11 +42,10 @@ This table lists the F2 development flows currently enabled and supported in the
 
 | Development Environment | Description | Accelerator Language | Hardware Interface | Debug Options | Typical Developer |
 | ------------------------|-------------|----------------------|--------------------|---------------|-------------------|
-| Hardware accelerator development using Vivado (HDK) | This environment supports the Hardware Development Kit (HDK) design flow, which empowers FPGA developers to create accelerator designs from scratch, using HDL source code and IPs. <br><br>The AMD Vivado tool synthesizes, implements, and generates the Design Check Point (DCP) file used in F2 AFI creation. AWS FPGA developers benefit from the suite of scripts supplied in the HDK that help to automate different design steps. This allows for flexibility in architecting, implementing, and optimizing accelerator designs while using the HDK.| Verilog/SystemVerilog/VHDL | User-implemented DMA engine or Streaming Data Engine (SDE) | Simulation, Virtual JTAG | Hardware developers with advanced FPGA experience |
+| Hardware accelerator development using Vivado (HDK) | This environment supports the Hardware Development Kit (HDK) design flow, which empowers FPGA developers to create accelerator designs from scratch, using HDL source code and IPs. The AMD Vivado tool synthesizes, implements, and generates the Design Check Point (DCP) file used in F2 AFI creation. AWS FPGA developers benefit from the suite of scripts supplied in the HDK that help to automate different design steps. This allows for flexibility in architecting, implementing, and optimizing accelerator designs while using the HDK.| Verilog/System Verilog/VHDL | User-implemented DMA engine or Streaming Data Engine (SDE) | Simulation, Virtual JTAG | Hardware developers with advanced FPGA experience |
 | Hardware accelerator development using Vitis | This environment supports the Vitis design flow, which enables software developers to write C++ code, which may then be compiled into RTL and used in cycle-accurate hardware simulation. After it may then be built into an accelerator design. This step is not necessary, but is encouraged. Vitis may also be used to implement accelerator designs from scratch, using HDL and IPs directly, similar to Vivado. Vitis offers additional analysis tools to aid in the refinement of designs. | Verilog/System Verilog/VHDL | XDMA Engine (coming soon) | Hardware Emulation | Advanced software developers or hardware developers with intermediate to advanced FPGA experience |
 | Hardware accelerator development using Vivado IP Integrator (IPI) and High Level Design (HLx) | This environment supports the Vivado high-level design flow using IP integrator in the GUI. | Block Design in IP Integrator | AWS IP for HLx | Simulation, Virtual JTAG | Hardware developers with intermediate FPGA experience |
-
-On-premise environment: Customers can set up a [on-premise development (with licensing requirements listed)](./hdk/docs/on_premise_licensing_help.md) environment for [supported AMD tool versions.](#hardware-development-kit-hdk).
+| On-premise environment | Customers can set up a [on-premise development (with licensing requirements listed)](./hdk/docs/on_premise_licensing_help.md) environment for [supported AMD tool versions.](#hardware-development-kit-hdk). | | | | |
 
 ### Quick Start Links
 
@@ -65,7 +63,7 @@ On-premise environment: Customers can set up a [on-premise development (with lic
     <td style="text-align: center" rowspan="4"><a href="https://github.com/aws/aws-fpga/tree/f2/hdk/cl/examples/cl_mem_perf">cl_mem_perf</a></td>
     <td style="text-align: center" rowspan="4">Demonstrates fine-tuned paths to memory to maximize bandwidth</td>
     <td style="text-align: center" rowspan="4"><a href="./hdk/README.md#build-accelerator-afi-using-hdk-design-flow">Guided Example</a></td>
-    <td style="text-align: center"><a href="./hdk/cl/examples/cl_mem_perf/README.md">Design Spec</a></td>
+    <td style="text-align: center"><a href="https://github.com/aws/aws-fpga/tree/f2/hdk/cl/examples/cl_mem_perf/README.md">Design Spec</a></td>
   </tr>
   <tr>
     <td style="text-align: center"><a href="./hdk/cl/examples/cl_mem_perf/design/">Design Source Code</a></td>
@@ -187,11 +185,11 @@ The [HDK directory structure](./hdk/README.md) contains:
 - [cl/examples](./hdk/cl/examples): Multiple CL examples to demonstrate connectivity between CL logic, the F2 Shell, and accelerator resources like DDR and HBM.
 - Support for 3rd party simulators
 
-
 The HDK currently supports the following tool versions:
 
 | AMD Vivado Design Suite | Synopsys VCS  (Bring your own license) | Siemens Questa (Bring your own license) |
 |:------------------------|:---------------------------------------|:----------------------------------------|
+| 2025.2                  | X-2025.06-SP1                          | 2025.2_2                                |
 | 2025.1                  | W-2024.09-SP1                          | 2024.3_3                                |
 | 2024.2                  | V-2023.12-SP1                          | 2024.1_2                                |
 | 2024.1                  | U-2023.03-SP2                          | 2023.3                                  |
@@ -201,7 +199,6 @@ Our scripts require a minimum Python version of 3.10, under `/usr/bin/env python
 | Tool   | Minimum Version |
 |:-------|:----------------|
 | Python | 3.10+           |
-
 
 ### Software-Defined Development Environment
 
@@ -217,13 +214,16 @@ A free-to-use FPGA developer AMI is available for on-cloud F2 development with A
 
 | FPGA Developer AMI Version | FPGA Developer AMI ID (us-east-1) | Vivado/Vitis Version Supported | Operating System Version    |
 |----------------------------|-----------------------------------|--------------------------------|-----------------------------|
-| 1.18.0                     | [ami-04b57de2833b499b1](http://aws.amazon.com/marketplace/pp/prodview-7mukkbz7l2uvu) | 2025.1 | Rocky Linux 8.10 (4.18.0-553.36.1.el8_10.x86_64)|
-| 1.18.0                     | [ami-098b2ed4c92602975](http://aws.amazon.com/marketplace/pp/prodview-tcl7sjgreh6bq) | 2025.1 | Ubuntu 24.04 (kernel 6.8.0-1021-aws)|
+| 1.19.1                     | [ami-07c259dae738189ec](http://aws.amazon.com/marketplace/pp/prodview-tcl7sjgreh6bq) | 2025.2 | Ubuntu 24.04 (kernel 6.8.0-1021-aws)|
+| 1.19.1                     | [ami-039f2d1d9952ef402](http://aws.amazon.com/marketplace/pp/prodview-7mukkbz7l2uvu) | 2025.2 | Rocky Linux 8.10 (4.18.0-553.36.1.el8_10.x86_64)|
 | 1.16.1                     | [ami-092fc5deb8f3c0f7d](https://aws.amazon.com/marketplace/pp/prodview-f5kjsenkfkz5u) | 2024.1 | Ubuntu 20.04.6 (kernel 5.15)|
 
 Given the large size of the FPGA used for F2, AMD tools work best with at least 4 vCPU’s and 32GiB Memory. We recommend [Compute Optimized and Memory Optimized instance types](https://aws.amazon.com/ec2/instance-types/) to successfully run the synthesis of acceleration code. Developers may start coding and run simulations on low-cost `General Purpose` [instances types](https://aws.amazon.com/ec2/instance-types/).
 
 Note that the tools used by the HDK are only supported on x86-based EC2 instances (Graviton-based instances are not compatible with the tools).
+
+For long-term cost savings when evaluating or debugging an accelerator in hardware, we recommend [creating a runtime AMI using the Runtime AMI Builder (RAB)](./developer_resources/runtime_ami_builder/README.md).
+The RAB is a customizable and extensible tool based on [the AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/home.html) that easily automates building production-ready AMIs tailored to each accelerator application's needs.
 
 ### Getting Familiar with AWS
 

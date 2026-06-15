@@ -32,7 +32,7 @@ Shell errata is [documented here](./hdk/docs/AWS_Shell_ERRATA.md)
 
 5. XSIM simulator does not support a cycle-accurate simulation model for the HBM IP. We’re observing significantly longer simulation times compared to VCS and Questa simulators. This is caused by the HBM BFM used in XSIM. Therefore, running HBM simulation using VCS or Questa is strongly recommended.
 
-6. Simulation of the [HBM monitor interface](./hdk/docs/AWS_Shell_Interface_Specification.md/#hbm-monitor-interface) is not supported in this release. The HBM IP always passes initialization and remains in an operating state for all tests. Simulation support for the HBM monitor will be added in a future release.
+6. Simulation of the [HBM monitor interface](./hdk/docs/AWS_Shell_Interface_Specification.md#hbm-monitor-interface) is not supported in this release. The HBM IP always passes initialization and remains in an operating state for all tests. Simulation support for the HBM monitor will be added in a future release.
 
 7. AFIs created based on HDK XDMA shell or Vitis are not supported on F2 instances at this time.
 

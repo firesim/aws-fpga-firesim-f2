@@ -120,6 +120,7 @@ vivado*.log
 
 # pytest artifacts
 .cache/
+docs-rtd/source/.pytest-cache/
 
 # Patches
 patches/*
@@ -145,3 +146,20 @@ docs-rtd/build/*
 *.tmp
 **/example_projects/
 *.pb
+
+# Runtime AMI BUilder
+developer_resources/runtime_ami_builder/.DS_Store
+developer_resources/runtime_ami_builder/.eslintcache
+developer_resources/runtime_ami_builder/build
+developer_resources/runtime_ami_builder/dist/
+developer_resources/runtime_ami_builder/node_modules
+developer_resources/runtime_ami_builder/.idea
+developer_resources/runtime_ami_builder/cdk.out
+
+hdk/cl/developer_designs/cl_firesim/design/xsim.dir/
+hdk/cl/developer_designs/cl_firesim/design/xvlog.log
+hdk/cl/developer_designs/cl_firesim/xsim.dir/
+hdk/cl/developer_designs/cl_firesim/xvlog.log
+hdk/cl/examples/xsim.dir/
+xsim.dir/
+xvlog.log

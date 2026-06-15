@@ -306,7 +306,7 @@ fpga_hal_mbox_write(pci_bar_handle_t handle, void *msg, uint32_t len)
 
 	uint32_t count = priv.mbox.timeout;
 	while (count) {
-		bool ack = false;;
+		bool ack = false;
 		ret = fpga_hal_mbox_write_async_tc_ack(handle, &ack);
 		fail_on(ret != 0, err_code, "fpga_hal_mbox_write_async_tc_ack failed");
 

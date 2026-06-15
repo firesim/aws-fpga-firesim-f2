@@ -472,7 +472,7 @@ int calculate_perf(int slot_id, uint64_t base_addr, uint32_t cfg_axlen, char pre
     uint64_t cyc_count;
     uint64_t timer;
     int      latency;
-    uint32_t ot;
+    uint32_t outstanding_transactions;
     uint32_t resp_err;
     float    perf;
 
@@ -487,11 +487,11 @@ int calculate_perf(int slot_id, uint64_t base_addr, uint32_t cfg_axlen, char pre
       fail_on(rc, out, "Failed to read from register @0x%08x", (uint32_t) addr);
     }
 
-    cyc_count = (((uint64_t) read_data[1]) << 32) | ((uint64_t) read_data[0]);
-    timer     = (((uint64_t) read_data[3]) << 32) | ((uint64_t) read_data[2]);
-    latency   = read_data[4] * 4;
-    ot        = read_data[5];
-    resp_err  = read_data[6];
+    cyc_count                = (((uint64_t) read_data[1]) << 32) | ((uint64_t) read_data[0]);
+    timer                    = (((uint64_t) read_data[3]) << 32) | ((uint64_t) read_data[2]);
+    latency                  = read_data[4] * 4;
+    outstanding_transactions = read_data[5];
+    resp_err                 = read_data[6];
 
     // calculate throughput
     if (timer == 0) {
@@ -500,12 +500,12 @@ int calculate_perf(int slot_id, uint64_t base_addr, uint32_t cfg_axlen, char pre
       perf = (cyc_count * (cfg_axlen + 1) * 32) / (timer * 4.0);
     }
 
-    printf("__INFO__: %s CycCount     = 0x%016lx\n"       ,prefix, cyc_count);
-    printf("__INFO__: %s Timer        = 0x%016lx\n"       ,prefix, timer    );
-    printf("__INFO__: %s Latency      = %dns\n"           ,prefix, latency  );
-    printf("__INFO__: %s Pending Txns = %d\n"             ,prefix, ot       );
-    printf("__INFO__: %s RespError    = 0x%08x\n"         ,prefix, resp_err );
-    printf("__INFO__: %s Bandwidth    = %4.2f GBytes/s\n" ,prefix, perf     );
+    printf("__INFO__: %s CycCount     = 0x%016lx\n"       ,prefix, cyc_count               );
+    printf("__INFO__: %s Timer        = 0x%016lx\n"       ,prefix, timer                   );
+    printf("__INFO__: %s Latency      = %dns\n"           ,prefix, latency                 );
+    printf("__INFO__: %s Pending Txns = %d\n"             ,prefix, outstanding_transactions);
+    printf("__INFO__: %s RespError    = 0x%08x\n"         ,prefix, resp_err                );
+    printf("__INFO__: %s Bandwidth    = %4.2f GBytes/s\n" ,prefix, perf                    );
 
 out:
     return rc;

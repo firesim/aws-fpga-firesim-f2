@@ -16,12 +16,13 @@
 info_msg "Setting up environment variables"
 
 # Make sure that AWS_FPGA_REPO_DIR is set to the location of this script.
+repo_root=$(git rev-parse --show-toplevel)
 if [[ -z "${AWS_FPGA_REPO_DIR:-}" ]]; then
-  debug_msg "AWS_FPGA_REPO_DIR not set so setting to $script_dir"
-  export AWS_FPGA_REPO_DIR=$script_dir
-elif [[ "$AWS_FPGA_REPO_DIR" != "$script_dir" ]]; then
-  info_msg "Changing AWS_FPGA_REPO_DIR from $AWS_FPGA_REPO_DIR to $script_dir"
-  export AWS_FPGA_REPO_DIR=$script_dir
+  debug_msg "AWS_FPGA_REPO_DIR not set so setting to $repo_root"
+  export AWS_FPGA_REPO_DIR=$repo_root
+elif [[ "$AWS_FPGA_REPO_DIR" != "$repo_root" ]]; then
+  info_msg "Changing AWS_FPGA_REPO_DIR from $AWS_FPGA_REPO_DIR to $repo_root"
+  export AWS_FPGA_REPO_DIR=$repo_root
 else
   debug_msg "AWS_FPGA_REPO_DIR=$AWS_FPGA_REPO_DIR"
 fi
@@ -56,6 +57,5 @@ python_lib=$AWS_FPGA_REPO_DIR/shared/lib
 export PYTHONPATH=$python_lib:${PYTHONPATH:+"$PYTHONPATH"}
 
 # PATH Changes
-
 export PATH=$(echo $PATH | sed -e 's/\(^\|:\)[^:]\+\/shared\/bin\/scripts\(:\|$\)/:/g; s/^://; s/:$//')
 PATH=$AWS_FPGA_REPO_DIR/shared/bin/scripts:$PATH

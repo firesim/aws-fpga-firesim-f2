@@ -1,0 +1,68 @@
+{
+  "app": "npx ts-node --prefer-ts-exts runtimeAmiBuilder.ts",
+  "watch": {
+    "include": ["**"],
+    "exclude": [
+      "README.md",
+      "cdk*.json",
+      "**/*.d.ts",
+      "**/*.js",
+      "tsconfig.json",
+      "package*.json",
+      "yarn.lock",
+      "node_modules",
+      "test"
+    ]
+  },
+  "context": {
+    // The version of the components and runtime AMI for this deployment
+    "ami-builder:image-recipe-version": "1.0.0",
+
+    // Controls which AMI definition from lib/types.ts we use
+    "ami-builder:base-image": "UBUNTU_24_04",
+    // Which Vivado Lab Edition version to install. If Vivado Lab Edition isn't needed,
+    // leave this value as is and remove the InstallVivadoLabEdition component from the list in in lib/runtimeAmiBuilder.ts
+    // Supported versions are in supported_vivado_versions.txt at this repo's root
+    "ami-builder:vivado-version": "2025.2",
+
+    // Volume size in GiB. For all components + Vivado Lab Edition 2025.2: Rocky Linux 8.10 needs 12GiB, Ubuntu 24.04: 14GiB
+    "ami-builder:root-volume-size": 14,
+    // Volume type. See here for more info: https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ec2.BlockDevice.html
+    "ami-builder:root-volume-type": "gp3",
+    // Optional drive encryption. Requires a KMS key: https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_kms.Key.html
+    "ami-builder:root-volume-encrypted": false,
+
+    // What accounts to share the built AMI with. Sharing does not grant ownership.
+    "ami-builder:sharing-accounts": ["012345678901"],
+    // Regions the runtime AMI will be distributed to for the deploying and sharing accounts
+    "ami-builder:distribution-regions": ["us-east-1"],
+
+    // The account that will own the deployed CloudFormation stack and Image Builder pipeline
+    "ami-builder:deployment-account": "109876543210",
+    // The region that the resources will be deployed in
+    "ami-builder:deployment-region": "us-east-1",
+
+    // The instance type used to build the runtime AMI.
+    "ami-builder:build-instance-types": ["c7a.2xlarge"],
+
+    // The name for the runtime AMI
+    "ami-builder:name-prefix": "f2-runtime-ami",
+    // A unique phrase used to identify the deployed resources
+    "ami-builder:unique-identifier": "F2RuntimeAMI",
+    // The runtime AMI's description that will appear in the EC2 console
+    "ami-builder:description": "F2 FPGA Runtime AMI - {{imagebuilder:buildDate}}",
+    // Custom tags to be applied to the runtime AMI
+    "ami-builder:tags": {
+      "Project": "AWS-FPGA-F2",
+      "Environment": "Production",
+      "ManagedBy": "ImageBuilder"
+    }
+  },
+  "amzn": {
+    "cdk-build": {
+      "build": "npm-pretty-much",
+      "version": 1
+    }
+  },
+  "output": "build/cdk.out"
+}

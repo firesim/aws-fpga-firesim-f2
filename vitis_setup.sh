@@ -18,7 +18,7 @@
 # When being run $0 and $_ will be the same.
 
 script=${BASH_SOURCE[0]}
-if [ $script == $0 ]; then
+if [ "$script" == "$0" ]; then
     echo "ERROR: You must source this script"
     exit 2
 fi
@@ -44,7 +44,7 @@ function vitis_help {
     info_msg "  (1) install FPGA Management Tools,"
     info_msg "  (2) check if Xilinx tools are available,"
     info_msg "  (3) check if required packages are installed,"
-    info_msg "  (4) Download lastest AWS platform,"
+    info_msg "  (4) Download latest AWS platform,"
     info_msg "  (5) Prepare environment to install runtime drivers "
     echo " "
     vitis_usage
@@ -62,6 +62,9 @@ function check_xilinx_vitis {
     # Extracts the tool version from its output
     export VITIS_TOOL_VER=$(vivado -version | grep -o "v[0-9]\+\.[0-9]" | sed 's/v//')
     info_msg "VITIS_TOOL_VER = ${VITIS_TOOL_VER}"
+
+    # Suppress IP warnings for compatible shell versions
+    export VPPDISABLEDRC="--drc.disable=IP-LOCK-01"
     return 0
 }
 
@@ -70,6 +73,7 @@ declare -A valid_tool_versions
 valid_tool_versions["2024.1"]="true"
 valid_tool_versions["2024.2"]="true"
 valid_tool_versions["2025.1"]="true"
+valid_tool_versions["2025.2"]="true"
 
 declare -A valid_os
 valid_os["Ubuntu"]="true"
@@ -111,7 +115,7 @@ function check_icd {
     icd_so_entry=libxilinxopencl.so
 
     info_msg "Checking for ICD installation"
-    if [[ $(cat $icd_path) == *"${icd_so_entry}"* ]]; then
+    if [[ $(cat "$icd_path") == *"${icd_so_entry}"* ]]; then
         info_msg "Found ${icd_so_entry}"
     else
         motd_contents=$(cat /etc/motd)
@@ -135,9 +139,7 @@ function set_up_vitis_examples {
     vitis_exs_repo_url="https://github.com/Xilinx/Vitis_Accel_Examples.git"
     if [[ ! -d "$VITIS_DIR/examples/$vitis_exs_repo_name" ]]; then
         mkdir -p $VITIS_DIR/examples/
-        cd $VITIS_DIR/examples/
-
-        if ! git clone "${vitis_exs_repo_url}" -b "${VITIS_TOOL_VER}" --recurse-submodules; then
+        if ! git -C "$VITIS_DIR/examples" clone "${vitis_exs_repo_url}" -b "${VITIS_TOOL_VER}" --recurse-submodules; then
             err_msg "Couldn't clone in ${vitis_exs_repo_name} repo!"
             return 1
         fi
@@ -252,11 +254,13 @@ declare -A xsa_dir_map
 xsa_dir_map["2024.1"]="2024_1_2"
 xsa_dir_map["2024.2"]="2024_2"
 xsa_dir_map["2025.1"]="2024_2"
+xsa_dir_map["2025.2"]="2024_2"
 
 declare -A xsa_map
 xsa_map["2024.1"]="202410_1_2"
 xsa_map["2024.2"]="202420_1"
 xsa_map["2025.1"]="202420_2"
+xsa_map["2025.2"]="202420_2"
 
 
 function setup_xsa {
@@ -405,6 +409,7 @@ declare -A commit_hash_map
 commit_hash_map["2024.1"]="a0729c69dba1ec05856d3008fbf9994a665f276c"
 commit_hash_map["2024.2"]="d8cf77af92e92324b038d787773b78fb7a44f812"
 commit_hash_map["2025.1"]="db8c37afa751589e72f0c47436bf3daca444d45d"
+commit_hash_map["2025.2"]="a4d60af463ae44509a92bb608e3fe3b48ea14be0"
 
 
 function set_up_xrt_vars {
@@ -452,9 +457,10 @@ function install_xrt {
         if ! build_and_install_xrt; then
             return 1
         fi
+    else
+        info_msg "XRT already installed!"
+        info_msg "Nothing to do!"
     fi
-    info_msg "XRT already installed!"
-    info_msg "Nothing to do!"
     return 0
 }
 

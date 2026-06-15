@@ -15,7 +15,7 @@
 # permissions and limitations under the License.
 #
 script=${BASH_SOURCE[0]}
-if [ $script != $0 ]; then
+if [ "$script" != "$0" ]; then
   echo "ERROR: You must execute this script instead of sourcing!"
   return
 fi

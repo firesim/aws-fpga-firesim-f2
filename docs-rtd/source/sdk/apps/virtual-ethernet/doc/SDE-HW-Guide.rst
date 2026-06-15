@@ -1,10 +1,10 @@
 SDE Hardware Guide
 ==================
 
-Table of Contents:
-------------------
+Table of Contents
+-----------------
 
-- `Overview <#overview-sde-hw>`__
+- `Overview <#overview>`__
 
 - `Feature List <#feature-list>`__
 
@@ -13,49 +13,40 @@ Table of Contents:
 - `Designing with the SDE <#designing-with-the-sde>`__
 
   - `IOs <#ios>`__
-
-  - `Design Configuration Parameters <#design-configuration-parameters>`__
-
+  - `Design Configuration
+    Parameters <#design-configuration-parameters>`__
   - `PF and Address Mapping <#pf-and-address-mapping>`__
-
-  - `CSR Description and Address Mapping <#csr-description-and-address-mapping>`__
-
-  - `Descriptors and Write-Back Metadata <#descriptors-and-write-back-metadata>`__
-
+  - `CSR Description and Address
+    Mapping <#csr-description-and-address-mapping>`__
+  - `Descriptors and Write-Back
+    Metadata <#descriptors-and-write-back-metadata>`__
   - `Credit Mechanism <#credit-mechanism>`__
-
   - `Write-Back Mechanism <#write-back-mechanism>`__
-
   - `Data Flow Model <#data-flow-model>`__
-
   - `Error Conditions <#error-conditions>`__
-
-  - `Implementation - Maximum Clock Frequency <#implementation-maximum-clock-frequency>`__
-
-  - `Implementation - Resource Utilization <#implementation-resource-utilization>`__
+  - `Implementation for Maximum Clock
+    Frequency <#implementation-for-maximum-clock-frequency>`__
+  - `Implementation for Resource
+    Utilization <#implementation-for-resource-utilization>`__
 
 - `Example Design <#example-design>`__
 
-- `FAQ <#faq-sde-hw>`__
-
-.. _overview-sde-hw:
+- `FAQ <#faq>`__
 
 Overview
---------
+========
 
 The Streaming Data Engine (SDE) provides high-performance packet
 streaming connectivity between the Custom Logic (CL) and the host
 application. The SDE provides a streaming interface to the CL and uses
-the shell's PCIM AXI4 interface to move packets between the CL and the
+the shell’s PCIM AXI4 interface to move packets between the CL and the
 host application. The SDE is a parameterizable, soft IP block that is
 intended to be instantiated within the CL. Each instance of the SDE
-provides two AXI streaming compliant interfaces viz. one Card-to-Host
+provides two AXI streaming compliant interfaces viz. one Card-to-Host
 (C2H) and one Host-to-Card (H2C) channel.
 
-.. _feature-list:
-
 Feature List
-------------
+============
 
 1.  High Performance PPS for C2H and H2C.
 2.  12GB/s Bandwidth per channel for C2H and H2C (4KB packet at 250MHz).
@@ -73,18 +64,20 @@ Feature List
 12. One instance of the streaming data engine can be configured at
     compile-time to provide the following channel combinations
 
-- One full-duplex streaming channel (one C2H and one H2C).
-- One Streaming C2H Channel only (No H2C Channel)
-- One Streaming H2C Channel only (No C2H Channel)
-
-.. _architecture:
+    - One full-duplex streaming channel (one C2H and one H2C).
+    - One Streaming C2H Channel only (No H2C Channel)
+    - One Streaming H2C Channel only (No C2H Channel)
 
 Architecture
-------------
+============
 
-.. image:: ./../../../../_static/sdk/apps/virtual-ethernet/SDE_Block_Diagram.jpg
+.. figure::
+   ../../../../_static/sdk/apps/virtual-ethernet/SDE_Block_Diagram.jpg
+   :alt: SDE Block Diagram
 
-The SDE uses shell's PCIM AXI4 interface to move packets between the AXI
+   SDE Block Diagram
+
+The SDE uses shell’s PCIM AXI4 interface to move packets between the AXI
 Streaming interface and the host. It implements a store and forward
 mechanism. For C2H, the packets received from the AXI Streaming
 interface is stored in the C2H packet buffer and are then transmitted on
@@ -103,16 +96,12 @@ software to track the descriptor utilization.
 In order to minimize latency and reduce the complexity of the
 software/driver, all the information that is polled by the
 driver/software (for example, descriptor credits, write-back ring write
-pointer, etc...) is stored in a contiguous host memory range. The SDE is
+pointer, etc…) is stored in a contiguous host memory range. The SDE is
 architected to update these variables together by writing to the
 physical memory location using the PCIM interface.
 
-.. _designing-with-the-sde:
-
 Designing with the SDE
-----------------------
-
-.. _ios:
+======================
 
 IOs
 ---
@@ -128,9 +117,7 @@ IOs
 - Clocks and Reset: SDE uses a single clock and a single synchronous
   active-low reset.
 
-.. _design-configuration-parameters:
-
-Design Configuration parameters
+Design Configuration Parameters
 -------------------------------
 
 The SDE can be parameterized when the SDE is instanced in the CL. These
@@ -153,7 +140,7 @@ for each parameter are listed in Supported Configurations column.**
 
 .. list-table::
    :header-rows: 1
-   :widths: 30 10 10 50
+   :widths: auto
 
    * - **Name**
      - **Default**
@@ -206,11 +193,11 @@ for each parameter are listed in Supported Configurations column.**
    * - C2H_DESC_RAM_DEPTH
      - 64
      - 64, 128
-     - Descriptor RAM Depth. This is the maximum number of descriptors.
+     - Descriptor RAM Depth. This is the maximum number of descriptors
    * - C2H_BUF_DEPTH
      - 512
      - 64, 128, 256, 512
-     - C2H Buffer RAM Depth. This is the maximum number of data slices that the buffer can hold. C2H buffer width is equal to PCIM_DATA_WIDTH. C2H Buffer size is (C2H_BUF_DEPTH*PCIM_DATA_WIDTH/8) bytes.
+     - C2H Buffer RAM Depth. This is the maximum number of data slices that the buffer can hold. C2H buffer width is equal to PCIM_DATA_WIDTH. C2H Buffer size is (C2H_BUF_DEPTH\*PCIM_DATA_WIDTH/8) bytes.
    * - C2H_AXIS_DATA_WIDTH
      - 512
      - Default only
@@ -230,7 +217,7 @@ for each parameter are listed in Supported Configurations column.**
    * - H2C_BUF_DEPTH
      - 512
      - 64, 128, 256, 512
-     - H2C Buffer RAM Depth. This is the maximum number of data slices that the buffer can hold. Buffer width is equal to PCIM_DATA_WIDTH. H2C Buffer size is (H2C_BUF_DEPTH*PCIM_DATA_WIDTH/8) bytes.
+     - H2C Buffer RAM Depth. This is the maximum number of data slices that the buffer can hold. Buffer width is equal to PCIM_DATA_WIDTH. H2C Buffer size is (H2C_BUF_DEPTH\*PCIM_DATA_WIDTH/8) bytes.
    * - H2C_AXIS_DATA_WIDTH
      - 512
      - Default only
@@ -280,8 +267,6 @@ for each parameter are listed in Supported Configurations column.**
      - Default only
      - C2H Maximum AXI Write request size (0 – 512B, 1 – 1KB, 2 – 2KB, 3 – 4KB). This should be 3 when using the AWS shell in order to maximize C2H performance.
 
-.. _pf-and-address-mapping:
-
 PF and Address Mapping
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -291,8 +276,8 @@ address bus of the PCIS interface. The SDE address window should be 16KB
 aligned. The following table describes address mapping within SDE.
 
 .. list-table::
-   :widths: 15 10 15 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Address Range**
      - **Size (Bytes)**
@@ -320,8 +305,6 @@ aligned. The following table describes address mapping within SDE.
      - Read-Write (DW accesses)
      - Software should use this address range when accessing CSRs. Software should use only 4 byte aligned address of the registers to access CSRs implemented in this range. Only 1 DW read or 1 DW write accesses are allowed in this range.
 
-.. _csr-description-and-address-mapping:
-
 CSR Description and Address Mapping
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -329,8 +312,8 @@ The CSR address space starts at the CSR base address and is organized as
 shown below
 
 .. list-table::
-   :widths: 20 15 15 50
    :header-rows: 1
+   :widths: auto
 
    * - **Address Range**
      - **Size (Bytes)**
@@ -354,7 +337,7 @@ shown below
      - H2C Config and Status Registers
 
 PCIS CSRs
----------
+^^^^^^^^^
 
 1. **Software Reset Register**
 
@@ -365,8 +348,8 @@ PCIS CSRs
    PCIS CSR Offset – PCIS_CSR_BASE_ADDR + 0x000
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -393,8 +376,8 @@ PCIS CSRs
    PCIS CSR Offset – PCIS_CSR_BASE_ADDR + 0x004
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -423,18 +406,18 @@ PCIS CSRs
      - Reserved
 
 PCIM CSRs
----------
+^^^^^^^^^
 
 RSVD for future Use
 
 C2H CSRs
---------
+^^^^^^^^
 
 **C2H CSR Address Mapping**
 
 .. list-table::
-   :widths: 20 15 20 45
    :header-rows: 1
+   :widths: auto
 
    * - **Address Range**
      - **Size (Bytes)**
@@ -466,12 +449,12 @@ C2H CSRs
      - C2H AXI-Stream Config and Status Registers
 
 C2H Global CSRs
----------------
+^^^^^^^^^^^^^^^
 
 RSVD for future use.
 
 C2H Descriptor CSRs
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 1. **Descriptor Credit Consumed Counter**
 
@@ -482,8 +465,8 @@ C2H Descriptor CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x100
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -505,8 +488,8 @@ C2H Descriptor CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x104
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -528,8 +511,8 @@ C2H Descriptor CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x108
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -551,8 +534,8 @@ C2H Descriptor CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x10C
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -589,8 +572,8 @@ C2H Descriptor CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x110
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -622,8 +605,8 @@ C2H Descriptor CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x114
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -645,8 +628,8 @@ C2H Descriptor CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x118
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -663,7 +646,7 @@ C2H Descriptor CSRs
      - RW1C
      - 0x0
      - Desc Out of Order Error
-   * - DESC_UNALIGN_ERROR
+   * - DESC_UNALIN_ERROR
      - 2
      - RW1C
      - 0x0
@@ -693,8 +676,8 @@ C2H Descriptor CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x120
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -718,7 +701,7 @@ C2H Descriptor CSRs
      - Descriptor RAM Depth. Maximum Number of descriptors.
 
 C2H Data Mover CSRs
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 1. **Data Mover Config Register 0**
 
@@ -729,8 +712,8 @@ C2H Data Mover CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x200
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -752,8 +735,8 @@ C2H Data Mover CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x204
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -777,7 +760,7 @@ C2H Data Mover CSRs
      - Reserved
 
 C2H Write-Back CSRs
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 1. **Write-Back Config Register 0**
 
@@ -788,8 +771,8 @@ C2H Write-Back CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x300
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -810,7 +793,7 @@ C2H Write-Back CSRs
      - 2
      - RW
      - 0x0
-     - Descriptor Credit Write-Back Trigger Enable. When set, SDE schedules a status counter write-back when descriptor credit "limit" increments.
+     - Descriptor Credit Write-Back Trigger Enable. When set, SDE schedules a status counter write-back when descriptor credit “limit” increments.
    * - MD_PTR_EN
      - 3
      - RW
@@ -820,7 +803,7 @@ C2H Write-Back CSRs
      - 4
      - RW
      - 0x0
-     - Descriptor Credit "Limit" Write-Back Coalesce Enable
+     - Descriptor Credit “Limit” Write-Back Coalesce Enable
    * - DESC_CNT_WC_EN
      - 5
      - RW
@@ -856,8 +839,8 @@ C2H Write-Back CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x304
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -879,8 +862,8 @@ C2H Write-Back CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x308
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -907,8 +890,8 @@ C2H Write-Back CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x30C
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -940,8 +923,8 @@ C2H Write-Back CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x318
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -963,8 +946,8 @@ C2H Write-Back CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x31C
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -991,8 +974,8 @@ C2H Write-Back CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x320
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1014,8 +997,8 @@ C2H Write-Back CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x324
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1042,8 +1025,8 @@ C2H Write-Back CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x328
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1070,8 +1053,8 @@ C2H Write-Back CSRs
     C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x32C
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1103,8 +1086,8 @@ C2H Write-Back CSRs
     C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x330
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1133,7 +1116,7 @@ C2H Write-Back CSRs
      - Reserved
 
 C2H Buffer CSRs
----------------
+^^^^^^^^^^^^^^^
 
 1. **Buffer Config Register 0**
 
@@ -1144,8 +1127,8 @@ C2H Buffer CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x400
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1167,8 +1150,8 @@ C2H Buffer CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x404
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1210,8 +1193,8 @@ C2H Buffer CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x408
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1233,8 +1216,8 @@ C2H Buffer CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x40C
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1256,8 +1239,8 @@ C2H Buffer CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x410
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1284,8 +1267,8 @@ C2H Buffer CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x414
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1322,8 +1305,8 @@ C2H Buffer CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x418
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1334,7 +1317,7 @@ C2H Buffer CSRs
      - 15:0
      - RO
      - 0x0
-     - Number of Bytes in Buffer. When Aux FIFO is valid, this is the number of bytes until end of current packet. When Aux FIFO is not valid, this is the number of bytes in the buffer
+     - Number of Bytes in Buffer When Aux FIFO is valid, this is the number of bytes until end of current packet When Aux FIFO is not valid, this is the number of bytes in the buffer
    * - RSVD
      - 31:16
      - RO
@@ -1342,7 +1325,7 @@ C2H Buffer CSRs
      - Reserved
 
 C2H AXI-Stream CSRs
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 1. **Packet Count**
 
@@ -1353,8 +1336,8 @@ C2H AXI-Stream CSRs
    C2H CSR Offset – C2H_CSR_BASE_ADDR + 0x500
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1368,14 +1351,14 @@ C2H AXI-Stream CSRs
      - Number of packets transmitted on the AXIS interface. Increments after transmitting an EOP. Write 0 to clear.
 
 H2C CSRs
---------
+^^^^^^^^
 
 H2C CSR Address Mapping
------------------------
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. list-table::
-   :widths: 20 15 20 45
    :header-rows: 1
+   :widths: auto
 
    * - **Range**
      - **Size (Bytes)**
@@ -1407,12 +1390,12 @@ H2C CSR Address Mapping
      - H2C AXI-Stream Config and Status Registers
 
 H2C Global CSRs
----------------
+^^^^^^^^^^^^^^^
 
 RSVD for future use
 
 H2C Descriptor CSRs
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 1. **Descriptor Credit Consumed Counter**
 
@@ -1423,8 +1406,8 @@ H2C Descriptor CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x100
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1446,8 +1429,8 @@ H2C Descriptor CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x104
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1469,8 +1452,8 @@ H2C Descriptor CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x108
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1492,8 +1475,8 @@ H2C Descriptor CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x10C
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1530,8 +1513,8 @@ H2C Descriptor CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x110
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1563,8 +1546,8 @@ H2C Descriptor CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x114
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1586,8 +1569,8 @@ H2C Descriptor CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x118
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1604,7 +1587,7 @@ H2C Descriptor CSRs
      - RW1C
      - 0x0
      - Desc Out of Order Error
-   * - DESC_UNALIGN_ERROR
+   * - DESC_UNALIN_ERROR
      - 2
      - RW1C
      - 0x0
@@ -1620,7 +1603,7 @@ H2C Descriptor CSRs
      - 0x0
      - Desc RAM Empty
    * - RSVD
-     - 31:5
+     - 31:1
      - RO
      - 0x0
      - Reserved
@@ -1634,8 +1617,8 @@ H2C Descriptor CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x120
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1659,7 +1642,7 @@ H2C Descriptor CSRs
      - Descriptor RAM Depth. Maximum Number of descriptors.
 
 H2C Data Mover CSRs
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 1. **Data Mover Config Register 0**
 
@@ -1670,8 +1653,8 @@ H2C Data Mover CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x200
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1693,8 +1676,8 @@ H2C Data Mover CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x204
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1718,7 +1701,7 @@ H2C Data Mover CSRs
      - Reserved
 
 H2C Write-Back CSRs
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 1. **Write-Back Config Register 0**
 
@@ -1729,8 +1712,8 @@ H2C Write-Back CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x300
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1751,7 +1734,7 @@ H2C Write-Back CSRs
      - 2
      - RW
      - 0x0
-     - Descriptor Credit Write-Back Trigger Enable. When set, SDE schedules a status counter write-back when descriptor credit "limit" increments.
+     - Descriptor Credit Write-Back Trigger Enable. When set, SDE schedules a status counter write-back when descriptor credit “limit” increments.
    * - RSVD
      - 3
      - RO
@@ -1761,7 +1744,7 @@ H2C Write-Back CSRs
      - 4
      - RW
      - 0x0
-     - Descriptor Credit "Limit" Write-Back Coalesce Enable
+     - Descriptor Credit “Limit” Write-Back Coalesce Enable
    * - DESC_CNT_WC_EN
      - 5
      - RW
@@ -1797,8 +1780,8 @@ H2C Write-Back CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x304
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1820,8 +1803,8 @@ H2C Write-Back CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x308
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1848,8 +1831,8 @@ H2C Write-Back CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x30C
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1881,8 +1864,8 @@ H2C Write-Back CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x310
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1909,8 +1892,8 @@ H2C Write-Back CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x314
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1939,7 +1922,7 @@ H2C Write-Back CSRs
      - Reserved
 
 H2C Buffer CSRs
----------------
+^^^^^^^^^^^^^^^
 
 1. **Buffer Config Register 0**
 
@@ -1950,8 +1933,8 @@ H2C Buffer CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x400
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -1973,8 +1956,8 @@ H2C Buffer CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x404
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -2016,8 +1999,8 @@ H2C Buffer CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x408
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -2039,8 +2022,8 @@ H2C Buffer CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x40C
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -2062,8 +2045,8 @@ H2C Buffer CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x410
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -2090,8 +2073,8 @@ H2C Buffer CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x414
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -2128,8 +2111,8 @@ H2C Buffer CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x418
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -2156,8 +2139,8 @@ H2C Buffer CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x41C
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -2186,7 +2169,7 @@ H2C Buffer CSRs
      - Data Mover Aux RAM Read Pointer MSB
 
 H2C AXI-Stream CSRs
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 1. **Packet Count**
 
@@ -2197,8 +2180,8 @@ H2C AXI-Stream CSRs
    H2C CSR Offset – H2C_CSR_BASE_ADDR + 0x500
 
 .. list-table::
-   :widths: 15 15 10 15 45
    :header-rows: 1
+   :widths: auto
 
    * - **Field Name**
      - **Bit Range**
@@ -2210,8 +2193,6 @@ H2C AXI-Stream CSRs
      - RW0C
      - 0x0
      - Number of packets received on the AXIS interface. Increments after receiving an EOP. Write 0 to clear.
-
-.. _descriptors-and-write-back-metadata:
 
 Descriptors and Write-Back Metadata
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2242,17 +2223,17 @@ C2H Descriptor
 ^^^^^^^^^^^^^^
 
 .. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 2
+   :header-rows: 1
+   :widths: auto
 
    * - **Field**
-     -
+     - 
      - **Normal Type**
-     -
-     -
+     - 
+     - 
      - **Compact Type**
-     -
-   * -
+     - 
+   * - 
      - **Bit-Width**
      - **High Bit Index**
      - **Low Bit Index**
@@ -2282,38 +2263,35 @@ C2H Descriptor
      - 80
    * - **Total**
      - 128
-     -
-     -
+     - 
+     - 
      - 128
-     -
-     -
+     - 
+     - 
 
-Description of Fields
-
-1) Physical Address: Destination physical address for the data. This is
-   the host guest physical address used by the SDE to write the packet.
-   For compact descriptor type, this address is 48 bits wide.
-2) Length: Number of bytes for the data transfer. The minimum length is
-   1 byte.
-3) RSVD: These bits are used to adjust the total length of the
-   descriptor to 128 bits and unused in the SDE. SDE does not store
-   these bits in the descriptor RAM.
+Description of Fields 1) Physical Address: Destination physical address
+for the data. This is the host guest physical address used by the SDE to
+write the packet. For compact descriptor type, this address is 48 bits
+wide. 2) Length: Number of bytes for the data transfer. The minimum
+length is 1 byte. 3) RSVD: These bits are used to adjust the total
+length of the descriptor to 128 bits and unused in the SDE. SDE does not
+store these bits in the descriptor RAM.
 
 C2H Write-Back Metadata
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 .. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 2
+   :header-rows: 1
+   :widths: auto
 
    * - **Field**
-     -
+     - 
      - **Normal Type**
-     -
-     -
+     - 
+     - 
      - **Compact Type**
-     -
-   * -
+     - 
+   * - 
      - **Bit-Width**
      - **High Bit Index**
      - **Low Bit Index**
@@ -2357,11 +2335,11 @@ C2H Write-Back Metadata
      - NA
    * - **Total**
      - 128
-     -
-     -
+     - 
+     - 
      - 64
-     -
-     -
+     - 
+     - 
 
 Description of Fields
 
@@ -2382,17 +2360,17 @@ H2C Descriptor
 ~~~~~~~~~~~~~~
 
 .. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 2
+   :header-rows: 1
+   :widths: auto
 
    * - **Field**
-     -
+     - 
      - **Normal Type**
-     -
-     -
+     - 
+     - 
      - **Compact Type**
-     -
-   * -
+     - 
+   * - 
      - **Bit-Width**
      - **High Bit Index**
      - **Low Bit Index**
@@ -2443,11 +2421,11 @@ H2C Descriptor
      - NA
    * - **Total**
      - 256
-     -
-     -
+     - 
+     - 
      - 128
-     -
-     -
+     - 
+     - 
 
 Descriptions of Fields
 
@@ -2472,8 +2450,6 @@ Descriptions of Fields
 6. RSVD: These bits are used to adjust the total length of the
    descriptor to 256 bits and unused in the SDE. SDE does not store
    these bits in the descriptor RAM.
-
-.. _credit-mechanism:
 
 Credit Mechanism
 ----------------
@@ -2507,8 +2483,6 @@ descriptor from the descriptor RAM.
    “limit” counters. The software will compute this locally and will use
    this value to determine how many descriptors can be written.
 
-.. _write-back-mechanism:
-
 Write-Back Mechanism
 --------------------
 
@@ -2524,8 +2498,13 @@ should configure the status counters’ host memory base address in the
 SDE during initialization. SDE updates the following counters
 periodically
 
-1) Status DW (Offset 0x0) a. Bit 0 – Descriptor Error b. Bit 1 – Data
-   Mover Error c. Bit 2 – Write Back Error d. Bit 31:3 – RSVD
+1) Status DW (Offset 0x0)
+
+a. Bit 0 – Descriptor Error
+b. Bit 1 – Data Mover Error
+c. Bit 2 – Write Back Error
+d. Bit 31:3 – RSVD
+
 2) Descriptor Credit “Limit” Counter (Offset 0x4)
 3) Number of completed Descriptors (Offset 0x8)
 4) Packet count on the AXIS interface (Offset 0xC)
@@ -2589,12 +2568,8 @@ of write pointer plus 1 is equal to the read pointer.
    write pointer value to determine how many valid metadata entries are
    present in the circular buffer.
 
-.. _data-flow-model:
-
 Data Flow Model
 ---------------
-
-.. _c2h-sde:
 
 C2H
 ~~~
@@ -2646,8 +2621,6 @@ C2H
     disabled and the software is not required to update SDE’s copy of
     the read pointer.
 
-.. _h2c-sde:
-
 H2C
 ~~~
 
@@ -2693,8 +2666,6 @@ H2C
 10) Software: Software can also poll its copy of “packet count” to
     figure out that a packet has been transmitted on the AXI-Stream
     interface.
-
-.. _error-conditions:
 
 Error Conditions
 ----------------
@@ -2743,24 +2714,20 @@ H2C Error Conditions
 6. Write Back BRESP Error: Occurs when a non-zero BRESP is received on
    the PCIM interface for write-back writes.
 
-.. _implementation-maximum-clock-frequency:
-
-Implementation - Maximum Clock Frequency
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Implementation for Maximum Clock Frequency
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The SDE can be implemented at a maximum frequency of 250MHz
 
-.. _implementation-resource-utilization:
-
-Implementation - Resource Utilization
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Implementation for Resource Utilization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The resource utilization for the SDE implemented at 250MHz when using 64
 descriptor RAM depth and 32KB buffers for C2H and H2C each.
 
 .. list-table::
-   :widths: 15 15 10 10 10 10 10 10 10
    :header-rows: 1
+   :widths: auto
 
    * - Total LUTs
      - Logic LUTs
@@ -2769,8 +2736,7 @@ descriptor RAM depth and 32KB buffers for C2H and H2C each.
      - FFs
      - RAMB2016
      - URAM
-     - DSP48
-     - Blocks
+     - DSP48 Blocks
    * - 36330
      - 35672
      - 658
@@ -2779,18 +2745,13 @@ descriptor RAM depth and 32KB buffers for C2H and H2C each.
      - 15
      - 0
      - 0
-     -
-
-.. _example-design:
 
 Example Design
 --------------
 
 AWS provides an example CL called CL_SDE. CL_SDE instances the SDE and
 some utility and test blocks to demonstrate the functionality of the
-SDE. See `CL_SDE <../../../../hdk/cl/examples/cl-sde/README.html>`__ for details.
-
-.. _faq-sde-hw:
+SDE. See `CL_SDE <https://github.com/aws/aws-fpga/tree/f2/hdk/cl/examples/cl_sde>`__ for details.
 
 FAQ
 ---
@@ -2801,16 +2762,12 @@ Q: What is the maximum number of full duplex channels per instance of SDE?
 One instance of SDE will provide one full duplex channel (one C2H and
 one H2C).
 
-.. _q-my-application-does-not-need-c2h-i-only-need-h2c-how-can-this-be-done:
-
 Q: My application does not need C2H. I only need H2C. How can this be done?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Design parameters C2H_ONLY and H2C_ONLY can be used to get what is
 required and avoid unwanted logic. For example, if only C2H is required,
 C2H_ONLY should be 1 so that H2C logic is avoided.
-
-.. _q-my-application-needs-more-than-one-full-duplex-channel-how-can-this-be-achieved:
 
 Q. My application needs more than one full duplex channel. How can this be achieved?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2821,22 +2778,16 @@ be used to connect the PCIS and PCIM buses to/from the corresponding
 SDEs. Similarly, if more than 1 C2H or more than 1 H2C channel is
 required, multiple SDEs have to be used.
 
-.. _q-is-there-a-maximum-number-of-sdes-that-can-be-instanced-in-a-cl:
-
 Q. Is there a maximum number of SDEs that can be instanced in a CL?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 There is no theoretical maximum. There is a practical limitation based
 on the number of resources in the CL.
 
-.. _q-what-kind-of-softwaredriver-is-required-to-use-the-sde:
-
 Q. What kind of software/Driver is required to use the SDE.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A userspace or kernel poll-mode driver is required to use the SDE.
-
-.. _q-does-aws-have-any-example-driverapplication:
 
 Q. Does AWS have any example Driver/Application?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2844,14 +2795,10 @@ Q. Does AWS have any example Driver/Application?
 AWS provides DPDK based Virtual Ethernet application described
 `here <./Virtual-Ethernet-Application-Guide.html>`__.
 
-.. _q-does-sde-supports-interrupts:
-
 Q. Does SDE supports interrupts?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Interrupts are not supported by the SDE.
-
-.. _q-my-application-needs-more-descriptors-in-the-sde-how-can-i-achieve-this:
 
 Q. My application needs more descriptors in the SDE? How can I achieve this?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2860,15 +2807,11 @@ Parameters C2H_DESC_RAM_DEPTH and H2C_DESC_RAM_DEPTH can be used to
 increase the number of descriptors that can be stored in the SDE. Note
 that this will increase BRAM usage in the SDE.
 
-.. _q-how-can-i-change-the-size-of-the-h2c-and-c2h-buffers:
-
 Q. How can I change the size of the H2C and C2H buffers?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Parameters C2H_BUF_DEPTH and H2C_BUF_DEPTH can be used to change the
 size of the main packet buffers for C2H and H2C respectively.
-
-.. _q-what-is-the-guideline-for-choosing-buffer-sizes:
 
 Q. What is the guideline for choosing buffer sizes?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2884,8 +2827,6 @@ resource availability and latency requirements. Assuming 4KB PCIM
 writes, AWS recommends at least a size of 16KB C2H buffer to maximize
 C2H BW.
 
-.. _q-my-application-needs-more-than--less-than-64-user-bits-how-can-this-be-achieved:
-
 Q. My application needs more than / less than 64 user bits. How can this be achieved?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -2894,8 +2835,6 @@ Therefore, parameters C2H_USER_BIT_WIDTH and H2C_USER_BIT_WIDTH should
 not be changed. If more user bits are required, they will have to be
 embedded in the payload of the packet (For example, preamble or appended
 at the end of the packet).
-
-.. _q-can-i-use-write-combine-to-write-multiple-descriptors-per-clock:
 
 Q. Can I use write-combine to write multiple descriptors per clock?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2907,22 +2846,16 @@ descriptor address range. SDE does not support out of order writes to
 the descriptor range. Therefore, x86 intrinsic load/store instructions
 should be used to write descriptors in order.
 
-.. _q-what-is-the-maximum-throughput-of-the-sde:
-
 Q. What is the maximum throughput of the SDE?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The maximum throughput for H2C is 12 GB/s and the maximum throughput for
 C2h is 12.4 GB/s.
 
-.. _q-what-is-the-minimum-packet-size-required-for-maximum-throughput:
-
 Q. What is the minimum packet size required for maximum throughput?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 4KB is the minimum packet size required for maximum throughput.
-
-.. _q-my-application-uses-pcis-and-pcim-interfaces-for-other-purposes-in-the-cl-can-i-still-use-the-sde:
 
 Q. My application uses PCIS and PCIM interfaces for other purposes in the CL. Can I still use the SDE?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2933,16 +2866,12 @@ connectivity for PCIS and PCIM buses to the SDE. Additionally, address
 and ARID/AWIDs should be appropriately configured/parameterized in the
 software and the SDE respectively.
 
-.. _q-my-acceleratorcl-cannot-transmitreceive-data-at-512bits-per-clock-can-sde-transmitreceive-less-than-512-bits-per-clock-on-the-h2cc2h-streaming-interfaces:
-
 Q. My accelerator/CL cannot transmit/receive data at 512bits per clock. Can SDE transmit/receive less than 512 bits per clock on the H2C/C2H Streaming Interfaces?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The current version of the SDE can only transmit/receive data at 512
 bits per clock. The CL developer can use Xilinx AXI-S width converters
 to achieve width conversion from any bit width to 512 bits.
-
-.. _q-what-is-the-guideline-for-choosing-between-regular-and-compact-descriptormetadata-types:
 
 Q. What is the guideline for choosing between Regular and Compact Descriptor/Metadata types?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2956,22 +2885,16 @@ the SDE. Therefore, the compact type should be chosen when user bits are
 not required and also to maximize bandwidth usage for packet data and to
 save BRAM utilization in the CL.
 
-.. _q-how-many-clocks-and-resets-does-the-sde-use:
-
 Q. How many clocks and resets does the SDE use?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The SDE uses only one clock. The SDE uses only one reset that is
 synchronized to the aforementioned clock.
 
-.. _q-can-the-sde-be-implemented-at-a-clock-frequency-greater-than-250mhz:
-
 Q. Can the SDE be implemented at a clock frequency greater than 250MHz?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 AWS only supports SDE implemented at a maximum of 250MHz.
-
-.. _q-should-the-sde-be-constrained-to-a-single-slr:
 
 Q. Should the SDE be constrained to a single SLR?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2980,6 +2903,4 @@ AWS recommends that the all the logic in the SDE be constrained to a
 single SLR. Additionally, AWS recommends adding pipelining on the PCIM
 and PCIS interfaces from the shell leading up to the SDE.
 
-.. |SDE_Block_Diagram| image:: ../../../../_static/sdk/apps/virtual-ethernet/SDE_Block_Diagram.jpg
-
-`Back to SDK README <../../../README.html>`__
+`Back to Home <../../../../index.html>`__
