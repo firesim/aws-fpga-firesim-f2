@@ -279,6 +279,23 @@ switch $BUILD_FLOW {
     source ${scripts_dir}/build_level_1_cl.tcl
   }
 
+  "PRBase" {
+    # PR Base build: full CL synthesis + implementation with nested DFX
+    source ${scripts_dir}/synth_${CL}.tcl
+    source ${scripts_dir}/build_level_1_cl_pr_base.tcl
+  }
+
+  "PRSynthRM" {
+    # PR RM synthesis only (out-of-context)
+    source ${scripts_dir}/synth_${CL}_pr_rm.tcl
+  }
+
+  "PRImplRM" {
+    # PR RM build: RM OOC synthesis + implementation in abstract shell
+    source ${scripts_dir}/synth_${CL}_pr_rm.tcl
+    source ${scripts_dir}/build_level_1_cl_pr_rm.tcl
+  }
+
   default {
     source ${scripts_dir}/synth_${CL}.tcl
     source ${scripts_dir}/build_level_1_cl.tcl

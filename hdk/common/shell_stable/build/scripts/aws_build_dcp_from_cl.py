@@ -271,7 +271,7 @@ def main():
     print("==================================================")
 
     # Check selected build flow
-    if options.flow not in ["SynthCL", "ImplCL", "BuildAll"]:
+    if (options.flow not in ["SynthCL", "ImplCL", "BuildAll", "PRBase", "PRSynthRM", "PRImplRM"]):
         print_error(f"Unsupported build flow value: {options.flow}. Build terminated")
 
     # Check selected shell mode
@@ -345,15 +345,8 @@ def main():
     sys.stdout.flush()
     os.system(cmd)
 
-    if options.flow == "BuildAll":
-        generate_dcp_tarball(
-            cl_name,
-            build_tag,
-            options.clock_recipe_a,
-            options.clock_recipe_b,
-            options.clock_recipe_c,
-            options.clock_recipe_hbm,
-        )
+    if (options.flow in ["BuildAll", "PRBase", "PRImplRM"]):
+        generate_dcp_tarball(cl_name, build_tag, options.clock_recipe_a, options.clock_recipe_b, options.clock_recipe_c, options.clock_recipe_hbm)
 
     finish_time = datetime.datetime.now()
     print(f"\nAWS FPGA: {finish_time.strftime(TIMESTAMP_LOG_FORMAT)} - Build completes\n")
