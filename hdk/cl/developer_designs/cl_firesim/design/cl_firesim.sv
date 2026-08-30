@@ -46,7 +46,6 @@ logic rst_firesim_n_sync;
 
 `include "unused_flr_template.inc"
 //`include "unused_ddr_template.inc"
-`include "unused_pcim_template.inc"
 `include "unused_cl_sda_template.inc"
 // `include "unused_sh_bar1_template.inc" // does not exist in F2
 `include "unused_apppf_irq_template.inc"
@@ -379,24 +378,156 @@ axi_clock_converter_512_wide wide_pcis_clock_convert (
 );
 
 
-//assign cl_sh_pcim_awuser = 55'h0;
-//assign cl_sh_pcim_aruser = 55'h0;
-//assign cl_sh_pcim_awid = 0;
-//assign cl_sh_pcim_awaddr = 0;
-//assign cl_sh_pcim_awlen = 0;
-//assign cl_sh_pcim_awsize = 0;
-//assign cl_sh_pcim_awvalid = 0;
-//assign cl_sh_pcim_wdata = 0;
-//assign cl_sh_pcim_wstrb = 0;
-//assign cl_sh_pcim_wlast = 0;
-//assign cl_sh_pcim_wvalid = 0;
-//assign cl_sh_pcim_bready = 0;
-//assign cl_sh_pcim_arid = 0;
-//assign cl_sh_pcim_araddr = 0;
-//assign cl_sh_pcim_arlen = 0; 
-//assign cl_sh_pcim_arsize = 0;
-//assign cl_sh_pcim_arvalid = 0;
-//assign cl_sh_pcim_rready = 0;
+//-------------------------------------------------
+// FireSim Master to PCIe PCIM
+//-------------------------------------------------
+// Outbound path: the FPGA-managed stream engine masters writes into host
+// memory. Mirror image of the DMA_PCIS block above -- here the converter's
+// *slave* port faces FireSim and its master port drives the shell.
+//
+// FireSim only ever issues writes on this interface (the stream engine holds
+// ar.valid low), but the read channels are wired through regardless so the
+// converter sees a complete AXI4 interface.
+
+logic [5:0]   cl_sh_pcim_awid_FIRESIM;
+logic [63:0]  cl_sh_pcim_awaddr_FIRESIM;
+logic [7:0]   cl_sh_pcim_awlen_FIRESIM;
+logic [2:0]   cl_sh_pcim_awsize_FIRESIM;
+logic         cl_sh_pcim_awvalid_FIRESIM;
+logic         sh_cl_pcim_awready_FIRESIM;
+logic [511:0] cl_sh_pcim_wdata_FIRESIM;
+logic [63:0]  cl_sh_pcim_wstrb_FIRESIM;
+logic         cl_sh_pcim_wlast_FIRESIM;
+logic         cl_sh_pcim_wvalid_FIRESIM;
+logic         sh_cl_pcim_wready_FIRESIM;
+logic [5:0]   sh_cl_pcim_bid_FIRESIM;
+logic [1:0]   sh_cl_pcim_bresp_FIRESIM;
+logic         sh_cl_pcim_bvalid_FIRESIM;
+logic         cl_sh_pcim_bready_FIRESIM;
+logic [5:0]   cl_sh_pcim_arid_FIRESIM;
+logic [63:0]  cl_sh_pcim_araddr_FIRESIM;
+logic [7:0]   cl_sh_pcim_arlen_FIRESIM;
+logic [2:0]   cl_sh_pcim_arsize_FIRESIM;
+logic         cl_sh_pcim_arvalid_FIRESIM;
+logic         sh_cl_pcim_arready_FIRESIM;
+logic [5:0]   sh_cl_pcim_rid_FIRESIM;
+logic [511:0] sh_cl_pcim_rdata_FIRESIM;
+logic [1:0]   sh_cl_pcim_rresp_FIRESIM;
+logic         sh_cl_pcim_rlast_FIRESIM;
+logic         sh_cl_pcim_rvalid_FIRESIM;
+logic         cl_sh_pcim_rready_FIRESIM;
+
+// The shell and the converter carry 16-bit IDs; FireSim emits 6 (see
+// FPGAManagedAXI4Params.idBits). Zero-extend outbound and take the low bits
+// back, which is safe because AXI requires a response to echo its request ID.
+logic [15:0] pcim_bid_wide;
+logic [15:0] pcim_rid_wide;
+assign sh_cl_pcim_bid_FIRESIM = pcim_bid_wide[5:0];
+assign sh_cl_pcim_rid_FIRESIM = pcim_rid_wide[5:0];
+
+// Not present on AXI4 (WID is AXI3), and the shell ignores the user fields.
+assign cl_sh_pcim_wid    = 16'b0;
+assign cl_sh_pcim_awuser = 55'b0;
+assign cl_sh_pcim_aruser = 55'b0;
+assign cl_sh_pcim_wuser  = 64'b0;
+
+axi_clock_converter_512_pcim pcim_clock_convert (
+  // Slave port: FireSim domain
+  .s_axi_aclk(firesim_internal_clock),
+  .s_axi_aresetn(rst_firesim_n_sync),
+
+  .s_axi_awid({10'b0, cl_sh_pcim_awid_FIRESIM}),
+  .s_axi_awaddr(cl_sh_pcim_awaddr_FIRESIM),
+  .s_axi_awlen(cl_sh_pcim_awlen_FIRESIM),
+  .s_axi_awsize(cl_sh_pcim_awsize_FIRESIM),
+  .s_axi_awburst(2'b01),                        // INCR; the only type FireSim issues
+  .s_axi_awlock(1'b0),
+  .s_axi_awcache(4'h2),                         // modifiable, per shell guidance
+  .s_axi_awprot(3'b0),
+  .s_axi_awregion(4'b0),
+  .s_axi_awqos(4'b0),
+  .s_axi_awvalid(cl_sh_pcim_awvalid_FIRESIM),
+  .s_axi_awready(sh_cl_pcim_awready_FIRESIM),
+
+  .s_axi_wdata(cl_sh_pcim_wdata_FIRESIM),
+  .s_axi_wstrb(cl_sh_pcim_wstrb_FIRESIM),
+  .s_axi_wlast(cl_sh_pcim_wlast_FIRESIM),
+  .s_axi_wvalid(cl_sh_pcim_wvalid_FIRESIM),
+  .s_axi_wready(sh_cl_pcim_wready_FIRESIM),
+
+  .s_axi_bid(pcim_bid_wide),
+  .s_axi_bresp(sh_cl_pcim_bresp_FIRESIM),
+  .s_axi_bvalid(sh_cl_pcim_bvalid_FIRESIM),
+  .s_axi_bready(cl_sh_pcim_bready_FIRESIM),
+
+  .s_axi_arid({10'b0, cl_sh_pcim_arid_FIRESIM}),
+  .s_axi_araddr(cl_sh_pcim_araddr_FIRESIM),
+  .s_axi_arlen(cl_sh_pcim_arlen_FIRESIM),
+  .s_axi_arsize(cl_sh_pcim_arsize_FIRESIM),
+  .s_axi_arburst(2'b01),
+  .s_axi_arlock(1'b0),
+  .s_axi_arcache(4'h2),
+  .s_axi_arprot(3'b0),
+  .s_axi_arregion(4'b0),
+  .s_axi_arqos(4'b0),
+  .s_axi_arvalid(cl_sh_pcim_arvalid_FIRESIM),
+  .s_axi_arready(sh_cl_pcim_arready_FIRESIM),
+
+  .s_axi_rid(pcim_rid_wide),
+  .s_axi_rdata(sh_cl_pcim_rdata_FIRESIM),
+  .s_axi_rresp(sh_cl_pcim_rresp_FIRESIM),
+  .s_axi_rlast(sh_cl_pcim_rlast_FIRESIM),
+  .s_axi_rvalid(sh_cl_pcim_rvalid_FIRESIM),
+  .s_axi_rready(cl_sh_pcim_rready_FIRESIM),
+
+  // Master port: shell domain
+  .m_axi_aclk(clk_main_a0),
+  .m_axi_aresetn(rst_main_n_sync),
+
+  .m_axi_awid(cl_sh_pcim_awid),
+  .m_axi_awaddr(cl_sh_pcim_awaddr),
+  .m_axi_awlen(cl_sh_pcim_awlen),
+  .m_axi_awsize(cl_sh_pcim_awsize),
+  .m_axi_awburst(cl_sh_pcim_awburst),
+  .m_axi_awlock(cl_sh_pcim_awlock),
+  .m_axi_awcache(cl_sh_pcim_awcache),
+  .m_axi_awprot(cl_sh_pcim_awprot),
+  .m_axi_awregion(),
+  .m_axi_awqos(cl_sh_pcim_awqos),
+  .m_axi_awvalid(cl_sh_pcim_awvalid),
+  .m_axi_awready(sh_cl_pcim_awready),
+
+  .m_axi_wdata(cl_sh_pcim_wdata),
+  .m_axi_wstrb(cl_sh_pcim_wstrb),
+  .m_axi_wlast(cl_sh_pcim_wlast),
+  .m_axi_wvalid(cl_sh_pcim_wvalid),
+  .m_axi_wready(sh_cl_pcim_wready),
+
+  .m_axi_bid(sh_cl_pcim_bid),
+  .m_axi_bresp(sh_cl_pcim_bresp),
+  .m_axi_bvalid(sh_cl_pcim_bvalid),
+  .m_axi_bready(cl_sh_pcim_bready),
+
+  .m_axi_arid(cl_sh_pcim_arid),
+  .m_axi_araddr(cl_sh_pcim_araddr),
+  .m_axi_arlen(cl_sh_pcim_arlen),
+  .m_axi_arsize(cl_sh_pcim_arsize),
+  .m_axi_arburst(cl_sh_pcim_arburst),
+  .m_axi_arlock(cl_sh_pcim_arlock),
+  .m_axi_arcache(cl_sh_pcim_arcache),
+  .m_axi_arprot(cl_sh_pcim_arprot),
+  .m_axi_arregion(),
+  .m_axi_arqos(cl_sh_pcim_arqos),
+  .m_axi_arvalid(cl_sh_pcim_arvalid),
+  .m_axi_arready(sh_cl_pcim_arready),
+
+  .m_axi_rid(sh_cl_pcim_rid),
+  .m_axi_rdata(sh_cl_pcim_rdata),
+  .m_axi_rresp(sh_cl_pcim_rresp),
+  .m_axi_rlast(sh_cl_pcim_rlast),
+  .m_axi_rvalid(sh_cl_pcim_rvalid),
+  .m_axi_rready(cl_sh_pcim_rready)
+);
 
 //----------------------------------------- 
 // DDR controller instantiation   
@@ -782,51 +913,51 @@ F1Shim firesim_top (
    .io_pcis_r_bits_id(cl_sh_dma_pcis_rid_FIRESIM),
    .io_pcis_r_bits_user(),    // UNUSED at top level
 
-   // .io_pcim_aw_ready(sh_cl_pcim_awready_FIRESIM),
-   // .io_pcim_aw_valid(cl_sh_pcim_awvalid_FIRESIM),
-   // .io_pcim_aw_bits_addr(cl_sh_pcim_awaddr_FIRESIM),
-   // .io_pcim_aw_bits_len(cl_sh_pcim_awlen_FIRESIM),
-   // .io_pcim_aw_bits_size(cl_sh_pcim_awsize_FIRESIM),
-   // .io_pcim_aw_bits_burst(),
-   // .io_pcim_aw_bits_lock(),
-   // .io_pcim_aw_bits_cache(),
-   // .io_pcim_aw_bits_prot(),
-   // .io_pcim_aw_bits_qos(),
-   // .io_pcim_aw_bits_region(),
-   // .io_pcim_aw_bits_id(cl_sh_pcim_awid_FIRESIM),
-   // .io_pcim_aw_bits_user(),
-   // .io_pcim_w_ready(sh_cl_pcim_wready_FIRESIM),
-   // .io_pcim_w_valid(cl_sh_pcim_wvalid_FIRESIM),
-   // .io_pcim_w_bits_data(cl_sh_pcim_wdata_FIRESIM),
-   // .io_pcim_w_bits_last(cl_sh_pcim_wlast_FIRESIM),
-   // .io_pcim_w_bits_id(),
-   // .io_pcim_w_bits_strb(cl_sh_pcim_wstrb_FIRESIM),
-   // .io_pcim_w_bits_user(),
-   // .io_pcim_b_ready(cl_sh_pcim_bready_FIRESIM),
-   // .io_pcim_b_valid(sh_cl_pcim_bvalid_FIRESIM),
-   // .io_pcim_b_bits_resp(sh_cl_pcim_bresp_FIRESIM),
-   // .io_pcim_b_bits_id(sh_cl_pcim_bid_FIRESIM),
-   // .io_pcim_b_bits_user(1'h0),
-   // .io_pcim_ar_ready(sh_cl_pcim_arready_FIRESIM),
-   // .io_pcim_ar_valid(cl_sh_pcim_arvalid_FIRESIM),
-   // .io_pcim_ar_bits_addr(cl_sh_pcim_araddr_FIRESIM),
-   // .io_pcim_ar_bits_len(cl_sh_pcim_arlen_FIRESIM),
-   // .io_pcim_ar_bits_size(cl_sh_pcim_arsize_FIRESIM),
-   // .io_pcim_ar_bits_burst(),
-   // .io_pcim_ar_bits_lock(),
-   // .io_pcim_ar_bits_cache(),
-   // .io_pcim_ar_bits_prot(),
-   // .io_pcim_ar_bits_qos(),
-   // .io_pcim_ar_bits_region(),
-   // .io_pcim_ar_bits_id(cl_sh_pcim_arid_FIRESIM),
-   // .io_pcim_ar_bits_user(),
-   // .io_pcim_r_ready(cl_sh_pcim_rready_FIRESIM),
-   // .io_pcim_r_valid(sh_cl_pcim_rvalid_FIRESIM),
-   // .io_pcim_r_bits_resp(sh_cl_pcim_rresp_FIRESIM),
-   // .io_pcim_r_bits_data(sh_cl_pcim_rdata_FIRESIM),
-   // .io_pcim_r_bits_last(sh_cl_pcim_rlast_FIRESIM),
-   // .io_pcim_r_bits_id(sh_cl_pcim_rid_FIRESIM),
-   // .io_pcim_r_bits_user(1'h0),
+   .io_pcim_aw_ready(sh_cl_pcim_awready_FIRESIM),
+   .io_pcim_aw_valid(cl_sh_pcim_awvalid_FIRESIM),
+   .io_pcim_aw_bits_addr(cl_sh_pcim_awaddr_FIRESIM),
+   .io_pcim_aw_bits_len(cl_sh_pcim_awlen_FIRESIM),
+   .io_pcim_aw_bits_size(cl_sh_pcim_awsize_FIRESIM),
+   .io_pcim_aw_bits_burst(),
+   .io_pcim_aw_bits_lock(),
+   .io_pcim_aw_bits_cache(),
+   .io_pcim_aw_bits_prot(),
+   .io_pcim_aw_bits_qos(),
+   .io_pcim_aw_bits_region(),
+   .io_pcim_aw_bits_id(cl_sh_pcim_awid_FIRESIM),
+   .io_pcim_aw_bits_user(),
+   .io_pcim_w_ready(sh_cl_pcim_wready_FIRESIM),
+   .io_pcim_w_valid(cl_sh_pcim_wvalid_FIRESIM),
+   .io_pcim_w_bits_data(cl_sh_pcim_wdata_FIRESIM),
+   .io_pcim_w_bits_last(cl_sh_pcim_wlast_FIRESIM),
+   .io_pcim_w_bits_id(),
+   .io_pcim_w_bits_strb(cl_sh_pcim_wstrb_FIRESIM),
+   .io_pcim_w_bits_user(),
+   .io_pcim_b_ready(cl_sh_pcim_bready_FIRESIM),
+   .io_pcim_b_valid(sh_cl_pcim_bvalid_FIRESIM),
+   .io_pcim_b_bits_resp(sh_cl_pcim_bresp_FIRESIM),
+   .io_pcim_b_bits_id(sh_cl_pcim_bid_FIRESIM),
+   .io_pcim_b_bits_user(1'h0),
+   .io_pcim_ar_ready(sh_cl_pcim_arready_FIRESIM),
+   .io_pcim_ar_valid(cl_sh_pcim_arvalid_FIRESIM),
+   .io_pcim_ar_bits_addr(cl_sh_pcim_araddr_FIRESIM),
+   .io_pcim_ar_bits_len(cl_sh_pcim_arlen_FIRESIM),
+   .io_pcim_ar_bits_size(cl_sh_pcim_arsize_FIRESIM),
+   .io_pcim_ar_bits_burst(),
+   .io_pcim_ar_bits_lock(),
+   .io_pcim_ar_bits_cache(),
+   .io_pcim_ar_bits_prot(),
+   .io_pcim_ar_bits_qos(),
+   .io_pcim_ar_bits_region(),
+   .io_pcim_ar_bits_id(cl_sh_pcim_arid_FIRESIM),
+   .io_pcim_ar_bits_user(),
+   .io_pcim_r_ready(cl_sh_pcim_rready_FIRESIM),
+   .io_pcim_r_valid(sh_cl_pcim_rvalid_FIRESIM),
+   .io_pcim_r_bits_resp(sh_cl_pcim_rresp_FIRESIM),
+   .io_pcim_r_bits_data(sh_cl_pcim_rdata_FIRESIM),
+   .io_pcim_r_bits_last(sh_cl_pcim_rlast_FIRESIM),
+   .io_pcim_r_bits_id(sh_cl_pcim_rid_FIRESIM),
+   .io_pcim_r_bits_user(1'h0),
 
    .io_slave_0_aw_ready(fsimtop_s_0_axi_awready),
    .io_slave_0_aw_valid(fsimtop_s_0_axi_awvalid),
