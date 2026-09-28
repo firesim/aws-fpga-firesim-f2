@@ -240,6 +240,15 @@ def main():
     )
 
     parser.add_option(
+        "--strategy",
+        dest="strategy",
+        metavar="NAME",
+        default="DEFAULT",
+        help="FireSim BuildStrategy name (see deploy/buildtools/buildconfig.py). "
+        "Selects the synth_design -directive. Default to <DEFAULT>.",
+    )
+
+    parser.add_option(
         "-t",
         "--tag",
         dest="build_tag",
@@ -317,6 +326,19 @@ def main():
     # Pass frequency to TCL via environment variable (FireSim clock wizard configuration)
     os.environ['DESIRED_HOST_FREQUENCY'] = str(options.frequency)
     print(f"Setting DESIRED_HOST_FREQUENCY={options.frequency} MHz for FireSim clock wizard")
+
+    # Map the FireSim BuildStrategy onto a Vivado synth_design -directive.
+    # NOTE: the existing strategies (TIMING/AREA/EXPLORE/...) describe the
+    # IMPLEMENTATION phase in FireSim's U250 flow (opt/place/phys_opt/route
+    # directives), not synthesis, so they deliberately keep Vivado's default
+    # synth directive -- mapping them here would silently change every existing
+    # recipe's results. Only RUNTIMEOPTIMIZED selects a non-default directive.
+    SYNTH_DIRECTIVE_MAP = {
+        "RUNTIMEOPTIMIZED": "RuntimeOptimized",
+    }
+    synth_directive = SYNTH_DIRECTIVE_MAP.get(options.strategy.upper(), "default")
+    os.environ['FIRESIM_SYNTH_DIRECTIVE'] = synth_directive
+    print(f"Setting FIRESIM_SYNTH_DIRECTIVE={synth_directive} (from strategy {options.strategy})")
 
     # Create a timestamp if no user tag is assgined
     if options.build_tag:

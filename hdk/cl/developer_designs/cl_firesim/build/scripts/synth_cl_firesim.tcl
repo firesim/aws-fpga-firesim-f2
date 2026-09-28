@@ -228,11 +228,15 @@ update_compile_order -fileset sources_1
 #              -part ${DEVICE_TYPE} \
 #              -keep_equivalent_registers
 
+# $synth_directive comes from build_all.tcl, which derives it from the FireSim
+# build recipe's `build_strategy:` (see FIRESIM_SYNTH_DIRECTIVE). Defaults to
+# "default", i.e. unchanged Vivado behaviour, so existing recipes are unaffected.
 synth_design -mode out_of_context \
              -top cl_firesim \
              -verilog_define XSDB_SLV_DIS \
              -part ${DEVICE_TYPE} \
-             -keep_equivalent_registers
+             -keep_equivalent_registers \
+             -directive $synth_directive
 
 # update_compile_order -fileset sources_1
 # puts "\nRunning synth_design for $CL_MODULE $CL_DIR/build/scripts \[[clock format [clock seconds] -format {%a %b %d %H:%M:%S %Y}]\]"

@@ -232,6 +232,16 @@ if { [info exists ::env(DESIRED_HOST_FREQUENCY)] } {
     print "WARNING: DESIRED_HOST_FREQUENCY not set, using default 75 MHz"
 }
 
+# Vivado synth_design -directive, derived from the FireSim build recipe's
+# `build_strategy:` by aws_build_dcp_from_cl.py. Consumed by synth_${CL}.tcl.
+if { [info exists ::env(FIRESIM_SYNTH_DIRECTIVE)] } {
+    set synth_directive $::env(FIRESIM_SYNTH_DIRECTIVE)
+    print "Using FIRESIM_SYNTH_DIRECTIVE from environment: $synth_directive"
+} else {
+    set synth_directive "default"
+    print "FIRESIM_SYNTH_DIRECTIVE not set, using Vivado default synth directive"
+}
+
 if { [info exists ::env(ENCRYPT)] } {
     set ENCRYPT $::env(ENCRYPT)
 } else {
