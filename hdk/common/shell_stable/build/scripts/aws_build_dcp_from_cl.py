@@ -332,9 +332,9 @@ def main():
     # IMPLEMENTATION phase in FireSim's U250 flow (opt/place/phys_opt/route
     # directives), not synthesis, so they deliberately keep Vivado's default
     # synth directive -- mapping them here would silently change every existing
-    # recipe's results. Only RUNTIMEOPTIMIZED selects a non-default directive.
+    # recipe's results. Only RUNTIME_OPTIMIZED selects a non-default directive.
     SYNTH_DIRECTIVE_MAP = {
-        "RUNTIMEOPTIMIZED": "RuntimeOptimized",
+        "RUNTIME_OPTIMIZED": "RuntimeOptimized",
     }
     synth_directive = SYNTH_DIRECTIVE_MAP.get(options.strategy.upper(), "default")
     os.environ['FIRESIM_SYNTH_DIRECTIVE'] = synth_directive
